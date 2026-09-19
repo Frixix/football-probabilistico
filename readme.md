@@ -1,967 +1,1087 @@
-# Football Probability Lab
+# Football Probabilístico
 
-Sistema de análisis estadístico y probabilístico aplicado al fútbol.
+Sistema de análisis probabilístico de fútbol que combina estadística, programación, análisis de datos, Machine Learning y backtesting para estimar probabilidades de eventos futbolísticos y compararlas con las probabilidades implícitas del mercado.
 
-El objetivo del proyecto es construir un sistema capaz de **estimar probabilidades de eventos futbolísticos**, compararlas con las probabilidades implícitas en las cuotas del mercado y evaluar mediante **backtesting** si los modelos presentan capacidad predictiva y valor esperado fuera de muestra.
+El objetivo no es crear una aplicación que simplemente diga qué apostar, sino construir un sistema capaz de responder:
 
-> **Principio fundamental:** el sistema no pretende "adivinar resultados". Busca construir, medir y validar modelos probabilísticos utilizando datos históricos y métodos estadísticos reproducibles.
+> ¿Qué probabilidad estima nuestro modelo, qué tan confiable es esa estimación y cómo se comportó históricamente?
 
 ---
 
-## 1. Objetivos
+# 1. Objetivos del proyecto
 
-### Objetivo general
+El sistema deberá evolucionar progresivamente hasta permitir:
 
-Desarrollar una plataforma de análisis estadístico para fútbol que permita:
-
-* Recopilar y procesar datos históricos.
-* Construir modelos probabilísticos.
-* Estimar probabilidades de eventos futbolísticos.
-* Comparar las probabilidades del modelo con las probabilidades implícitas del mercado.
-* Calcular valor esperado.
-* Realizar backtesting.
-* Evaluar la calibración y precisión de los modelos.
-* Comparar diferentes modelos estadísticos y de Machine Learning.
-* Analizar la estabilidad de los resultados fuera de muestra.
-
-### Objetivos específicos
-
-1. Construir un dataset histórico confiable.
-2. Implementar modelos estadísticos base.
-3. Implementar validación temporal.
-4. Construir un motor de backtesting.
-5. Medir el desempeño mediante métricas estadísticas y financieras.
-6. Comparar modelos.
-7. Construir un sistema de predicción probabilística.
-8. Exponer los resultados mediante una API.
-9. Crear un dashboard web.
-10. Documentar todo el proceso de manera reproducible.
+1. Recopilar y procesar datos históricos de fútbol.
+2. Analizar el rendimiento de equipos.
+3. Construir modelos estadísticos.
+4. Estimar probabilidades de diferentes eventos.
+5. Comparar las probabilidades del modelo con las probabilidades implícitas del mercado.
+6. Calcular valor esperado (EV).
+7. Realizar backtesting histórico.
+8. Evaluar la calidad y calibración de los modelos.
+9. Incorporar Machine Learning posteriormente.
+10. Exponer los resultados mediante una API.
+11. Construir una interfaz web utilizando JavaScript y React.
+12. Mantener una arquitectura modular, testeable y escalable.
 
 ---
 
 # 2. Filosofía del proyecto
 
-El proyecto seguirá una metodología orientada a la investigación y no únicamente a la creación de una aplicación.
+Este proyecto tiene dos objetivos simultáneos.
 
-La cadena principal será:
+## 2.1 Construir software real
 
-```text
-DATOS
-  ↓
-LIMPIEZA
-  ↓
-FEATURE ENGINEERING
-  ↓
-MODELO
-  ↓
-PROBABILIDADES
-  ↓
-CALIBRACIÓN
-  ↓
-COMPARACIÓN CON MERCADO
-  ↓
-BACKTESTING
-  ↓
-EVALUACIÓN
-  ↓
-MODELO VALIDADO
-```
+El resultado final debe ser un sistema funcional de análisis futbolístico con:
 
-Se evitarán conclusiones basadas únicamente en resultados de una muestra pequeña.
+* Código organizado.
+* Arquitectura modular.
+* Pruebas automatizadas.
+* Modelos reproducibles.
+* Datos procesados correctamente.
+* Backtesting.
+* API.
+* Interfaz web.
 
----
+## 2.2 Aprender mientras se construye
 
-# 3. Arquitectura
+El proyecto también será utilizado para fortalecer conocimientos de:
 
-La arquitectura prevista será:
+* Python.
+* Programación orientada a objetos.
+* Estadística.
+* Probabilidad.
+* Análisis de datos.
+* JavaScript.
+* React.
+* APIs.
+* Bases de datos.
+* Machine Learning.
 
-```text
-                         ┌─────────────────────┐
-                         │      Next.js        │
-                         │ React + TypeScript  │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │       FastAPI       │
-                         │       Backend       │
-                         └──────────┬──────────┘
-                                    │
-             ┌──────────────────────┼──────────────────────┐
-             │                      │                      │
-             ▼                      ▼                      ▼
-       ┌───────────┐         ┌──────────────┐       ┌─────────────┐
-       │    ETL    │         │ Model Engine │       │  Backtest   │
-       │   Datos   │         │ Probabilidad │       │   Engine    │
-       └─────┬─────┘         └──────┬───────┘       └──────┬──────┘
-             │                      │                      │
-             └──────────────────────┼──────────────────────┘
-                                    ▼
-                           ┌─────────────────┐
-                           │   PostgreSQL    │
-                           └─────────────────┘
-```
+## Regla fundamental
+
+La IA puede acelerar el desarrollo, pero no debe sustituir el aprendizaje.
+
+No se debe introducir código complejo que el desarrollador no pueda explicar.
+
+Cuando aparezca una tecnología, función, patrón o concepto desconocido, primero debe explicarse y comprenderse antes de utilizarlo.
 
 ---
 
-# 4. Stack tecnológico
+# 3. Metodología de aprendizaje
 
-## Backend y Data Science
+El desarrollo deberá seguir esta metodología:
 
-* Python
-* FastAPI
-* Pandas
+```text
+PROBLEMA
+   |
+   v
+EXPLICACIÓN
+   |
+   v
+INTENTO DEL DESARROLLADOR
+   |
+   v
+PISTA O CORRECCIÓN
+   |
+   v
+IMPLEMENTACIÓN
+   |
+   v
+PRUEBAS
+   |
+   v
+REVISIÓN
+```
+
+La IA puede actuar como:
+
+* Tutor.
+* Revisor de código.
+* Pair programmer.
+* Investigador.
+* Ayuda para debugging.
+* Generador de ejercicios.
+* Analista de arquitectura.
+
+Pero no debe convertirse en una herramienta para copiar y pegar código desconocido.
+
+Cuando sea posible, el desarrollador deberá intentar resolver primero los problemas antes de recibir la solución completa.
+
+---
+
+# 4. Tecnologías principales
+
+## 4.1 Python
+
+Python será el lenguaje principal del motor estadístico y de análisis.
+
+Se utilizará para:
+
+* Procesamiento de datos.
+* Estadística.
+* Probabilidad.
+* Modelos predictivos.
+* Backtesting.
+* Métricas.
+* Automatización.
+* APIs.
+
+Tecnologías iniciales:
+
+* Python 3.12+
 * NumPy
+* Pandas
 * SciPy
-* scikit-learn
+* Statsmodels
+* Pytest
 
-## Machine Learning
+Tecnologías posteriores:
 
-Se incorporarán progresivamente:
+* Scikit-learn.
+* XGBoost.
+* LightGBM.
 
-* Logistic Regression
-* Random Forest
-* XGBoost
-* LightGBM
+---
 
-## Modelos estadísticos
+# 5. JavaScript
 
-Inicialmente:
+JavaScript será utilizado como base para el desarrollo frontend.
 
-* Probabilidad implícita de cuotas
-* Frecuencia histórica
-* Poisson
-* Dixon-Coles
-* Elo
-* Skellam
+Antes de profundizar en React se deberán reforzar los siguientes conceptos:
 
-Posteriormente:
+* Variables.
+* Tipos de datos.
+* Funciones.
+* Arrays.
+* Objetos.
+* Métodos de arrays.
+* `map()`.
+* `filter()`.
+* `reduce()`.
+* Destructuring.
+* Módulos.
+* JSON.
+* Promises.
+* `async/await`.
+* Consumo de APIs.
+* Manejo de eventos.
+* Manipulación de datos.
 
-* Modelos de regresión
-* Machine Learning
-* Ensembles
-* Modelos calibrados
+Los ejercicios de JavaScript deberán estar relacionados, cuando sea posible, con problemas reales del proyecto.
 
-## Frontend
+---
 
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
+# 6. React
+
+React será utilizado posteriormente para construir la interfaz web.
+
+Los conceptos se introducirán progresivamente:
+
+* Componentes.
+* Props.
+* State.
+* Hooks.
+* Eventos.
+* Formularios.
+* Renderizado condicional.
+* Componentización.
+* Consumo de APIs.
+* Manejo de estado.
+
+No se deberá introducir React de forma profunda antes de tener una base suficiente de JavaScript.
+
+---
+
+# 7. TypeScript
+
+TypeScript se incorporará posteriormente.
+
+No es prioridad durante las primeras fases.
+
+Primero se deberá desarrollar una base funcional de JavaScript y React.
+
+Cuando el proyecto alcance una etapa adecuada, se podrá migrar progresivamente a TypeScript.
+
+---
+
+# 8. Tecnologías futuras
+
+A medida que el proyecto madure se podrán incorporar:
+
+## Backend
+
+* FastAPI.
+* SQLAlchemy.
 
 ## Base de datos
 
-* PostgreSQL
-* SQLAlchemy
+* PostgreSQL.
 
-## Visualización
+## Frontend
 
-* Plotly
-* ECharts
+* React.
+* Next.js.
+* TypeScript.
+* Tailwind CSS.
 
-## Desarrollo
+## Machine Learning
 
-* Git
-* GitHub
-* Docker
-* Pytest
-* Jupyter Notebook
+* Scikit-learn.
+* XGBoost.
+* LightGBM.
 
 ## Experimentación
 
-* MLflow
+* MLflow.
+
+## Infraestructura
+
+* Docker.
+* Git.
+* GitHub.
+
+Estas tecnologías no deben incorporarse todas desde el comienzo.
+
+Cada tecnología deberá introducirse cuando exista una necesidad real dentro del proyecto.
 
 ---
 
-# 5. Estructura del proyecto
+# 9. Datos
 
-```text
-football-probability/
-│
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── odds/
-│
-├── notebooks/
-│   ├── exploration.ipynb
-│   ├── poisson.ipynb
-│   ├── elo.ipynb
-│   └── backtest.ipynb
-│
-├── src/
-│   ├── data/
-│   │   ├── loader.py
-│   │   ├── cleaning.py
-│   │   └── features.py
-│   │
-│   ├── models/
-│   │   ├── poisson.py
-│   │   ├── dixon_coles.py
-│   │   ├── elo.py
-│   │   ├── logistic.py
-│   │   ├── xgboost_model.py
-│   │   └── ensemble.py
-│   │
-│   ├── betting/
-│   │   ├── odds.py
-│   │   ├── implied_probability.py
-│   │   └── expected_value.py
-│   │
-│   ├── backtesting/
-│   │   ├── engine.py
-│   │   ├── bankroll.py
-│   │   └── metrics.py
-│   │
-│   └── utils/
-│       └── config.py
-│
-├── api/
-│   ├── main.py
-│   ├── routes/
-│   └── schemas/
-│
-├── frontend/
-│   └── ...
-│
-├── tests/
-│   ├── test_models.py
-│   ├── test_probabilities.py
-│   └── test_backtest.py
-│
-├── results/
-│   ├── models/
-│   ├── backtests/
-│   └── reports/
-│
-├── paper/
-│   └── research.md
-│
-├── requirements.txt
-├── .env.example
-├── .gitignore
-└── README.md
-```
+El sistema podrá trabajar con información como:
+
+* Fecha del partido.
+* Liga.
+* Temporada.
+* Equipo local.
+* Equipo visitante.
+* Goles del equipo local.
+* Goles del equipo visitante.
+* xG.
+* Tiros.
+* Tiros a puerta.
+* Posesión.
+* Tarjetas.
+* Corners.
+* Rendimiento como local.
+* Rendimiento como visitante.
+* Cuotas.
+* Casa de apuestas.
+* Hora de captura de la cuota.
+* Cuota inicial.
+* Cuota de cierre.
+* Movimiento de cuotas.
+* Lesiones.
+* Suspensiones.
+* Días de descanso.
+* Calendario.
+* Otros factores disponibles antes del partido.
+
+La información utilizada para generar una predicción histórica debe corresponder únicamente a información que habría estado disponible antes del inicio del partido.
 
 ---
 
-# 6. Datos
+# 10. Primer modelo: Poisson
 
-Los datos serán uno de los componentes más importantes del proyecto.
+El primer modelo estadístico será una distribución de Poisson.
 
-Se buscará almacenar información como:
-
-### Partidos
-
-* Fecha
-* Liga
-* Temporada
-* Equipo local
-* Equipo visitante
-* Goles local
-* Goles visitante
-* Resultado
-
-### Rendimiento
-
-* xG
-* tiros
-* tiros a puerta
-* posesión
-* tarjetas
-* corners
-* rendimiento local
-* rendimiento visitante
-
-### Mercado
-
-* Cuotas
-* Casa de apuestas
-* Hora de captura
-* Cuota inicial
-* Cuota de cierre
-* Movimiento de cuota
-
-### Contexto
-
-Cuando los datos estén disponibles:
-
-* Lesiones
-* Suspensiones
-* Días de descanso
-* Calendario
-* Localía
-* Competición
-
----
-
-# 7. Probabilidad implícita
-
-Las cuotas serán convertidas a probabilidades implícitas.
-
-Para una cuota decimal:
-
-```text
-P = 1 / cuota
-```
-
-Por ejemplo:
-
-```text
-Cuota = 2.00
-
-P = 1 / 2.00
-
-P = 0.50
-
-P = 50%
-```
-
-Sin embargo, las cuotas incluyen el margen de la casa.
-
-Por ello se deberá estudiar la diferencia entre:
-
-```text
-Probabilidad implícita
-```
-
-y
-
-```text
-Probabilidad implícita normalizada
-```
-
-para diferentes mercados.
-
----
-
-# 8. Primer modelo: Poisson
-
-El primer modelo probabilístico será Poisson.
-
-La distribución de Poisson se define como:
+La fórmula es:
 
 ```text
 P(X = k) = e^(-λ) × λ^k / k!
 ```
 
-donde:
+Donde:
 
-* `λ` representa la media esperada de goles.
-* `k` representa el número de goles.
+* `λ` representa el promedio esperado de goles.
+* `k` representa una cantidad específica de goles.
 
-El modelo permitirá construir probabilidades de marcadores.
+El objetivo inicial será construir una matriz de probabilidades de marcadores.
 
 Ejemplo conceptual:
 
 ```text
-                 Goles visitante
-
-                 0       1       2       3
-              ┌────────────────────────────
-Goles local 0 │
-             1 │
-             2 │
-             3 │
-```
-
-A partir de esta matriz podrán calcularse probabilidades de:
-
-* Victoria local
-* Empate
-* Victoria visitante
-* Over/Under
-* Ambos equipos marcan
-* Marcador exacto
-
----
-
-# 9. Modelos posteriores
-
-## Dixon-Coles
-
-Se utilizará para estudiar una mejora sobre el modelo Poisson, especialmente en determinados marcadores de baja anotación.
-
-## Elo
-
-Sistema de rating para estimar la fuerza relativa de los equipos.
-
-Variables potenciales:
-
-```text
-Rating equipo A
-Rating equipo B
-Ventaja de localía
-Diferencia de rating
-```
-
-## Skellam
-
-Permitirá modelar la diferencia entre goles de dos equipos.
-
-## Regresión logística
-
-Se utilizará para problemas de clasificación:
-
-```text
+              Visitante
+             0     1     2     3
 Local
-Empate
-Visitante
+0          8.2%  9.4%  5.4%  2.1%
+1         13.0% 14.0%  8.1%  3.2%
+2         11.0% 12.0%  7.0%  2.8%
+3          6.0%  6.7%  3.9%  1.5%
 ```
 
-o eventos binarios:
+A partir de esta matriz se podrán obtener probabilidades para:
 
-```text
-Over 2.5
-Under 2.5
-```
+* 1X2.
+* Over/Under.
+* BTTS.
+* Marcador exacto.
 
-## Machine Learning
-
-Posteriormente se evaluarán:
-
-* Random Forest
-* XGBoost
-* LightGBM
+El rango de goles deberá ser configurable y no estar limitado permanentemente a un número arbitrario.
 
 ---
 
-# 10. Ensemble
+# 11. Modelos estadísticos futuros
 
-Una fase posterior consistirá en combinar diferentes modelos.
+Después del modelo Poisson podrán estudiarse:
+
+* Elo.
+* Dixon-Coles.
+* Skellam.
+* Regresión logística.
+* Regresión de Poisson.
+* Random Forest.
+* XGBoost.
+* LightGBM.
+* Modelos ensemble.
+
+Cada modelo deberá evaluarse individualmente antes de combinarlo con otros.
+
+---
+
+# 12. Comparación con el mercado
+
+Las cuotas pueden convertirse en probabilidades implícitas.
 
 Conceptualmente:
 
 ```text
-Poisson
-    │
-Dixon-Coles
-    │
-Elo
-    │
-Logistic Regression
-    │
-XGBoost
-    │
-LightGBM
-    │
-    ▼
-ENSEMBLE
-    │
-    ▼
-PROBABILIDAD FINAL
+P = 1 / cuota
 ```
 
-La combinación deberá evaluarse estadísticamente y no asumirse automáticamente como una mejora.
+Posteriormente deberá considerarse el margen de la casa de apuestas.
+
+El sistema podrá comparar:
+
+```text
+Probabilidad estimada por el modelo
+                vs
+Probabilidad implícita del mercado
+```
+
+Esta comparación deberá mantenerse separada de cualquier conclusión automática sobre una decisión de apuesta.
 
 ---
 
-# 11. Backtesting
+# 13. Valor esperado
 
-El backtesting será una parte central del proyecto.
-
-El sistema deberá simular cómo habría funcionado un modelo utilizando únicamente la información disponible en cada momento histórico.
+Para determinados análisis se podrá calcular:
 
 ```text
-Datos históricos
-      ↓
-Fecha T
-      ↓
-Información disponible antes del partido
-      ↓
-Predicción
-      ↓
-Resultado real
-      ↓
-Evaluación
-      ↓
-Siguiente partido
+EV = P × (cuota - 1) - (1 - P)
 ```
-
-No se permitirá utilizar información futura.
-
----
-
-# 12. Data Leakage
-
-Una regla fundamental:
-
-> **El modelo nunca debe utilizar información que no habría estado disponible en el momento de realizar la predicción.**
-
-Ejemplo incorrecto:
-
-```text
-Partido
-   ↓
-Resultado final
-   ↓
-Modelo
-```
-
-Ejemplo correcto:
-
-```text
-Información histórica hasta T-1
-              ↓
-           Modelo
-              ↓
-        Predicción T
-              ↓
-       Resultado real
-```
-
-Esto será especialmente importante al utilizar:
-
-* xG
-* lesiones
-* cuotas
-* rankings
-* estadísticas recientes
-* movimientos del mercado
-
----
-
-# 13. Métricas
-
-El proyecto no utilizará una única métrica.
-
-## Métricas probabilísticas
-
-### Brier Score
-
-Mide la calidad de probabilidades predichas.
-
-### Log Loss
-
-Penaliza predicciones probabilísticas incorrectas, especialmente cuando son demasiado confiadas.
-
-### Calibration
-
-Se analizará si:
-
-```text
-Predicción de 60%
-```
-
-ocurre aproximadamente el:
-
-```text
-60%
-```
-
-de las veces en eventos similares.
-
----
-
-# 14. Métricas de estrategia
-
-Cuando corresponda realizar simulaciones con cuotas:
-
-* ROI
-* Yield
-* Profit/Loss
-* Drawdown
-* Volatilidad
-* Número de operaciones
-* Tasa de acierto
-* Valor esperado
-* CLV
-
-Estas métricas deberán analizarse conjuntamente con las métricas probabilísticas.
-
-Un ROI positivo en una muestra pequeña no será considerado evidencia suficiente de que un modelo funciona.
-
----
-
-# 15. Validación temporal
-
-No se utilizará únicamente un train/test split aleatorio.
-
-Para datos deportivos se priorizará la validación temporal.
 
 Ejemplo:
 
 ```text
-2018 ─────────────── 2022
-       TRAIN
+Probabilidad del modelo = 60%
+Cuota = 2.00
 
-2023 ─────────────── 2024
-       VALIDATION
-
-2025 ─────────────── 2026
-       TEST
+EV = 0.60 × (2 - 1) - 0.40
+EV = 0.20
 ```
 
-El objetivo es aproximarse a las condiciones reales de predicción.
+El valor esperado es una herramienta matemática de análisis.
+
+Un EV histórico positivo no constituye una garantía de rendimiento futuro.
+
+---
+
+# 14. Backtesting
+
+El backtesting será una parte fundamental del proyecto.
+
+El sistema deberá evaluar los modelos utilizando datos históricos y respetando el orden temporal.
+
+Principios fundamentales:
+
+* No utilizar información futura.
+* Evitar data leakage.
+* Separar entrenamiento y evaluación.
+* Utilizar validación temporal.
+* Evaluar resultados out-of-sample.
+* Mantener reproducibilidad.
+* Registrar las condiciones del experimento.
+
+La estructura conceptual será:
+
+```text
+Datos históricos
+      |
+      v
+Información disponible antes del partido
+      |
+      v
+Predicción
+      |
+      v
+Resultado real
+      |
+      v
+Evaluación
+      |
+      v
+Métricas
+```
+
+---
+
+# 15. Métricas
+
+Los modelos podrán evaluarse mediante:
+
+* Brier Score.
+* Log Loss.
+* Accuracy.
+* Calibration.
+* Reliability diagrams.
+* Profit/Loss.
+* ROI.
+* Yield.
+* Max Drawdown.
+* Número de eventos.
+
+Posteriormente:
+
+* CLV.
+* Intervalos de incertidumbre.
+* Simulaciones Monte Carlo.
+* Análisis de estabilidad.
+* Comparación entre períodos.
+
+Las métricas predictivas y las métricas financieras deberán analizarse por separado.
 
 ---
 
 # 16. Calibración
 
-Una buena predicción no consiste únicamente en acertar.
+Una probabilidad del 70% debe representar aproximadamente un evento que ocurre 70% de las veces dentro de un conjunto suficientemente grande y comparable.
 
-También debe proporcionar probabilidades confiables.
+Por esta razón, la calibración será una parte importante del proyecto.
+
+Se podrán estudiar:
+
+* Reliability diagrams.
+* Calibration curves.
+* Platt scaling.
+* Isotonic regression.
+
+El objetivo no será solamente obtener predicciones, sino obtener probabilidades confiables.
+
+---
+
+# 17. Tests
+
+El proyecto utilizará Pytest.
+
+Los tests deberán comprobar especialmente:
+
+* Cálculos de Poisson.
+* Probabilidades.
+* Conversión de cuotas.
+* Margen del mercado.
+* EV.
+* Métricas.
+* Backtesting.
+* Casos extremos.
+* Validaciones de datos.
 
 Ejemplo:
 
 ```text
-Predicción       Resultado observado
-
-50%              ≈ 50%
-60%              ≈ 60%
-70%              ≈ 70%
-80%              ≈ 80%
+tests/
+├── test_poisson.py
+├── test_probabilities.py
+└── test_metrics.py
 ```
 
-Se estudiarán herramientas como:
-
-* Reliability diagrams
-* Calibration curves
-* Brier Score
-* Log Loss
-* Platt Scaling
-* Isotonic Regression
+Cada nueva funcionalidad importante deberá acompañarse de pruebas.
 
 ---
 
-# 17. Valor esperado
-
-Una vez estimada una probabilidad, podrá compararse con una cuota.
-
-Para una cuota decimal `O` y probabilidad estimada `P`:
+# 18. Estructura inicial del proyecto
 
 ```text
-EV = P × (O - 1) - (1 - P)
+football-probabilistico/
+|
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── odds/
+|
+├── notebooks/
+│   └── 01_exploracion_datos.ipynb
+|
+├── src/
+│   ├── __init__.py
+│   |
+│   ├── data/
+│   │   ├── __init__.py
+│   │   ├── loader.py
+│   │   ├── cleaning.py
+│   │   └── features.py
+│   |
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── poisson.py
+│   |
+│   ├── probabilities/
+│   │   ├── __init__.py
+│   │   └── calculations.py
+│   |
+│   ├── backtesting/
+│   │   ├── __init__.py
+│   │   └── engine.py
+│   |
+│   ├── metrics/
+│   │   ├── __init__.py
+│   │   └── evaluation.py
+│   |
+│   └── utils/
+│       ├── __init__.py
+│       └── config.py
+|
+├── tests/
+│   ├── __init__.py
+│   ├── test_poisson.py
+│   ├── test_probabilities.py
+│   └── test_metrics.py
+|
+├── results/
+│   ├── models/
+│   ├── backtests/
+│   └── reports/
+|
+├── frontend/
+|
+├── .env.example
+├── .gitignore
+├── requirements.txt
+├── README.md
+└── main.py
 ```
 
-Ejemplo hipotético:
-
-```text
-P = 0.60
-O = 2.00
-
-EV = 0.60 × 1 - 0.40
-
-EV = 0.20
-```
-
-Esto representa un valor esperado teórico de:
-
-```text
-+20%
-```
-
-La existencia de un EV positivo estimado **no demuestra por sí misma** que exista una ventaja explotable. Deberá comprobarse mediante datos fuera de muestra, sensibilidad al error de estimación, costes y backtesting.
+La carpeta `frontend/` podrá permanecer inicialmente vacía hasta comenzar el desarrollo de JavaScript y React.
 
 ---
 
-# 18. Simulación
+# 19. Roadmap
 
-Se podrán implementar posteriormente simulaciones Monte Carlo para estudiar:
+## Fase 1 — Fundamentos
 
-* Distribución de resultados
-* Variabilidad
-* Drawdowns
-* Sensibilidad a la probabilidad estimada
-* Diferentes tamaños de muestra
-* Diferentes reglas de staking
+Objetivos:
 
-La simulación será utilizada como herramienta estadística, no como garantía de resultados futuros.
+* Crear estructura del proyecto.
+* Configurar Git.
+* Configurar entorno virtual de Python.
+* Configurar requirements.
+* Configurar Pytest.
+* Crear módulos iniciales.
+* Ejecutar correctamente el proyecto.
+
+No implementar todavía modelos complejos.
 
 ---
 
-# 19. Dashboard
+## Fase 2 — Python y datos
 
-La aplicación web final podrá incluir:
+Aprender y aplicar:
 
-### Dashboard general
+* Variables.
+* Funciones.
+* Estructuras de datos.
+* Módulos.
+* Manejo de archivos.
+* CSV.
+* JSON.
+* Pandas.
+* NumPy.
+* Limpieza de datos.
+* Transformación de datos.
+* Exploración estadística.
+
+Resultado:
 
 ```text
-Partidos
-Modelos
-Probabilidades
-Mercado
-Backtesting
-Experimentos
+Datos crudos
+     |
+     v
+Limpieza
+     |
+     v
+Datos procesados
 ```
 
-### Análisis de partido
+---
+
+## Fase 3 — Probabilidad y Poisson
+
+Aprender:
+
+* Probabilidad.
+* Distribuciones.
+* Esperanza.
+* Varianza.
+* Poisson.
+* λ.
+* Probabilidad de goles.
+* Matriz de marcadores.
+
+Resultado:
 
 ```text
-Equipo A vs Equipo B
-
+Equipos
+   |
+   v
+λ local / λ visitante
+   |
+   v
 Poisson
-Dixon-Coles
-Elo
-XGBoost
-Ensemble
-
+   |
+   v
+Matriz de marcadores
+   |
+   v
 Probabilidades
-Cuotas
-Probabilidad implícita
-Diferencia
-EV
 ```
 
-### Modelos
+---
+
+## Fase 4 — Backtesting
+
+Construir un motor que recorra partidos históricos cronológicamente.
+
+Resultado:
 
 ```text
-Modelo
-Accuracy
-Brier Score
-Log Loss
-Calibration
-ROI histórico
-Drawdown
+Partido histórico
+      |
+      v
+Información disponible antes del partido
+      |
+      v
+Predicción
+      |
+      v
+Resultado real
+      |
+      v
+Métrica
 ```
 
-### Backtesting
+---
+
+## Fase 5 — JavaScript
+
+Antes de comenzar React:
+
+* Variables.
+* Funciones.
+* Arrays.
+* Objetos.
+* Métodos de arrays.
+* JSON.
+* Promises.
+* Async/await.
+* APIs.
+* Eventos.
+* Manipulación de datos.
+
+Los ejercicios deberán utilizar ejemplos relacionados con el proyecto.
+
+---
+
+## Fase 6 — React
+
+Construir progresivamente:
 
 ```text
-Capital inicial
-Capital final
-Profit/Loss
-ROI
-Drawdown máximo
-Número de eventos
+JavaScript
+    |
+    v
+React
+    |
+    v
+Componentes
+    |
+    v
+Props
+    |
+    v
+State
+    |
+    v
+Hooks
+    |
+    v
+API
+    |
+    v
+Dashboard
 ```
 
 ---
 
-# 20. Metodología científica
+## Fase 7 — API
 
-Cada experimento deberá documentar:
+Introducir FastAPI.
+
+Arquitectura:
 
 ```text
-Dataset
-↓
-Variables utilizadas
-↓
-Periodo
-↓
-Modelo
-↓
-Hiperparámetros
-↓
-Método de validación
-↓
-Métricas
-↓
-Resultados
-↓
-Limitaciones
+React
+  |
+  v
+API
+  |
+  v
+Python
+  |
+  v
+Modelos
+  |
+  v
+Datos
 ```
 
-Se evitará seleccionar únicamente los experimentos que produzcan resultados favorables.
+---
+
+## Fase 8 — Base de datos
+
+Introducir:
+
+* PostgreSQL.
+* SQLAlchemy.
+
+La base de datos podrá almacenar:
+
+* Equipos.
+* Partidos.
+* Temporadas.
+* Estadísticas.
+* Cuotas.
+* Predicciones.
+* Resultados.
+* Modelos.
+* Experimentos.
+* Backtests.
 
 ---
 
-# 21. Roadmap
+## Fase 9 — Machine Learning
 
-## Fase 0 — Preparación
+Solo después de tener una base estadística sólida.
 
-* [ ] Crear repositorio
-* [ ] Configurar entorno Python
-* [ ] Configurar Git
-* [ ] Crear estructura de carpetas
-* [ ] Documentar fuentes de datos
+Modelos potenciales:
 
-## Fase 1 — Datos
+* Logistic Regression.
+* Random Forest.
+* XGBoost.
+* LightGBM.
 
-* [ ] Conseguir dataset histórico
-* [ ] Limpieza
-* [ ] Normalización
-* [ ] Exploratory Data Analysis
-* [ ] Definir esquema de datos
-
-## Fase 2 — Modelo base
-
-* [ ] Probabilidad implícita
-* [ ] Modelo de frecuencia
-* [ ] Poisson
-* [ ] Matriz de marcadores
-* [ ] 1X2
-* [ ] Over/Under
-
-## Fase 3 — Backtesting
-
-* [ ] Motor temporal
-* [ ] Train/Test temporal
-* [ ] Brier Score
-* [ ] Log Loss
-* [ ] Calibration
-* [ ] ROI
-* [ ] Drawdown
-
-## Fase 4 — Modelos avanzados
-
-* [ ] Dixon-Coles
-* [ ] Elo
-* [ ] Skellam
-* [ ] Regresión logística
-
-## Fase 5 — Machine Learning
-
-* [ ] Feature engineering
-* [ ] Random Forest
-* [ ] XGBoost
-* [ ] LightGBM
-* [ ] Optimización de hiperparámetros
-
-## Fase 6 — Ensemble
-
-* [ ] Combinar modelos
-* [ ] Calibración
-* [ ] Validación
-* [ ] Análisis de robustez
-
-## Fase 7 — Backend
-
-* [ ] PostgreSQL
-* [ ] SQLAlchemy
-* [ ] FastAPI
-* [ ] Endpoints
-* [ ] Sistema de predicciones
-
-## Fase 8 — Frontend
-
-* [ ] Next.js
-* [ ] Dashboard
-* [ ] Partidos
-* [ ] Modelos
-* [ ] Gráficas
-* [ ] Backtesting
-
-## Fase 9 — Producción
-
-* [ ] Docker
-* [ ] Tests
-* [ ] CI/CD
-* [ ] MLflow
-* [ ] Deployment
-* [ ] Monitoreo
+Posteriormente se podrán estudiar modelos ensemble.
 
 ---
 
-# 22. Estado actual
+## Fase 10 — Dashboard
 
-**Proyecto:** En planificación.
+El frontend deberá permitir visualizar:
 
-**Prioridad actual:**
+* Partidos.
+* Probabilidades.
+* Marcadores esperados.
+* Distribuciones.
+* Estadísticas.
+* Comparación modelo vs mercado.
+* Resultados de backtesting.
+* Métricas.
+* Calibración.
+* Historial de modelos.
+
+El dashboard deberá mostrar información y análisis, no simplemente producir una recomendación automática.
+
+---
+
+# 20. Arquitectura objetivo
 
 ```text
-1. Dataset
-2. Exploración estadística
-3. Poisson
-4. Backtesting
-5. Validación
-6. Modelos adicionales
-7. Machine Learning
-8. API
-9. Dashboard
-```
+                 FOOTBALL PROBABILÍSTICO
 
-No se desarrollará el frontend completo antes de validar el motor estadístico.
+                       FRONTEND
+                          |
+                 JavaScript / React
+                          |
+                          v
+                         API
+                          |
+                       FastAPI
+                          |
+              +-----------+-----------+
+              |                       |
+              v                       v
+           MODELOS                  DATOS
+              |                       |
+        +-----+-----+             PostgreSQL
+        |           |
+        v           v
+     Poisson       ML
+        |           |
+        +-----+-----+
+              |
+              v
+       PROBABILIDADES
+              |
+              v
+         BACKTESTING
+              |
+              v
+           MÉTRICAS
+              |
+              v
+          RESULTADOS
+```
 
 ---
 
-# 23. Principio de reproducibilidad
+# 21. Separación de responsabilidades
 
-Todo resultado deberá poder reproducirse mediante:
+El proyecto deberá mantener separadas las siguientes capas:
 
 ```text
-Dataset
-+
-Código
-+
-Configuración
-+
-Versión del modelo
-+
-Parámetros
-=
-Resultado
+DATA
+ |
+ v
+PROCESAMIENTO
+ |
+ v
+FEATURES
+ |
+ v
+MODELOS
+ |
+ v
+PROBABILIDADES
+ |
+ v
+BACKTESTING
+ |
+ v
+MÉTRICAS
+ |
+ v
+API
+ |
+ v
+FRONTEND
 ```
 
-Los experimentos importantes deberán quedar registrados.
+El frontend no deberá contener lógica estadística compleja.
+
+Los modelos no deberán depender de React.
+
+La API será la encargada de comunicar el motor de análisis con el frontend.
 
 ---
 
-# 24. Investigación futura
+# 22. Uso de inteligencia artificial
 
-Posibles líneas de investigación:
+Se podrán utilizar diferentes herramientas de IA como apoyo al desarrollo:
 
-* Efecto de la localía.
-* Evolución de la fuerza de los equipos.
-* Predicción de goles.
-* Modelos de xG.
-* Movimiento de cuotas.
-* Closing Line Value.
-* Calibración probabilística.
-* Ensemble de modelos.
-* Detección de overfitting.
-* Sensibilidad del EV al error de probabilidad.
-* Diferencias entre ligas.
-* Robustez entre temporadas.
-* Simulación Monte Carlo.
-* Gestión del bankroll.
-* Análisis de incertidumbre.
+* ChatGPT.
+* Claude.
+* Gemini.
 
----
+La IA podrá ayudar a:
 
-# 25. Advertencia metodológica
+* Explicar conceptos.
+* Revisar código.
+* Detectar errores.
+* Proponer arquitecturas.
+* Ayudar con debugging.
+* Generar ejercicios.
+* Analizar documentación.
+* Comparar soluciones.
+* Revisar modelos.
+* Identificar posibles problemas metodológicos.
 
-Este proyecto tiene fines de **investigación estadística, programación y análisis de datos**.
+## Regla de uso
 
-Una predicción probabilística no representa una certeza.
+La IA no debe ocultar la complejidad del proyecto.
 
-Un modelo puede presentar resultados históricos favorables debido a:
-
-* Overfitting
-* Data leakage
-* Sesgo de selección
-* Muestras pequeñas
-* Cambios estructurales
-* Calidad deficiente de los datos
-* Costes y márgenes del mercado
-* Error de estimación
-
-Por esta razón, cualquier resultado deberá interpretarse dentro de su intervalo de incertidumbre y contexto estadístico.
-
----
-
-# 26. Visión final
-
-La visión del proyecto es construir un sistema donde la pregunta principal no sea:
-
-> "¿Qué equipo va a ganar?"
-
-sino:
-
-> **"¿Qué probabilidad asigna nuestro modelo, qué tan bien calibrada está esa probabilidad y qué evidencia histórica existe para respaldarla?"**
-
-El proyecto busca combinar:
+Cuando se introduzca código que utilice un concepto nuevo:
 
 ```text
-ESTADÍSTICA
-     +
-DATA SCIENCE
-     +
-MACHINE LEARNING
-     +
-PROGRAMACIÓN
-     +
-INVESTIGACIÓN
+Código nuevo
+    |
+    v
+¿Qué hace?
+    |
+    v
+¿Por qué lo necesitamos?
+    |
+    v
+¿Cómo funciona?
+    |
+    v
+¿El desarrollador puede explicarlo?
+    |
+    v
+Implementación
 ```
 
-para construir un sistema reproducible de análisis probabilístico aplicado al fútbol.
+Si el desarrollador no entiende una parte del código, esa parte deberá explicarse antes de continuar.
 
 ---
 
-## Licencia
+# 23. Principios que no se deben romper
 
-Pendiente de definir.
+## No copiar código sin entenderlo
 
-## Autor
+El código generado por IA debe ser explicado y revisado.
 
-Frix
+## No hacer todo de una vez
+
+El proyecto deberá desarrollarse por fases.
+
+## No utilizar Machine Learning antes de tener una base estadística
+
+Los modelos complejos no solucionan automáticamente problemas de datos.
+
+## No utilizar información futura
+
+Debe evitarse estrictamente el data leakage.
+
+## No confundir precisión con rentabilidad
+
+Una buena métrica predictiva no garantiza rentabilidad.
+
+## No confundir backtesting con garantía futura
+
+Los resultados históricos describen el comportamiento del modelo bajo las condiciones evaluadas.
+
+## No construir primero la interfaz
+
+La prioridad inicial será:
+
+```text
+Datos
+  |
+  v
+Estadística
+  |
+  v
+Modelos
+  |
+  v
+Backtesting
+  |
+  v
+API
+  |
+  v
+Frontend
+```
+
+## No introducir tecnologías innecesariamente
+
+Cada nueva tecnología deberá responder a una necesidad concreta.
+
+---
+
+# 24. Objetivo de aprendizaje final
+
+Al finalizar el proyecto, el desarrollador deberá ser capaz de explicar:
+
+* Cómo funcionan los modelos utilizados.
+* De dónde salen las probabilidades.
+* Cómo se procesan los datos.
+* Cómo funciona el backtesting.
+* Qué significa cada métrica.
+* Cómo evitar data leakage.
+* Cómo funciona una API.
+* Cómo JavaScript consume una API.
+* Cómo React representa los datos.
+* Cómo se estructura el proyecto.
+* Por qué se tomó cada decisión técnica.
+* Cómo modificar y extender el sistema.
+
+La meta no es llegar a:
+
+```text
+"Copié este código y funciona."
+```
+
+La meta es llegar a:
+
+```text
+"Entiendo este código, sé por qué existe,
+sé cómo modificarlo y puedo explicar
+qué problema resuelve."
+```
+
+---
+
+# 25. Estado actual
+
+Proyecto: Football Probabilístico
+
+Estado: Inicio del desarrollo.
+
+Primera meta:
+
+```text
+Crear estructura
+      |
+      v
+Configurar Python
+      |
+      v
+Configurar tests
+      |
+      v
+Aprender y practicar
+      |
+      v
+Trabajar con datos
+      |
+      v
+Construir Poisson
+      |
+      v
+Crear backtesting
+```
+
+No implementar inicialmente:
+
+* Machine Learning avanzado.
+* PostgreSQL.
+* FastAPI.
+* React.
+* Docker.
+* MLflow.
+* Arquitecturas innecesariamente complejas.
+
+Estas tecnologías se incorporarán progresivamente cuando el proyecto y el nivel de conocimiento lo justifiquen.
+
+---
+
+# 26. Primera tarea para la IA de desarrollo
+
+La primera IA que trabaje sobre este repositorio deberá:
+
+1. Leer completamente este README.
+2. Respetar la metodología de aprendizaje.
+3. No construir todo el proyecto de una vez.
+4. No implementar funcionalidades avanzadas sin autorización.
+5. Crear inicialmente únicamente la estructura base del proyecto.
+6. Configurar Python y Pytest.
+7. Crear los archivos iniciales necesarios.
+8. Explicar cada archivo creado.
+9. Explicar cualquier concepto nuevo antes de utilizarlo.
+10. Verificar que el proyecto pueda ejecutarse correctamente.
+11. No introducir React, FastAPI, PostgreSQL, Machine Learning avanzado ni Docker en esta primera etapa.
+12. Esperar a que la etapa actual esté comprendida y funcionando antes de avanzar.
+
+La prioridad es construir el proyecto de forma progresiva y, al mismo tiempo, convertir cada etapa en una oportunidad real de aprendizaje.
