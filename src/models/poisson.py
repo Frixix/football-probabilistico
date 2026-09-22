@@ -4,6 +4,7 @@ import numpy as np
 def poisson_probability(mu, k):
     return poisson.pmf(k, mu)
 
+
 def calcular_distribucion_goles(mu, max_goles=5):
     # 1. Preparamos una lista vacía para guardar nuestros resultados
     distribucion = []
@@ -38,6 +39,7 @@ def generar_matriz_partido(mu_local, mu_visitante, max_goles=5):
     # 4. Devolvemos la matriz completa
     return matriz
 
+
 def calcular_probabilidades_1x2(matriz):
     # 1. Empate (X): Sumamos la diagonal principal
     prob_empate = np.sum(np.diag(matriz))
@@ -54,3 +56,19 @@ def calcular_probabilidades_1x2(matriz):
         "X": prob_empate,
         "2": prob_visitante
     }
+
+
+def probabilidades_a_cuotas(probabilidades_1x2):
+    # Creamos un nuevo diccionario para guardar las cuotas
+    cuotas = {}
+    
+    # Recorremos el diccionario de probabilidades (1, X, 2)
+    for resultado, prob in probabilidades_1x2.items():
+        # Evitamos dividir por cero por seguridad matemática
+        if prob > 0:
+            # Fórmula: 1 / probabilidad, redondeado a 2 decimales
+            cuotas[resultado] = round(1 / prob, 2)
+        else:
+            cuotas[resultado] = 0.0
+            
+    return cuotas

@@ -1,4 +1,4 @@
-from src.models.poisson import poisson_probability, calcular_distribucion_goles, generar_matriz_partido, calcular_probabilidades_1x2
+from src.models.poisson import poisson_probability, calcular_distribucion_goles, generar_matriz_partido, calcular_probabilidades_1x2, probabilidades_a_cuotas
 import numpy as np
 
 def test_poisson_probability():
@@ -62,3 +62,10 @@ def test_calcular_probabilidades_1x2():
     
     # Comparamos redondeando a 5 decimales para evitar problemas de precisión de la computadora
     assert round(suma_1x2, 5) == round(suma_matriz, 5)
+
+def test_probabilidades_a_cuotas():
+    probs_simuladas = {"1": 0.50, "X": 0.25, "2": 0.25}
+    cuotas = probabilidades_a_cuotas(probs_simuladas)
+    assert cuotas["1"] == 2.00
+    assert cuotas["X"] == 4.00
+    assert cuotas["2"] == 4.00
