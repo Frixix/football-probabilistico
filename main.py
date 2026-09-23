@@ -6,48 +6,59 @@ from src.models.poisson import (
     probabilidades_a_cuotas
 )
 
-def simular_partido():
-    print("⚽ INICIANDO EL MOTOR PROBABILÍSTICO ⚽\n")
+def simular_partido_real():
+    print("🌍 CONECTANDO A BASE DE DATOS DE SELECCIONES (GITHUB) 🌍\n")
     
-    # 1. Cargamos datos históricos (Simulados por ahora)
-    datos = pd.DataFrame({
-        "Local": ["Arsenal", "Man City", "Liverpool", "Chelsea", "Arsenal"],
-        "Visitante": ["Chelsea", "Arsenal", "Everton", "Liverpool", "Man City"],
-        "Goles_Local": [2, 3, 2, 1, 1],
-        "Goles_Visitante": [1, 1, 0, 1, 2]
-    })
+    # 1. URL cruda de GitHub (Resultados internacionales, 100% estable)
+    url_internacional = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
+    print("Descargando historial de selecciones nacionales...")
+    df_global = pd.read_csv(url_internacional)
     
-    # 2. Inicializamos el procesador de datos
-    procesador = ProcesadorDatos(datos)
+    # 2. Filtramos para usar solo fútbol moderno (desde el año 2020)
+    print("Filtrando partidos de la era moderna (2020+)...")
+    df_global['date'] = pd.to_datetime(df_global['date'])
+    df_reciente = df_global[df_global['date'].dt.year >= 2020]
     
-    # 3. Elegimos el partido a predecir
-    equipo_local = "Arsenal"
-    equipo_visitante = "Chelsea"
-    print(f"Partidazo: {equipo_local} vs {equipo_visitante}")
+    # 3. Traducimos las columnas al idioma de nuestro procesador
+    df_limpio = df_reciente[['home_team', 'away_team', 'home_score', 'away_score']].copy()
+    df_limpio.columns = ['Local', 'Visitante', 'Goles_Local', 'Goles_Visitante']
     
-    # 4. Calculamos los goles esperados (Mu)
+    # 4. Inicializamos nuestro procesador
+    procesador = ProcesadorDatos(df_limpio)
+    
+    promedios = procesador.obtener_promedios_liga()
+    print(f"\nPromedio Goles Local: {promedios['goles_local']} | Visitante: {promedios['goles_visitante']}\n")
+    
+    # 5. Elegimos un clásico sudamericano
+    equipo_local = "Colombia"
+    equipo_visitante = "Argentina"
+    print(f"🔥 PREDICCIÓN: {equipo_local} vs {equipo_visitante} 🔥")
+    
+    # 6. Calculamos los goles esperados (Mu)
     esperados = procesador.calcular_mu_esperado(equipo_local, equipo_visitante)
+    
+    if esperados is None:
+        print("Error: Uno de los equipos no está en la base de datos. Verifica el nombre en inglés.")
+        return
+
     mu_l = esperados["mu_local"]
     mu_v = esperados["mu_visitante"]
     print(f"Goles esperados -> {equipo_local}: {mu_l} | {equipo_visitante}: {mu_v}")
     
-    # 5. Generamos la matriz de Poisson (El motor matemático)
+    # 7. Motor Matemático y Resultados
     matriz = generar_matriz_partido(mu_l, mu_v)
-    
-    # 6. Extraemos el mercado 1X2 (Probabilidades)
     probabilidades = calcular_probabilidades_1x2(matriz)
-    print("\n📊 PROBABILIDADES (%):")
+    
+    print("\n📊 PROBABILIDADES REALES (%):")
     print(f"Gana {equipo_local} (1): {round(probabilidades['1'] * 100, 2)}%")
     print(f"Empate (X): {round(probabilidades['X'] * 100, 2)}%")
     print(f"Gana {equipo_visitante} (2): {round(probabilidades['2'] * 100, 2)}%")
     
-    # 7. Convertimos a Cuotas (Para comparar con la casa de apuestas)
     cuotas = probabilidades_a_cuotas(probabilidades)
-    print("\n💰 CUOTAS JUSTAS (Nuestra predicción):")
+    print("\n💰 CUOTAS JUSTAS:")
     print(f"Cuota 1: {cuotas['1']}")
     print(f"Cuota X: {cuotas['X']}")
     print(f"Cuota 2: {cuotas['2']}")
 
 if __name__ == "__main__":
-    simular_partido()
-    
+    simular_partido_real()
