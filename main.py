@@ -23,8 +23,8 @@ def simular_partido_real():
     
     procesador = ProcesadorDatos(df_limpio)
     
-    equipo_local = "Colombia"
-    equipo_visitante = "Argentina"
+    equipo_local = "Brazil"
+    equipo_visitante = "Bolivia"
     print(f"\n🔥 PREDICCIÓN: {equipo_local} vs {equipo_visitante} 🔥")
     
     esperados = procesador.calcular_mu_esperado(equipo_local, equipo_visitante)

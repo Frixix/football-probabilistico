@@ -4,8 +4,7 @@ import numpy as np
 def poisson_probability(mu, k):
     return poisson.pmf(k, mu)
 
-
-def calcular_distribucion_goles(mu, max_goles=5):
+def calcular_distribucion_goles(mu, max_goles=10):
     # 1. Preparamos una lista vacía para guardar nuestros resultados
     distribucion = []
     
@@ -20,13 +19,12 @@ def calcular_distribucion_goles(mu, max_goles=5):
     # 5. Devolvemos la lista completa
     return distribucion
 
-
-def generar_matriz_partido(mu_local, mu_visitante, max_goles=5):
+def generar_matriz_partido(mu_local, mu_visitante, max_goles=10):
     # 1. Calculamos las probabilidades individuales de cada equipo
     dist_local = calcular_distribucion_goles(mu_local, max_goles)
     dist_visitante = calcular_distribucion_goles(mu_visitante, max_goles)
     
-    # 2. Le pedimos a numpy que cree una matriz llena de ceros (6 filas x 6 columnas)
+    # 2. Le pedimos a numpy que cree una matriz llena de ceros (ahora 11x11)
     dimension = max_goles + 1
     matriz = np.zeros((dimension, dimension))
     
@@ -38,7 +36,6 @@ def generar_matriz_partido(mu_local, mu_visitante, max_goles=5):
             
     # 4. Devolvemos la matriz completa
     return matriz
-
 
 def calcular_probabilidades_1x2(matriz):
     # 1. Empate (X): Sumamos la diagonal principal
@@ -57,19 +54,18 @@ def calcular_probabilidades_1x2(matriz):
         "2": prob_visitante
     }
 
-
-def probabilidades_a_cuotas(probabilidades_1x2):
+def probabilidades_a_cuotas(diccionario_probabilidades):
     # Creamos un nuevo diccionario para guardar las cuotas
     cuotas = {}
     
-    # Recorremos el diccionario de probabilidades (1, X, 2)
-    for resultado, prob in probabilidades_1x2.items():
+    # Recorremos el diccionario de probabilidades (puede ser 1X2 o Over/Under)
+    for llave, prob in diccionario_probabilidades.items():
         # Evitamos dividir por cero por seguridad matemática
         if prob > 0:
             # Fórmula: 1 / probabilidad, redondeado a 2 decimales
-            cuotas[resultado] = round(1 / prob, 2)
+            cuotas[llave] = round(1 / prob, 2)
         else:
-            cuotas[resultado] = 0.0
+            cuotas[llave] = 0.0
             
     return cuotas
 
@@ -81,7 +77,7 @@ def calcular_probabilidades_over_under(matriz, limite=2.5):
     prob_under = 0.0
     prob_over = 0.0
     
-    # Recorremos todas las combinaciones posibles de goles (ej. de 0 a 10 goles)
+    # Recorremos todas las combinaciones posibles de goles (de 0 a 10 goles)
     for goles_local in range(len(matriz)):
         for goles_visitante in range(len(matriz[0])):
             probabilidad = matriz[goles_local][goles_visitante]
