@@ -43,15 +43,13 @@ def iniciar_app():
     print("🏟️ INTERFAZ 1: CARTELERA DEL DÍA 🏟️\n")
     
     partidos_disponibles = [
-        ("Brazil", "Bolivia"),
-        ("Colombia", "Uruguay"),
-        ("Argentina", "Chile"),
-        ("Spain", "Costa Rica"),
-        ("France", "Peru"),
-        ("England", "Iran"),
-        ("Germany", "Japan"),
-        ("Ecuador", "Senegal"),
-        ("Netherlands", "Qatar")
+        ("Netherlands", "Germany"),   # Jueves 24 Sep (Nations League)
+        ("Portugal", "Wales"),        # Jueves 24 Sep
+        ("Italy", "Belgium"),         # Viernes 25 Sep
+        ("Turkey", "France"),         # Viernes 25 Sep
+        ("England", "Spain"),         # Sábado 26 Sep
+        ("Sweden", "Romania"),        # Viernes 25 Sep
+        ("Norway", "Denmark")         # Jueves 24 Sep
     ]
     
     # --- MENÚ 1 ---
