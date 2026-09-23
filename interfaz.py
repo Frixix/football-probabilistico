@@ -43,13 +43,13 @@ def iniciar_app():
     print("🏟️ INTERFAZ 1: CARTELERA DEL DÍA 🏟️\n")
     
     partidos_disponibles = [
-        ("Netherlands", "Germany"),   # Jueves 24 Sep (Nations League)
-        ("Portugal", "Wales"),        # Jueves 24 Sep
-        ("Italy", "Belgium"),         # Viernes 25 Sep
-        ("Turkey", "France"),         # Viernes 25 Sep
-        ("England", "Spain"),         # Sábado 26 Sep
-        ("Sweden", "Romania"),        # Viernes 25 Sep
-        ("Norway", "Denmark")         # Jueves 24 Sep
+        ("Netherlands", "Germany"),
+        ("Portugal", "Wales"),
+        ("Italy", "Belgium"),
+        ("Turkey", "France"),
+        ("England", "Spain"),
+        ("Sweden", "Romania"),
+        ("Norway", "Denmark")
     ]
     
     # --- MENÚ 1 ---
@@ -118,7 +118,6 @@ def iniciar_app():
                 local, visitante, mercados_permitidos
             )
             
-            # Solo imprime la tabla si el usuario dijo que "s"
             if mostrar_tabla:
                 print(f"⚽ {local} vs {visitante}")
                 for opt in opciones_partido:
@@ -136,10 +135,22 @@ def iniciar_app():
         cuotas.append(seleccion["cuota"])
         print(f"✅ {seleccion['partido']} -> {seleccion['mercado']}")
         
+    # --- CÁLCULOS FINALES Y SEMÁFORO ---
+    prob_final = calcular_probabilidad_combinada(probs)
+    cuota_final = calcular_cuota_combinada(cuotas)
+    
     print("========================================")
     print("📈 RESUMEN DEL TICKET 📈")
-    print(f"Probabilidad de acertar todo: {round(calcular_probabilidad_combinada(probs) * 100, 2)}%")
-    print(f"Cuota Total a cobrar: {calcular_cuota_combinada(cuotas)}")
+    print(f"Probabilidad de acertar todo: {round(prob_final * 100, 2)}%")
+    print(f"Cuota Total a cobrar: {cuota_final}")
+    
+    print("\n🚦 SEMÁFORO ESTADÍSTICO 🚦")
+    if prob_final > 0.40:
+        print("🟢 SEGURO: Riesgo controlado. Matemáticamente viable a largo plazo.")
+    elif prob_final >= 0.15:
+        print("🟡 ALERTA: Efecto dado en curso. Estás dependiendo de múltiples variables.")
+    else:
+        print("🔴 PELIGRO: Ticket lotería. La matemática está completamente en tu contra.")
     print("========================================")
 
 if __name__ == "__main__":
