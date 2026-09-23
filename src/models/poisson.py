@@ -72,3 +72,27 @@ def probabilidades_a_cuotas(probabilidades_1x2):
             cuotas[resultado] = 0.0
             
     return cuotas
+
+def calcular_probabilidades_over_under(matriz, limite=2.5):
+    """
+    Suma las probabilidades de la matriz para calcular el mercado Over/Under.
+    La matriz debe ser una lista de listas o un array 2D.
+    """
+    prob_under = 0.0
+    prob_over = 0.0
+    
+    # Recorremos todas las combinaciones posibles de goles (ej. de 0 a 10 goles)
+    for goles_local in range(len(matriz)):
+        for goles_visitante in range(len(matriz[0])):
+            probabilidad = matriz[goles_local][goles_visitante]
+            
+            # Si la suma de goles es menor al límite (ej. 2.5), es Under
+            if (goles_local + goles_visitante) < limite:
+                prob_under += probabilidad
+            else:
+                prob_over += probabilidad
+                
+    return {
+        "Over": prob_over,
+        "Under": prob_under
+    }
