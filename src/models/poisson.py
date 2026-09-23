@@ -92,3 +92,26 @@ def calcular_probabilidades_over_under(matriz, limite=2.5):
         "Over": prob_over,
         "Under": prob_under
     }
+
+def calcular_probabilidades_btts(matriz):
+    """
+    Calcula el mercado BTTS (Both Teams To Score / Ambos Equipos Marcan).
+    """
+    prob_si = 0.0
+    prob_no = 0.0
+    
+    # Recorremos la matriz
+    for goles_local in range(len(matriz)):
+        for goles_visitante in range(len(matriz[0])):
+            probabilidad = matriz[goles_local][goles_visitante]
+            
+            # Si ambos equipos marcaron 1 o más goles
+            if goles_local > 0 and goles_visitante > 0:
+                prob_si += probabilidad
+            else:
+                prob_no += probabilidad
+                
+    return {
+        "Si": prob_si,
+        "No": prob_no
+    }
