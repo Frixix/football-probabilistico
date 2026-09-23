@@ -6,12 +6,10 @@ from src.models.poisson import (
 )
 from src.probabilities.calculations import calcular_probabilidad_combinada, calcular_cuota_combinada
 
-def encontrar_mejor_apuesta(mu_l, mu_v, equipo_local, equipo_visitante, mercados_permitidos):
-    """Analiza los mercados permitidos y devuelve la apuesta más segura."""
+def analizar_mercados_partido(mu_l, mu_v, equipo_local, equipo_visitante, mercados_permitidos):
     matriz = generar_matriz_partido(mu_l, mu_v)
     opciones = []
     
-    # 1. Filtro dinámico: Mercado de Ganador
     if "1x2" in mercados_permitidos:
         p_1x2 = calcular_probabilidades_1x2(matriz)
         opciones.extend([
@@ -20,7 +18,6 @@ def encontrar_mejor_apuesta(mu_l, mu_v, equipo_local, equipo_visitante, mercados
             {"mercado": f"Gana {equipo_visitante}", "prob": p_1x2["2"]}
         ])
         
-    # 2. Filtro dinámico: Mercado de Goles
     if "goles" in mercados_permitidos:
         p_goles = calcular_probabilidades_over_under(matriz)
         opciones.extend([
@@ -28,7 +25,6 @@ def encontrar_mejor_apuesta(mu_l, mu_v, equipo_local, equipo_visitante, mercados
             {"mercado": "Menos de 2.5 Goles", "prob": p_goles["Under"]}
         ])
         
-    # 3. Filtro dinámico: Mercado Ambos Marcan
     if "btts" in mercados_permitidos:
         p_btts = calcular_probabilidades_btts(matriz)
         opciones.extend([
@@ -36,12 +32,12 @@ def encontrar_mejor_apuesta(mu_l, mu_v, equipo_local, equipo_visitante, mercados
             {"mercado": "Ambos Marcan: No", "prob": p_btts["No"]}
         ])
     
-    # Buscamos la mejor opción dentro de los mercados que sobrevivieron al filtro
-    mejor_opcion = max(opciones, key=lambda x: x["prob"])
-    mejor_opcion["partido"] = f"{equipo_local} vs {equipo_visitante}"
-    mejor_opcion["cuota"] = round(1 / mejor_opcion["prob"], 2) if mejor_opcion["prob"] > 0 else 0
-    
-    return mejor_opcion
+    for opt in opciones:
+        opt["partido"] = f"{equipo_local} vs {equipo_visitante}"
+        opt["cuota"] = round(1 / opt["prob"], 2) if opt["prob"] > 0 else 0
+        
+    opciones.sort(key=lambda x: x["prob"], reverse=True)
+    return opciones
 
 def iniciar_app():
     print("🏟️ INTERFAZ 1: CARTELERA DEL DÍA 🏟️\n")
@@ -58,7 +54,7 @@ def iniciar_app():
         ("Netherlands", "Qatar")
     ]
     
-    # --- MENÚ 1: SELECCIÓN DE PARTIDOS ---
+    # --- MENÚ 1 ---
     print("Partidos disponibles para hoy:")
     for i, (local, visitante) in enumerate(partidos_disponibles):
         print(f"[{i}] {local} vs {visitante}")
@@ -77,7 +73,7 @@ def iniciar_app():
         
     partidos_elegidos = [partidos_disponibles[i] for i in indices if 0 <= i < len(partidos_disponibles)]
     
-    # --- MENÚ 2: SELECCIÓN DE MERCADOS ---
+    # --- MENÚ 2 ---
     print("\n📊 FILTRO DE MERCADOS 📊")
     print("[1] 1X2 (Quién gana o empate)")
     print("[2] Goles (Más/Menos de 2.5)")
@@ -85,8 +81,6 @@ def iniciar_app():
     print("[4] TODOS los mercados")
     
     mercados_texto = input("Elige los mercados separados por coma (Ej: 1, 2) -> ")
-    
-    # Traductor del input del usuario a nuestro código interno
     filtro_usuario = [num.strip() for num in mercados_texto.split(',')]
     mercados_permitidos = []
     
@@ -97,13 +91,15 @@ def iniciar_app():
         if "2" in filtro_usuario: mercados_permitidos.append("goles")
         if "3" in filtro_usuario: mercados_permitidos.append("btts")
         
-    # Si el usuario metió algo raro, por defecto activamos todos
-    if not mercados_permitidos:
-        mercados_permitidos = ["1x2", "goles", "btts"]
+    if not mercados_permitidos: mercados_permitidos = ["1x2", "goles", "btts"]
 
-    print(f"\n⚙️ Procesando {len(partidos_elegidos)} partidos con los filtros: {mercados_permitidos}...\n")
+    # --- MENÚ 3: MODO DE VISUALIZACIÓN ---
+    print("\n👀 VISUALIZACIÓN 👀")
+    respuesta_tabla = input("¿Deseas ver la tabla analítica detallada de cada partido? (s/n) -> ").strip().lower()
+    mostrar_tabla = (respuesta_tabla == 's')
+
+    print(f"\n⚙️ Procesando combinada...\n")
     
-    # --- CARGA PESADA DE DATOS ---
     url = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
     df = pd.read_csv(url)
     df['date'] = pd.to_datetime(df['date'])
@@ -111,24 +107,36 @@ def iniciar_app():
     df_reciente.columns = ['Local', 'Visitante', 'Goles_Local', 'Goles_Visitante']
     procesador = ProcesadorDatos(df_reciente)
     
-    mejores_apuestas = []
+    mejores_apuestas_ticket = []
+    
+    if mostrar_tabla:
+        print("🔍 TABLA ANALÍTICA POR PARTIDO 🔍\n")
+        
     for local, visitante in partidos_elegidos:
         esperados = procesador.calcular_mu_esperado(local, visitante)
         if esperados:
-            mejor = encontrar_mejor_apuesta(esperados["mu_local"], esperados["mu_visitante"], local, visitante, mercados_permitidos)
-            mejores_apuestas.append(mejor)
+            opciones_partido = analizar_mercados_partido(
+                esperados["mu_local"], esperados["mu_visitante"], 
+                local, visitante, mercados_permitidos
+            )
             
-    mejores_apuestas.sort(key=lambda x: x["prob"], reverse=True)
-    
-    print("⭐ LA MEJOR COMBINACIÓN AUTOMÁTICA ⭐\n")
+            # Solo imprime la tabla si el usuario dijo que "s"
+            if mostrar_tabla:
+                print(f"⚽ {local} vs {visitante}")
+                for opt in opciones_partido:
+                    print(f"   - {opt['mercado']:<22} | Prob: {round(opt['prob']*100, 2):>5}% | Cuota: {opt['cuota']:>5}")
+                print("-" * 55)
+            
+            if opciones_partido:
+                mejores_apuestas_ticket.append(opciones_partido[0])
+            
+    print("\n⭐ TICKET AUTOMÁTICO (Las opciones más seguras) ⭐\n")
     probs, cuotas = [], []
     
-    for seleccion in mejores_apuestas:
+    for seleccion in mejores_apuestas_ticket:
         probs.append(seleccion["prob"])
         cuotas.append(seleccion["cuota"])
-        print(f"⚽ {seleccion['partido']}")
-        print(f"   Mejor Mercado: {seleccion['mercado']}")
-        print(f"   Probabilidad: {round(seleccion['prob']*100, 2)}% | Cuota: {seleccion['cuota']}\n")
+        print(f"✅ {seleccion['partido']} -> {seleccion['mercado']}")
         
     print("========================================")
     print("📈 RESUMEN DEL TICKET 📈")
