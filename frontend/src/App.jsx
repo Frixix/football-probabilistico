@@ -10,17 +10,19 @@ function App() {
 
   useEffect(() => {
     const pedirDatosAPython = async () => {
-      setTimeout(() => {
-        const datosSimulados = [
-          { id: 1, local: "Netherlands", visitante: "Germany", mercado: "Gana Netherlands", prob: 0.55 },
-          { id: 2, local: "Colombia", visitante: "Uruguay", mercado: "Menos de 2.5 Goles", prob: 0.72 },
-          { id: 3, local: "England", visitante: "Spain", mercado: "Ambos Marcan: Sí", prob: 0.65 },
-          { id: 4, local: "Argentina", visitante: "Chile", mercado: "Gana Argentina", prob: 0.82 }
-        ];
-        setPartidos(datosSimulados);
+      try {
+        // Hacemos la petición real a nuestra API de Python (FastAPI)
+        const respuesta = await fetch('http://localhost:8000/api/partidos');
+        const datosReales = await respuesta.json();
+        
+        setPartidos(datosReales);
+      } catch (error) {
+        console.error("Error conectando con Python:", error);
+      } finally {
         setCargando(false);
-      }, 2000);
+      }
     };
+    
     pedirDatosAPython();
   }, []);
 
@@ -31,18 +33,33 @@ function App() {
     }
   };
 
+  // NUEVA FUNCIÓN: Filtra el array para dejar todos los partidos excepto el que queremos borrar
+  const removerDelTicket = (id) => {
+    setTicket(ticket.filter(item => item.id !== id));
+  };
+
+  // NUEVA FUNCIÓN: Vacía el array completamente
+  const limpiarTicket = () => {
+    setTicket([]);
+  };
+
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1>Dashboard de Probabilidades</h1>
+      <h1> Dashboard de Probabilidades</h1>
       <hr style={{ marginBottom: '20px' }} />
 
       {cargando ? (
-        <p>Calculando predicciones con el modelo de Poisson...</p>
+        <p> Calculando predicciones con el modelo de Poisson...</p>
       ) : (
         <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
-          {/* Aquí inyectamos nuestros nuevos componentes y les pasamos los datos (Props) */}
           <MatchList partidos={partidos} onAddTicket={agregarAlTicket} />
-          <BetSlip ticket={ticket} />
+          
+          {/* Pasamos las nuevas funciones al BetSlip */}
+          <BetSlip 
+            ticket={ticket} 
+            onRemove={removerDelTicket} 
+            onClear={limpiarTicket} 
+          />
         </div>
       )}
     </div>

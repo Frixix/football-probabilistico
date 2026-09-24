@@ -1,69 +1,106 @@
 import pandas as pd
-from src.data.procesador import ProcesadorDatos
+import requests
+import json
+import os
+from datetime import datetime
 from src.models.poisson import (
     generar_matriz_partido,
     calcular_probabilidades_1x2,
     probabilidades_a_cuotas,
     calcular_probabilidades_over_under,
-    calcular_probabilidades_btts # ¡NUEVA FUNCIÓN IMPORTADA!
+    calcular_probabilidades_btts
 )
 
-def simular_partido_real():
-    print("🌍 CONECTANDO A BASE DE DATOS DE SELECCIONES (GITHUB) 🌍\n")
+def obtener_predicciones_api():
+    print("\n--- INICIANDO CÁLCULO DE API CON CACHÉ ---")
     
-    url_internacional = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
-    df_global = pd.read_csv(url_internacional)
-    
-    df_global['date'] = pd.to_datetime(df_global['date'])
-    df_reciente = df_global[df_global['date'].dt.year >= 2020]
-    
-    df_limpio = df_reciente[['home_team', 'away_team', 'home_score', 'away_score']].copy()
-    df_limpio.columns = ['Local', 'Visitante', 'Goles_Local', 'Goles_Visitante']
-    
-    procesador = ProcesadorDatos(df_limpio)
-    
-    # Probemos con un clásico muy reñido
-    equipo_local = "Colombia"
-    equipo_visitante = "Uruguay"
-    print(f"🔥 PREDICCIÓN: {equipo_local} vs {equipo_visitante} 🔥")
-    
-    esperados = procesador.calcular_mu_esperado(equipo_local, equipo_visitante)
-    
-    if esperados is None:
-        print("Error: Uno de los equipos no está en la base de datos.")
-        return
+    # Archivo donde guardaremos los datos para no gastar peticiones
+    archivo_cache = "partidos_cache.json"
+    hoy = datetime.now().strftime("%Y-%m-%d")
 
-    mu_l = esperados["mu_local"]
-    mu_v = esperados["mu_visitante"]
-    print(f"Goles esperados -> {equipo_local}: {mu_l} | {equipo_visitante}: {mu_v}")
-    
-    # --- MOTOR MATEMÁTICO ---
-    matriz = generar_matriz_partido(mu_l, mu_v)
-    
-    # 1. Mercado 1X2
-    probabilidades_1x2 = calcular_probabilidades_1x2(matriz)
-    cuotas_1x2 = probabilidades_a_cuotas(probabilidades_1x2)
-    
-    print("\n📊 MERCADO 1X2 (Ganador):")
-    print(f"Gana {equipo_local} (1): {round(probabilidades_1x2['1'] * 100, 2)}% -> Cuota: {cuotas_1x2['1']}")
-    print(f"Empate (X): {round(probabilidades_1x2['X'] * 100, 2)}% -> Cuota: {cuotas_1x2['X']}")
-    print(f"Gana {equipo_visitante} (2): {round(probabilidades_1x2['2'] * 100, 2)}% -> Cuota: {cuotas_1x2['2']}")
-    
-    # 2. Mercado Over/Under
-    prob_goles = calcular_probabilidades_over_under(matriz, limite=2.5)
-    cuotas_goles = probabilidades_a_cuotas(prob_goles)
-    
-    print("\n⚽ MERCADO DE GOLES (Over/Under 2.5):")
-    print(f"Más de 2.5 (Over) : {round(prob_goles['Over'] * 100, 2)}% -> Cuota: {cuotas_goles['Over']}")
-    print(f"Menos de 2.5 (Under): {round(prob_goles['Under'] * 100, 2)}% -> Cuota: {cuotas_goles['Under']}")
-    
-    # 3. Mercado BTTS (NUEVO)
-    prob_btts = calcular_probabilidades_btts(matriz)
-    cuotas_btts = probabilidades_a_cuotas(prob_btts)
-    
-    print("\n🤝 MERCADO AMBOS MARCAN (BTTS):")
-    print(f"Sí marcan ambos: {round(prob_btts['Si'] * 100, 2)}% -> Cuota: {cuotas_btts['Si']}")
-    print(f"No marcan ambos: {round(prob_btts['No'] * 100, 2)}% -> Cuota: {cuotas_btts['No']}")
+    # 1. SISTEMA DE CACHÉ: Revisar si ya descargamos los datos hoy
+    if os.path.exists(archivo_cache):
+        try:
+            with open(archivo_cache, "r", encoding="utf-8") as f:
+                datos_cache = json.load(f)
+                if datos_cache.get("fecha") == hoy:
+                    print("✅ Usando caché local (0 peticiones gastadas).")
+                    return datos_cache["partidos"]
+        except Exception:
+            pass # Si el caché falla, continuamos a la descarga
 
-if __name__ == "__main__":
-    simular_partido_real()
+    # 2. DESCARGA DE DATOS REALES (Solo ocurre 1 vez al día)
+    print("🌐 Conectando a API-Football (1 petición gastada)...")
+    url = "https://v3.football.api-sports.io/fixtures"
+    
+    # Traemos los próximos 15 partidos oficiales a nivel mundial
+    querystring = {"next": "15"}
+    headers = {'x-apisports-key': 'dbb9e71d4b3320ceca52a903fd3c5bc8'}
+
+    try:
+        response = requests.get(url, headers=headers, params=querystring)
+        datos_api = response.json()
+        partidos_reales = datos_api.get("response", [])
+    except Exception as e:
+        print(f"Error conectando a la API: {e}")
+        return []
+
+    resultados_para_react = []
+    identificador = 1
+
+    print("3. Evaluando partidos con el Modelo de Poisson...")
+    
+    for p in partidos_reales:
+        local = p["teams"]["home"]["name"]
+        visitante = p["teams"]["away"]["name"]
+        torneo = p["league"]["name"]
+        
+        # Extraemos fecha y hora real exacta
+        fecha_hora = p["fixture"]["date"] # Ej: 2026-09-24T18:00:00+00:00
+        fecha_str = fecha_hora[8:10] + "/" + fecha_hora[5:7]
+        hora_str = fecha_hora[11:16]
+
+        # PLAN DE CONTINGENCIA MATEMÁTICA:
+        # Como aún no tenemos un CSV con el historial de todos los clubes del mundo,
+        # inyectamos goles esperados (mu) estandarizados para que el motor de Poisson
+        # pueda hacer sus cálculos y la aplicación no se bloquee.
+        mu_l = 1.6  
+        mu_v = 1.2  
+        
+        matriz = generar_matriz_partido(mu_l, mu_v)
+
+        prob_1x2 = calcular_probabilidades_1x2(matriz)
+        prob_goles = calcular_probabilidades_over_under(matriz, limite=2.5)
+        prob_btts = calcular_probabilidades_btts(matriz)
+
+        opciones_mercado = [
+            {"mercado": f"Gana {local}", "prob": prob_1x2["1"], "tipo": "1x2"},
+            {"mercado": "Empate", "prob": prob_1x2["X"], "tipo": "1x2"},
+            {"mercado": f"Gana {visitante}", "prob": prob_1x2["2"], "tipo": "1x2"},
+            {"mercado": "Más de 2.5 Goles", "prob": prob_goles["Over"], "tipo": "goles"},
+            {"mercado": "Menos de 2.5 Goles", "prob": prob_goles["Under"], "tipo": "goles"},
+            {"mercado": "Ambos Marcan: Sí", "prob": prob_btts["Si"], "tipo": "btts"},
+            {"mercado": "Ambos Marcan: No", "prob": prob_btts["No"], "tipo": "btts"}
+        ]
+
+        mejor_opcion = max(opciones_mercado, key=lambda x: x["prob"])
+
+        resultados_para_react.append({
+            "id": identificador,
+            "local": local,
+            "visitante": visitante,
+            "mercado": mejor_opcion["mercado"],
+            "prob": mejor_opcion["prob"],
+            "tipo": mejor_opcion["tipo"],
+            "fecha": fecha_str,
+            "torneo": torneo,
+            "hora": hora_str # ¡Enviamos la hora real!
+        })
+        identificador += 1
+
+    # 4. GUARDAR EN CACHÉ
+    with open(archivo_cache, "w", encoding="utf-8") as f:
+        json.dump({"fecha": hoy, "partidos": resultados_para_react}, f, indent=4)
+
+    print("--- CÁLCULO TERMINADO Y GUARDADO EN CACHÉ ---")
+    return resultados_para_react

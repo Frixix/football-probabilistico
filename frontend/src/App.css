@@ -1,0 +1,463 @@
+/* ============================================================
+   DESIGN TOKENS — Sistema de diseño
+   ============================================================ */
+:root {
+  /* Colores base */
+  --bg-app: #f7f8fa;
+  --bg-card: #ffffff;
+  --bg-subtle: #f1f3f6;
+
+  /* Texto */
+  --text-primary: #0f1419;
+  --text-secondary: #4a5568;
+  --text-muted: #8a94a6;
+
+  /* Acento (azul premium, más profundo que #0d6efd) */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+  --accent-glow: rgba(37, 99, 235, 0.18);
+
+  /* Bordes */
+  --border-subtle: #e8ecf1;
+  --border-default: #dde3ea;
+  --border-strong: #c9d1dc;
+
+  /* Radios */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* Sombras (multicapa, muy suaves) */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.06), 0 2px 4px rgba(16, 24, 40, 0.04);
+  --shadow-lg: 0 12px 28px rgba(16, 24, 40, 0.10), 0 4px 10px rgba(16, 24, 40, 0.05);
+  --shadow-focus: 0 0 0 4px var(--accent-glow);
+
+  /* Transiciones */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 150ms var(--ease-out);
+  --t-base: 220ms var(--ease-out);
+  --t-slow: 320ms var(--ease-out);
+
+  /* Tipografía */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+               Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* ============================================================
+   LAYOUT — Grilla de tarjetas
+   ============================================================ */
+.cartelera-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  padding: 4px;
+}
+
+/* ============================================================
+   TARJETA — Diseño premium
+   ============================================================ */
+.tarjeta-partido {
+  position: relative;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 18px 18px 16px;
+  cursor: pointer;
+  transition:
+    transform var(--t-base),
+    box-shadow var(--t-base),
+    border-color var(--t-base);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  isolation: isolate;
+  font-family: var(--font-sans);
+}
+
+/* Línea de acento superior (detalle premium) */
+.tarjeta-partido::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #60a5fa);
+  opacity: 0;
+  transition: opacity var(--t-base);
+}
+
+.tarjeta-partido:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-strong);
+}
+
+.tarjeta-partido:hover::before {
+  opacity: 1;
+}
+
+.tarjeta-partido:active {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Accesibilidad — focus visible para teclado */
+.tarjeta-partido:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+/* ============================================================
+   HEADER DE TARJETA
+   ============================================================ */
+.tarjeta-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.badge-torneo {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--accent-soft);
+  color: var(--accent);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  line-height: 1;
+}
+
+.badge-fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+/* ============================================================
+   TÍTULO Y DATOS
+   ============================================================ */
+.tarjeta-titulo {
+  margin: 0 0 14px 0;
+  font-size: 16.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.tarjeta-datos {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   FILTROS
+   ============================================================ */
+.filtros-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.btn-filtro {
+  appearance: none;
+  padding: 8px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 550;
+  letter-spacing: 0.1px;
+  transition:
+    background-color var(--t-fast),
+    color var(--t-fast),
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-filtro:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.btn-filtro:active {
+  transform: translateY(0);
+}
+
+.btn-filtro:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.btn-filtro.activo {
+  background-color: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.btn-filtro.activo:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* ============================================================
+   BUSCADOR
+   ============================================================ */
+.buscador-container {
+  margin-bottom: 22px;
+  position: relative;
+}
+
+.buscador-input {
+  width: 100%;
+  padding: 13px 18px 13px 44px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-card);
+  font-family: inherit;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    background-color var(--t-fast);
+  box-shadow: var(--shadow-xs);
+}
+
+.buscador-input::placeholder {
+  color: var(--text-muted);
+}
+
+.buscador-input:hover {
+  border-color: var(--border-strong);
+}
+
+.buscador-input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Ícono de lupa decorativo (puedes ponerlo con background-image o un ::before) */
+.buscador-container::before {
+  content: "🔍";
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 640px) {
+  .cartelera-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .tarjeta-partido {
+    padding: 16px;
+  }
+
+  .tarjeta-titulo {
+    font-size: 15.5px;
+  }
+}
+
+/* ============================================================
+   DARK MODE — opcional, activa con [data-theme="dark"] en <html>
+   ============================================================ */
+[data-theme="dark"] {
+  --bg-app: #0d1117;
+  --bg-card: #161b22;
+  --bg-subtle: #1c232c;
+
+  --text-primary: #e6edf3;
+  --text-secondary: #9ba7b4;
+  --text-muted: #6e7681;
+
+  --border-subtle: #21262d;
+  --border-default: #30363d;
+  --border-strong: #3d444d;
+
+  --accent-soft: rgba(37, 99, 235, 0.15);
+  --accent-glow: rgba(37, 99, 235, 0.35);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+/* ============================================================
+   ANIMACIÓN DE ENTRADA ESCALONADA
+   ============================================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* Aplica la animación a cada tarjeta */
+.tarjeta-partido {
+  animation: fadeInUp 420ms var(--ease-out) both;
+  /* 'both' mantiene el estado final y aplica el delay */
+}
+
+/* Stagger: retrasos progresivos para las primeras 12 tarjetas.
+   Más allá de 12, todas usan el mismo delay (evita esperas largas). */
+.cartelera-grid .tarjeta-partido:nth-child(1)  { animation-delay: 30ms; }
+.cartelera-grid .tarjeta-partido:nth-child(2)  { animation-delay: 60ms; }
+.cartelera-grid .tarjeta-partido:nth-child(3)  { animation-delay: 90ms; }
+.cartelera-grid .tarjeta-partido:nth-child(4)  { animation-delay: 120ms; }
+.cartelera-grid .tarjeta-partido:nth-child(5)  { animation-delay: 150ms; }
+.cartelera-grid .tarjeta-partido:nth-child(6)  { animation-delay: 180ms; }
+.cartelera-grid .tarjeta-partido:nth-child(7)  { animation-delay: 210ms; }
+.cartelera-grid .tarjeta-partido:nth-child(8)  { animation-delay: 240ms; }
+.cartelera-grid .tarjeta-partido:nth-child(9)  { animation-delay: 270ms; }
+.cartelera-grid .tarjeta-partido:nth-child(10) { animation-delay: 300ms; }
+.cartelera-grid .tarjeta-partido:nth-child(11) { animation-delay: 330ms; }
+.cartelera-grid .tarjeta-partido:nth-child(12) { animation-delay: 360ms; }
+
+/* Respeta la preferencia del usuario de reducir movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta-partido,
+  .tarjeta-skeleton {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================================
+   SKELETON LOADER — mientras cargan los datos
+   ============================================================ */
+.tarjeta-skeleton {
+  position: relative;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 18px 18px 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: fadeInUp 400ms var(--ease-out) both;
+}
+
+/* Shimmer que barre la tarjeta */
+.tarjeta-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 80%
+  );
+  background-size: 400px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.4s linear infinite;
+  pointer-events: none;
+}
+
+/* En dark mode el brillo debe ser sutil y claro */
+[data-theme="dark"] .tarjeta-skeleton::after {
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 80%
+  );
+  background-size: 400px 100%;
+  background-repeat: no-repeat;
+}
+
+/* Bloques internos del skeleton */
+.sk-line {
+  height: 12px;
+  border-radius: 6px;
+  background-color: var(--bg-subtle);
+  margin-bottom: 10px;
+}
+
+.sk-line.sk-title {
+  height: 16px;
+  width: 65%;
+  margin-bottom: 18px;
+}
+
+.sk-line.sk-short { width: 40%; }
+.sk-line.sk-medium { width: 55%; }
+.sk-line.sk-full { width: 100%; }
+
+/* Fila inferior con dos columnas simulando los datos */
+.sk-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.sk-badge {
+  height: 18px;
+  width: 64px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-subtle);
+}
+
+.sk-value {
+  height: 22px;
+  width: 70px;
+  border-radius: 6px;
+  background-color: var(--bg-subtle);
+}
