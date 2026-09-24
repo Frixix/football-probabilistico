@@ -1,463 +1,1182 @@
-/* ============================================================
-   DESIGN TOKENS — Sistema de diseño
-   ============================================================ */
+/* =========================================================
+   CARTELERA DE PARTIDOS — V3
+   Dark Sports / Football Analytics
+   ========================================================= */
+
+/* =========================================================
+   1. VARIABLES
+   ========================================================= */
+
 :root {
-  /* Colores base */
-  --bg-app: #f7f8fa;
-  --bg-card: #ffffff;
-  --bg-subtle: #f1f3f6;
+  /* ---------- Fondo ---------- */
+  --bg-app: #090d14;
+  --bg-card: #111722;
+  --bg-subtle: #151c28;
+  --bg-hover: #192231;
+  --bg-elevated: #1a2330;
 
-  /* Texto */
-  --text-primary: #0f1419;
-  --text-secondary: #4a5568;
-  --text-muted: #8a94a6;
+  /* ---------- Texto ---------- */
+  --text-primary: #f3f6fb;
+  --text-secondary: #a8b2c2;
+  --text-muted: #6f7b8f;
+  --text-disabled: #4d5869;
 
-  /* Acento (azul premium, más profundo que #0d6efd) */
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.08);
-  --accent-glow: rgba(37, 99, 235, 0.18);
+  /* ---------- Azul principal ---------- */
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-soft: rgba(59, 130, 246, 0.12);
+  --accent-glow: rgba(59, 130, 246, 0.24);
 
-  /* Bordes */
-  --border-subtle: #e8ecf1;
-  --border-default: #dde3ea;
-  --border-strong: #c9d1dc;
+  /* ---------- Bordes ---------- */
+  --border-subtle: #1d2633;
+  --border-default: #283342;
+  --border-strong: #37465a;
 
-  /* Radios */
+  /* ---------- Estados ---------- */
+  --success: #22c55e;
+  --success-soft: rgba(34, 197, 94, 0.12);
+
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.12);
+
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.12);
+
+  /* ---------- Radios ---------- */
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-md: 9px;
+  --radius-lg: 13px;
   --radius-pill: 999px;
 
-  /* Sombras (multicapa, muy suaves) */
-  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
-  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
-  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.06), 0 2px 4px rgba(16, 24, 40, 0.04);
-  --shadow-lg: 0 12px 28px rgba(16, 24, 40, 0.10), 0 4px 10px rgba(16, 24, 40, 0.05);
-  --shadow-focus: 0 0 0 4px var(--accent-glow);
+  /* ---------- Sombras ---------- */
+  --shadow-xs:
+    0 1px 2px rgba(0, 0, 0, 0.25);
 
-  /* Transiciones */
+  --shadow-sm:
+    0 2px 6px rgba(0, 0, 0, 0.28);
+
+  --shadow-md:
+    0 6px 16px rgba(0, 0, 0, 0.32);
+
+  --shadow-lg:
+    0 14px 30px rgba(0, 0, 0, 0.42);
+
+  --shadow-focus:
+    0 0 0 3px var(--accent-glow);
+
+  /* ---------- Transiciones ---------- */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   --t-fast: 150ms var(--ease-out);
   --t-base: 220ms var(--ease-out);
   --t-slow: 320ms var(--ease-out);
 
-  /* Tipografía */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-               Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  /* ---------- Fuentes ---------- */
+  --font-sans:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+
+  --font-mono:
+    'JetBrains Mono',
+    'SF Mono',
+    Menlo,
+    Consolas,
+    monospace;
 }
 
-/* ============================================================
-   LAYOUT — Grilla de tarjetas
-   ============================================================ */
+
+/* =========================================================
+   2. RESET / BASE
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg-app);
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(
+      circle at 50% -20%,
+      rgba(59, 130, 246, 0.055),
+      transparent 42%
+    ),
+    var(--bg-app);
+
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+
+/* =========================================================
+   3. CARTELERA
+   ========================================================= */
+
 .cartelera-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(280px, 1fr)
+    );
+
   gap: 18px;
+
   padding: 4px;
 }
 
-/* ============================================================
-   TARJETA — Diseño premium
-   ============================================================ */
+
+/* =========================================================
+   4. TARJETA DE PARTIDO
+   ========================================================= */
+
 .tarjeta-partido {
   position: relative;
-  background-color: var(--bg-card);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.018),
+      transparent 45%
+    ),
+    var(--bg-card);
+
   border: 1px solid var(--border-subtle);
+
   border-radius: var(--radius-lg);
+
   padding: 18px 18px 16px;
+
   cursor: pointer;
+
   transition:
     transform var(--t-base),
     box-shadow var(--t-base),
-    border-color var(--t-base);
+    border-color var(--t-base),
+    background-color var(--t-base);
+
   box-shadow: var(--shadow-sm);
+
   overflow: hidden;
+
   isolation: isolate;
+
   font-family: var(--font-sans);
+
+  animation:
+    fadeInUp 420ms var(--ease-out) both;
 }
 
-/* Línea de acento superior (detalle premium) */
+
+/* ---------- Línea superior ---------- */
+
 .tarjeta-partido::before {
   content: "";
+
   position: absolute;
+
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), #60a5fa);
+
+  height: 2px;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--accent),
+      #60a5fa
+    );
+
   opacity: 0;
+
   transition: opacity var(--t-base);
 }
 
+
+/* ---------- Brillo sutil ---------- */
+
+.tarjeta-partido::after {
+  content: "";
+
+  position: absolute;
+
+  width: 140px;
+  height: 140px;
+
+  top: -90px;
+  right: -70px;
+
+  background: var(--accent);
+
+  opacity: 0.035;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  z-index: -1;
+}
+
+
+/* ---------- Hover ---------- */
+
 .tarjeta-partido:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.025),
+      transparent 50%
+    ),
+    var(--bg-hover);
+
   border-color: var(--border-strong);
+
+  box-shadow: var(--shadow-lg);
 }
 
 .tarjeta-partido:hover::before {
   opacity: 1;
 }
 
+
+/* ---------- Active ---------- */
+
 .tarjeta-partido:active {
   transform: translateY(-1px);
+
   box-shadow: var(--shadow-md);
 }
 
-/* Accesibilidad — focus visible para teclado */
+
+/* ---------- Focus ---------- */
+
 .tarjeta-partido:focus-visible {
   outline: none;
+
   border-color: var(--accent);
+
   box-shadow: var(--shadow-focus);
 }
 
-/* ============================================================
-   HEADER DE TARJETA
-   ============================================================ */
+
+/* =========================================================
+   5. HEADER DE TARJETA
+   ========================================================= */
+
 .tarjeta-header {
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   gap: 8px;
+
   margin-bottom: 14px;
+
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-subtle);
+
+  border-bottom:
+    1px solid var(--border-subtle);
 }
+
+
+/* =========================================================
+   6. BADGE DEL TORNEO
+   ========================================================= */
 
 .badge-torneo {
   display: inline-flex;
+
   align-items: center;
-  background-color: var(--accent-soft);
-  color: var(--accent);
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
+
+  background-color:
+    var(--accent-soft);
+
+  color:
+    #60a5fa;
+
+  padding:
+    5px 10px;
+
+  border-radius:
+    var(--radius-pill);
+
   font-size: 10.5px;
-  font-weight: 700;
+
+  font-weight: 750;
+
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+
+  letter-spacing: 0.65px;
+
   line-height: 1;
+
+  border:
+    1px solid
+    rgba(59, 130, 246, 0.14);
+
+  white-space: nowrap;
 }
+
+
+/* =========================================================
+   7. FECHA
+   ========================================================= */
 
 .badge-fecha {
   display: inline-flex;
+
   align-items: center;
+
   gap: 4px;
-  color: var(--text-muted);
+
+  color:
+    var(--text-muted);
+
   font-size: 11px;
-  font-weight: 500;
+
+  font-weight: 550;
+
   letter-spacing: 0.2px;
+
+  white-space: nowrap;
 }
 
-/* ============================================================
-   TÍTULO Y DATOS
-   ============================================================ */
+
+/* =========================================================
+   8. TÍTULO DEL PARTIDO
+   ========================================================= */
+
 .tarjeta-titulo {
-  margin: 0 0 14px 0;
-  font-size: 16.5px;
-  font-weight: 650;
-  line-height: 1.35;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
+  margin:
+    0 0 14px 0;
+
+  font-size:
+    16.5px;
+
+  font-weight:
+    700;
+
+  line-height:
+    1.35;
+
+  color:
+    var(--text-primary);
+
+  letter-spacing:
+    -0.015em;
 }
+
+
+/* =========================================================
+   9. DATOS DEL PARTIDO
+   ========================================================= */
 
 .tarjeta-datos {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+
+  justify-content:
+    space-between;
+
+  align-items:
+    flex-end;
+
   gap: 12px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px dashed var(--border-subtle);
-  font-size: 13px;
-  color: var(--text-secondary);
+
+  margin-top:
+    16px;
+
+  padding-top:
+    14px;
+
+  border-top:
+    1px dashed
+    var(--border-subtle);
+
+  font-size:
+    13px;
+
+  color:
+    var(--text-secondary);
 }
 
-/* ============================================================
-   FILTROS
-   ============================================================ */
+
+/* =========================================================
+   10. FILTROS
+   ========================================================= */
+
 .filtros-container {
   display: flex;
+
   flex-wrap: wrap;
+
   gap: 8px;
-  margin-bottom: 20px;
+
+  margin-bottom:
+    20px;
 }
+
+
+/* ---------- Botón ---------- */
 
 .btn-filtro {
   appearance: none;
-  padding: 8px 16px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-pill);
-  background-color: var(--bg-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 550;
-  letter-spacing: 0.1px;
+
+  padding:
+    8px 15px;
+
+  border:
+    1px solid
+    var(--border-default);
+
+  border-radius:
+    var(--radius-pill);
+
+  background:
+    var(--bg-card);
+
+  color:
+    var(--text-secondary);
+
+  cursor:
+    pointer;
+
+  font-family:
+    inherit;
+
+  font-size:
+    13px;
+
+  font-weight:
+    600;
+
+  letter-spacing:
+    0.1px;
+
   transition:
     background-color var(--t-fast),
     color var(--t-fast),
     border-color var(--t-fast),
     box-shadow var(--t-fast),
     transform var(--t-fast);
-  box-shadow: var(--shadow-xs);
+
+  box-shadow:
+    var(--shadow-xs);
 }
+
+
+/* ---------- Hover ---------- */
 
 .btn-filtro:hover {
-  background-color: var(--bg-subtle);
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-  transform: translateY(-1px);
+  background:
+    var(--bg-hover);
+
+  border-color:
+    var(--border-strong);
+
+  color:
+    var(--text-primary);
+
+  transform:
+    translateY(-1px);
 }
+
+
+/* ---------- Active ---------- */
 
 .btn-filtro:active {
-  transform: translateY(0);
+  transform:
+    translateY(0);
 }
+
+
+/* ---------- Focus ---------- */
 
 .btn-filtro:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus);
+  outline:
+    none;
+
+  box-shadow:
+    var(--shadow-focus);
 }
+
+
+/* ---------- Seleccionado ---------- */
 
 .btn-filtro.activo {
-  background-color: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-  box-shadow: 0 4px 12px var(--accent-glow);
+  background:
+    var(--accent);
+
+  color:
+    #ffffff;
+
+  border-color:
+    var(--accent);
+
+  box-shadow:
+    0 4px 14px
+    var(--accent-glow);
 }
+
 
 .btn-filtro.activo:hover {
-  background-color: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background:
+    var(--accent-hover);
+
+  border-color:
+    var(--accent-hover);
 }
 
-/* ============================================================
-   BUSCADOR
-   ============================================================ */
+
+/* =========================================================
+   11. BUSCADOR
+   ========================================================= */
+
 .buscador-container {
-  margin-bottom: 22px;
   position: relative;
+
+  margin-bottom:
+    22px;
 }
+
+
+/* ---------- Input ---------- */
 
 .buscador-input {
   width: 100%;
-  padding: 13px 18px 13px 44px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  background-color: var(--bg-card);
-  font-family: inherit;
-  font-size: 14.5px;
-  color: var(--text-primary);
-  outline: none;
-  box-sizing: border-box;
+
+  padding:
+    13px 18px 13px 44px;
+
+  border:
+    1px solid
+    var(--border-default);
+
+  border-radius:
+    var(--radius-md);
+
+  background:
+    var(--bg-card);
+
+  color:
+    var(--text-primary);
+
+  font-family:
+    inherit;
+
+  font-size:
+    14px;
+
+  outline:
+    none;
+
+  box-shadow:
+    var(--shadow-xs);
+
   transition:
     border-color var(--t-fast),
     box-shadow var(--t-fast),
     background-color var(--t-fast);
-  box-shadow: var(--shadow-xs);
 }
+
+
+/* ---------- Placeholder ---------- */
 
 .buscador-input::placeholder {
-  color: var(--text-muted);
+  color:
+    var(--text-muted);
 }
+
+
+/* ---------- Hover ---------- */
 
 .buscador-input:hover {
-  border-color: var(--border-strong);
+  border-color:
+    var(--border-strong);
 }
+
+
+/* ---------- Focus ---------- */
 
 .buscador-input:focus {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-focus);
+  border-color:
+    var(--accent);
+
+  background:
+    var(--bg-hover);
+
+  box-shadow:
+    var(--shadow-focus);
 }
 
-/* Ícono de lupa decorativo (puedes ponerlo con background-image o un ::before) */
+
+/* =========================================================
+   12. ICONO DEL BUSCADOR
+   ========================================================= */
+
 .buscador-container::before {
-  content: "🔍";
+  content: "";
+
   position: absolute;
+
   left: 16px;
+
   top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  opacity: 0.5;
-  pointer-events: none;
+
+  width: 14px;
+  height: 14px;
+
+  transform:
+    translateY(-55%);
+
+  border:
+    2px solid
+    var(--text-muted);
+
+  border-radius:
+    50%;
+
+  opacity:
+    0.75;
+
+  pointer-events:
+    none;
 }
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 640px) {
-  .cartelera-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
 
-  .tarjeta-partido {
-    padding: 16px;
-  }
+/* Mango de la lupa */
 
-  .tarjeta-titulo {
-    font-size: 15.5px;
-  }
+.buscador-container::after {
+  content: "";
+
+  position: absolute;
+
+  left: 29px;
+
+  top: calc(50% + 5px);
+
+  width: 6px;
+  height: 2px;
+
+  background:
+    var(--text-muted);
+
+  transform:
+    rotate(45deg);
+
+  transform-origin:
+    left center;
+
+  opacity:
+    0.75;
+
+  pointer-events:
+    none;
 }
 
-/* ============================================================
-   DARK MODE — opcional, activa con [data-theme="dark"] en <html>
-   ============================================================ */
-[data-theme="dark"] {
-  --bg-app: #0d1117;
-  --bg-card: #161b22;
-  --bg-subtle: #1c232c;
 
-  --text-primary: #e6edf3;
-  --text-secondary: #9ba7b4;
-  --text-muted: #6e7681;
+/* =========================================================
+   13. ANIMACIÓN DE ENTRADA
+   ========================================================= */
 
-  --border-subtle: #21262d;
-  --border-default: #30363d;
-  --border-strong: #3d444d;
-
-  --accent-soft: rgba(37, 99, 235, 0.15);
-  --accent-glow: rgba(37, 99, 235, 0.35);
-
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55);
-}
-
-/* ============================================================
-   ANIMACIÓN DE ENTRADA ESCALONADA
-   ============================================================ */
 @keyframes fadeInUp {
+
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+
+    transform:
+      translateY(10px)
+      scale(0.985);
   }
+
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+
+    transform:
+      translateY(0)
+      scale(1);
   }
+
 }
 
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+
+/* =========================================================
+   14. RETRASO ESCALONADO
+   ========================================================= */
+
+.tarjeta-partido:nth-child(1) {
+  animation-delay: 30ms;
 }
 
-/* Aplica la animación a cada tarjeta */
-.tarjeta-partido {
-  animation: fadeInUp 420ms var(--ease-out) both;
-  /* 'both' mantiene el estado final y aplica el delay */
+.tarjeta-partido:nth-child(2) {
+  animation-delay: 60ms;
 }
 
-/* Stagger: retrasos progresivos para las primeras 12 tarjetas.
-   Más allá de 12, todas usan el mismo delay (evita esperas largas). */
-.cartelera-grid .tarjeta-partido:nth-child(1)  { animation-delay: 30ms; }
-.cartelera-grid .tarjeta-partido:nth-child(2)  { animation-delay: 60ms; }
-.cartelera-grid .tarjeta-partido:nth-child(3)  { animation-delay: 90ms; }
-.cartelera-grid .tarjeta-partido:nth-child(4)  { animation-delay: 120ms; }
-.cartelera-grid .tarjeta-partido:nth-child(5)  { animation-delay: 150ms; }
-.cartelera-grid .tarjeta-partido:nth-child(6)  { animation-delay: 180ms; }
-.cartelera-grid .tarjeta-partido:nth-child(7)  { animation-delay: 210ms; }
-.cartelera-grid .tarjeta-partido:nth-child(8)  { animation-delay: 240ms; }
-.cartelera-grid .tarjeta-partido:nth-child(9)  { animation-delay: 270ms; }
-.cartelera-grid .tarjeta-partido:nth-child(10) { animation-delay: 300ms; }
-.cartelera-grid .tarjeta-partido:nth-child(11) { animation-delay: 330ms; }
-.cartelera-grid .tarjeta-partido:nth-child(12) { animation-delay: 360ms; }
-
-/* Respeta la preferencia del usuario de reducir movimiento */
-@media (prefers-reduced-motion: reduce) {
-  .tarjeta-partido,
-  .tarjeta-skeleton {
-    animation: none !important;
-    transition: none !important;
-  }
+.tarjeta-partido:nth-child(3) {
+  animation-delay: 90ms;
 }
 
-/* ============================================================
-   SKELETON LOADER — mientras cargan los datos
-   ============================================================ */
+.tarjeta-partido:nth-child(4) {
+  animation-delay: 120ms;
+}
+
+.tarjeta-partido:nth-child(5) {
+  animation-delay: 150ms;
+}
+
+.tarjeta-partido:nth-child(6) {
+  animation-delay: 180ms;
+}
+
+.tarjeta-partido:nth-child(7) {
+  animation-delay: 210ms;
+}
+
+.tarjeta-partido:nth-child(8) {
+  animation-delay: 240ms;
+}
+
+.tarjeta-partido:nth-child(9) {
+  animation-delay: 270ms;
+}
+
+.tarjeta-partido:nth-child(10) {
+  animation-delay: 300ms;
+}
+
+.tarjeta-partido:nth-child(11) {
+  animation-delay: 330ms;
+}
+
+.tarjeta-partido:nth-child(12) {
+  animation-delay: 360ms;
+}
+
+
+/* =========================================================
+   15. SKELETON LOADER
+   ========================================================= */
+
 .tarjeta-skeleton {
   position: relative;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 18px 18px 16px;
+
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  animation: fadeInUp 400ms var(--ease-out) both;
+
+  background:
+    var(--bg-card);
+
+  border:
+    1px solid
+    var(--border-subtle);
+
+  border-radius:
+    var(--radius-lg);
+
+  padding:
+    18px;
+
+  min-height:
+    190px;
 }
 
-/* Shimmer que barre la tarjeta */
+
+/* ---------- Brillo ---------- */
+
 .tarjeta-skeleton::after {
   content: "";
+
   position: absolute;
+
   inset: 0;
-  background: linear-gradient(
-    110deg,
-    transparent 20%,
-    rgba(255, 255, 255, 0.55) 50%,
-    transparent 80%
-  );
-  background-size: 400px 100%;
-  background-repeat: no-repeat;
-  animation: shimmer 1.4s linear infinite;
-  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.025) 45%,
+      rgba(255, 255, 255, 0.055) 50%,
+      rgba(255, 255, 255, 0.025) 55%,
+      transparent 100%
+    );
+
+  background-size:
+    400px 100%;
+
+  animation:
+    shimmer 1.5s infinite;
 }
 
-/* En dark mode el brillo debe ser sutil y claro */
-[data-theme="dark"] .tarjeta-skeleton::after {
-  background: linear-gradient(
-    110deg,
-    transparent 20%,
-    rgba(255, 255, 255, 0.06) 50%,
-    transparent 80%
-  );
-  background-size: 400px 100%;
-  background-repeat: no-repeat;
-}
 
-/* Bloques internos del skeleton */
+/* =========================================================
+   16. ELEMENTOS DEL SKELETON
+   ========================================================= */
+
 .sk-line {
-  height: 12px;
-  border-radius: 6px;
-  background-color: var(--bg-subtle);
-  margin-bottom: 10px;
+  display: block;
+
+  height: 10px;
+
+  border-radius:
+    var(--radius-sm);
+
+  background:
+    var(--bg-subtle);
+
+  margin-bottom:
+    12px;
 }
 
-.sk-line.sk-title {
-  height: 16px;
-  width: 65%;
-  margin-bottom: 18px;
+
+.sk-line-sm {
+  width: 30%;
 }
 
-.sk-line.sk-short { width: 40%; }
-.sk-line.sk-medium { width: 55%; }
-.sk-line.sk-full { width: 100%; }
 
-/* Fila inferior con dos columnas simulando los datos */
-.sk-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px dashed var(--border-subtle);
+.sk-line-md {
+  width: 60%;
 }
 
-.sk-badge {
-  height: 18px;
-  width: 64px;
-  border-radius: var(--radius-pill);
-  background-color: var(--bg-subtle);
+
+.sk-line-lg {
+  width: 85%;
 }
 
-.sk-value {
-  height: 22px;
-  width: 70px;
-  border-radius: 6px;
-  background-color: var(--bg-subtle);
+
+.sk-line-full {
+  width: 100%;
 }
+
+
+/* =========================================================
+   17. SHIMMER
+   ========================================================= */
+
+@keyframes shimmer {
+
+  0% {
+    background-position:
+      -400px 0;
+  }
+
+  100% {
+    background-position:
+      400px 0;
+  }
+
+}
+
+
+/* =========================================================
+   18. ESTADOS DE DATOS
+   ========================================================= */
+
+/*
+   Estas clases son opcionales.
+   Si todavía no existen en tu HTML/JS,
+   no afectan absolutamente nada.
+*/
+
+.estado-positivo {
+  color:
+    var(--success);
+}
+
+.estado-neutro {
+  color:
+    var(--text-secondary);
+}
+
+.estado-alerta {
+  color:
+    var(--warning);
+}
+
+.estado-negativo {
+  color:
+    var(--danger);
+}
+
+
+/* =========================================================
+   19. RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .cartelera-grid {
+    grid-template-columns:
+      repeat(
+        auto-fill,
+        minmax(250px, 1fr)
+      );
+
+    gap:
+      14px;
+  }
+
+}
+
+
+/* =========================================================
+   20. RESPONSIVE — MÓVIL
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+  body {
+    background:
+      var(--bg-app);
+  }
+
+
+  .cartelera-grid {
+    grid-template-columns:
+      1fr;
+
+    gap:
+      12px;
+
+    padding:
+      2px;
+  }
+
+
+  .tarjeta-partido {
+    padding:
+      16px;
+  }
+
+
+  .tarjeta-titulo {
+    font-size:
+      15.5px;
+  }
+
+
+  .tarjeta-header {
+    margin-bottom:
+      12px;
+  }
+
+
+  .badge-torneo {
+    font-size:
+      10px;
+
+    padding:
+      5px 9px;
+  }
+
+
+  .badge-fecha {
+    font-size:
+      10.5px;
+  }
+
+
+  .buscador-input {
+    padding:
+      12px 16px 12px 42px;
+  }
+
+
+  .btn-filtro {
+    padding:
+      7px 13px;
+
+    font-size:
+      12.5px;
+  }
+
+}
+
+
+/* =========================================================
+   21. MÓVILES MUY PEQUEÑOS
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+  .tarjeta-partido {
+    padding:
+      14px;
+  }
+
+
+  .tarjeta-header {
+    align-items:
+      flex-start;
+  }
+
+
+  .tarjeta-datos {
+    gap:
+      8px;
+
+    font-size:
+      12px;
+  }
+
+}
+
+
+/* =========================================================
+   22. REDUCCIÓN DE MOVIMIENTO
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.01ms !important;
+
+    scroll-behavior:
+      auto !important;
+  }
+
+
+  .tarjeta-partido {
+    animation:
+      none !important;
+  }
+
+
+  .tarjeta-skeleton::after {
+    animation:
+      none !important;
+  }
+
+}
+
+
+/* =========================================================
+   23. MODO CLARO OPCIONAL
+   =========================================================
+
+   El proyecto queda oscuro por defecto.
+
+   Si tu JS coloca:
+       data-theme="light"
+
+   sobre <html> o <body>,
+   se activa esta variante.
+   ========================================================= */
+
+[data-theme="light"] {
+
+  --bg-app: #f7f8fa;
+
+  --bg-card: #ffffff;
+
+  --bg-subtle: #f1f3f6;
+
+  --bg-hover: #f8fafc;
+
+  --bg-elevated: #ffffff;
+
+
+  --text-primary: #0f1419;
+
+  --text-secondary: #4a5568;
+
+  --text-muted: #8a94a6;
+
+  --text-disabled: #aab2bf;
+
+
+  --accent: #2563eb;
+
+  --accent-hover: #1d4ed8;
+
+  --accent-soft:
+    rgba(37, 99, 235, 0.08);
+
+  --accent-glow:
+    rgba(37, 99, 235, 0.18);
+
+
+  --border-subtle: #e8ecf1;
+
+  --border-default: #dde3ea;
+
+  --border-strong: #c9d1dc;
+
+
+  --shadow-xs:
+    0 1px 2px
+    rgba(16, 24, 40, 0.04);
+
+  --shadow-sm:
+    0 1px 3px
+    rgba(16, 24, 40, 0.06),
+    0 1px 2px
+    rgba(16, 24, 40, 0.04);
+
+  --shadow-md:
+    0 4px 12px
+    rgba(16, 24, 40, 0.06),
+    0 2px 4px
+    rgba(16, 24, 40, 0.04);
+
+  --shadow-lg:
+    0 12px 28px
+    rgba(16, 24, 40, 0.10),
+    0 4px 10px
+    rgba(16, 24, 40, 0.05);
+}
+
+
+[data-theme="light"] body {
+  background:
+    radial-gradient(
+      circle at 50% -20%,
+      rgba(37, 99, 235, 0.045),
+      transparent 42%
+    ),
+    var(--bg-app);
+}
+
+
+[data-theme="light"] .tarjeta-partido {
+  background:
+    var(--bg-card);
+}
+
+
+[data-theme="light"] .tarjeta-partido:hover {
+  background:
+    var(--bg-card);
+}
+
+
+/* =========================================================
+   FIN — V3
+   ========================================================= */
