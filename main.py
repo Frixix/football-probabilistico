@@ -156,6 +156,30 @@ def obtener_predicciones_api():
         except Exception as e:
             print(f"Error guardando caché temporal: {e}")
             
+    # 👇 SALVAVIDAS: DATOS DE PRUEBA SI LA API NO DEVUELVE PARTIDOS HOY 👇
+    if len(resultados_para_react) == 0:
+        print("⚠️ No hay partidos reales, enviando datos de prueba al Frontend...")
+        return [
+            { 
+                "id": 991, "local": "Arsenal", "visitante": "Liverpool", 
+                "mercado": "Ambos Marcan: Sí", "prob": 82.5, "tipo": "btts", 
+                "fecha": hoy_dia, "torneo": "Premier League (Prueba)", "hora": "15:00", 
+                "estado_texto": "En Vivo", "estado_clase": "estado-amarillo" 
+            },
+            { 
+                "id": 992, "local": "Millonarios", "visitante": "Nacional", 
+                "mercado": "Gana Millonarios", "prob": 65.0, "tipo": "1x2", 
+                "fecha": hoy_dia, "torneo": "Liga BetPlay (Prueba)", "hora": "20:00", 
+                "estado_texto": "No Iniciado", "estado_clase": "estado-verde" 
+            },
+            { 
+                "id": 993, "local": "Boca Juniors", "visitante": "River Plate", 
+                "mercado": "Menos de 2.5 Goles", "prob": 70.1, "tipo": "goles", 
+                "fecha": hoy_dia, "torneo": "Liga Argentina (Prueba)", "hora": "18:00", 
+                "estado_texto": "Terminado", "estado_clase": "estado-rojo" 
+            }
+        ]
+
     return resultados_para_react
 
 if __name__ == "__main__":
