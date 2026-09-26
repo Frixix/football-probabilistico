@@ -12,7 +12,7 @@ function App() {
     const pedirDatosAPython = async () => {
       try {
         // Hacemos la petición real a nuestra API de Python (FastAPI)
-        const respuesta = await fetch('http://localhost:8000/api/partidos');
+        const response = await fetch("https://football-probabilistico.vercel.app/api/partidos");
         const datosReales = await respuesta.json();
         
         setPartidos(datosReales);
