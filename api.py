@@ -1,29 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from main import obtener_predicciones_api  # Aquí importamos tu salvavidas de main.py
 
-# Importamos la función puente desde tu archivo principal
-from main import obtener_predicciones_api 
+app = FastAPI()
 
-app = FastAPI(title="Football API")
-
+# Permisos para que el Frontend (React) pueda hablar con este Backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite conexiones desde cualquier origen (incluyendo tu frontend en Vercel)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"estado": "API funcionando perfectamente"}
-
 @app.get("/api/partidos")
-def obtener_partidos():
-    # Ejecutamos tu modelo de Poisson real en vivo
-    try:
-        partidos_reales = obtener_predicciones_api()
-        return partidos_reales
-    except Exception as e:
-        # En caso de que el CSV falle o haya un error matemático
-        return {"error": str(e)}
+def partidos():
+    # Ejecuta tu código de main.py y devuelve el resultado
+    return obtener_predicciones_api()
