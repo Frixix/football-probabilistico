@@ -1,6 +1,0 @@
-[project]
-name = "football-api"
-version = "1.0.0"
-
-[tool.vercel]
-entrypoint = "api:app"
