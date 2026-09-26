@@ -44,8 +44,8 @@ def obtener_predicciones_api():
         "timezone": "America/Bogota"
     }
     
-    # 🔐 Leemos la clave secreta desde las Variables de Entorno
-    api_key = os.getenv("API_FOOTBALL_KEY")
+    # 🔐 LLAVE EXPUESTA TEMPORALMENTE (Para la prueba final)
+    api_key = "dbb9e71d4b3320ceca52a903fd3c5bc8"
     headers = {'x-apisports-key': api_key}
 
     try:
