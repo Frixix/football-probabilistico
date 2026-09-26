@@ -1,3 +1,4 @@
+import tempfile
 import pandas as pd
 import requests
 import json
@@ -18,7 +19,8 @@ def simular_partido_real():
 def obtener_predicciones_api():
     print("\n--- INICIANDO CÁLCULO DE API (MODO DESARROLLO / BLINDADO) ---")
     
-    archivo_cache = "partidos_cache.json"
+    # 📁 Usamos la carpeta temporal del sistema para evitar errores de solo lectura en Vercel
+    archivo_cache = os.path.join(tempfile.gettempdir(), "partidos_cache.json")
     hoy_dia = datetime.now().strftime("%Y-%m-%d")
 
     # 1. SISTEMA DE CACHÉ
@@ -36,13 +38,14 @@ def obtener_predicciones_api():
     print("🌐 Conectando a API-Football...")
     url = "https://v3.football.api-sports.io/fixtures"
     
-    # NUEVO: Le exigimos a la API que calcule el "hoy" basándose en Bogotá, no en Londres.
     querystring = {
         "date": hoy_dia,
         "timezone": "America/Bogota"
     }
     
-    headers = {'x-apisports-key': 'dbb9e71d4b3320ceca52a903fd3c5bc8'}
+    # 🔐 Leemos la clave secreta desde las Variables de Entorno
+    api_key = os.getenv("API_FOOTBALL_KEY")
+    headers = {'x-apisports-key': api_key}
 
     try:
         response = requests.get(url, headers=headers, params=querystring)
@@ -144,10 +147,13 @@ def obtener_predicciones_api():
         })
         identificador += 1
 
-    # GUARDAR EN CACHÉ
+    # GUARDAR EN CACHÉ (Blindado)
     if resultados_para_react:
-        with open(archivo_cache, "w", encoding="utf-8") as f:
-            json.dump({"partidos": resultados_para_react}, f, indent=4)
+        try:
+            with open(archivo_cache, "w", encoding="utf-8") as f:
+                json.dump({"partidos": resultados_para_react}, f, indent=4)
+        except Exception as e:
+            print(f"Error guardando caché temporal: {e}")
             
     return resultados_para_react
 
