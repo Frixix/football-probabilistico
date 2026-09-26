@@ -8,7 +8,7 @@ app = FastAPI(title="Football API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], 
+    allow_origins=["*"],  # Permite conexiones desde cualquier origen (incluyendo tu frontend en Vercel)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
