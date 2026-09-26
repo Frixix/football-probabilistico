@@ -21,7 +21,8 @@ def obtener_predicciones_api():
     
     # 📁 Usamos la carpeta temporal del sistema para evitar errores de solo lectura en Vercel
     archivo_cache = os.path.join(tempfile.gettempdir(), "partidos_cache.json")
-    hoy_dia = datetime.now().strftime("%Y-%m-%d")
+    # Obligamos al servidor a calcular la fecha exacta de Colombia (UTC -5)
+    hoy_dia = (datetime.utcnow() - timedelta(hours=5)).strftime("%Y-%m-%d")
 
     # 1. SISTEMA DE CACHÉ
     if os.path.exists(archivo_cache):
