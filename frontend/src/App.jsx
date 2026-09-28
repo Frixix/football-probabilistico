@@ -1,69 +1,72 @@
-import { useState, useEffect } from 'react'
-import MatchList from './components/MatchList'
-import BetSlip from './components/BetSlip'
-import './App.css'
+import { useState } from 'react';
+import MatchList from './components/MatchList';
+import BetSlip from './components/BetSlip';
+import { usePartidos } from './hooks/usePartidos'; // Importamos nuestro nuevo hook profesional
+import './App.css';
 
 function App() {
-  const [partidos, setPartidos] = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [ticket, setTicket] = useState([])
-
-  useEffect(() => {
-    const pedirDatosAPython = async () => {
-      try {
-        // Hacemos la petición real a nuestra API de Python (FastAPI)
-        const response = await fetch("https://football-probabilistico.vercel.app/api/partidos");
-        const datosReales = await response.json();
-        
-        setPartidos(datosReales);
-      } catch (error) {
-        console.error("Error conectando con Python:", error);
-      } finally {
-        setCargando(false);
-      }
-    };
-    
-    pedirDatosAPython();
-  }, []);
+  // Lógica separada y limpia
+  const { partidos, cargando, error } = usePartidos();
+  const [ticket, setTicket] = useState([]);
 
   const agregarAlTicket = (partido) => {
-    const yaExiste = ticket.find(item => item.id === partido.id);
-    if (!yaExiste) {
+    if (!ticket.find(item => item.id === partido.id)) {
       setTicket([...ticket, partido]);
     }
   };
-
-  // NUEVA FUNCIÓN: Filtra el array para dejar todos los partidos excepto el que queremos borrar
-  const removerDelTicket = (id) => {
-    setTicket(ticket.filter(item => item.id !== id));
-  };
-
-  // NUEVA FUNCIÓN: Vacía el array completamente
-  const limpiarTicket = () => {
-    setTicket([]);
-  };
+  const removerDelTicket = (id) => setTicket(ticket.filter(item => item.id !== id));
+  const limpiarTicket = () => setTicket([]);
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1> Dashboard de Probabilidades</h1>
-      <hr style={{ marginBottom: '20px' }} />
-
-      {cargando ? (
-        <p> Calculando predicciones con el modelo de Poisson...</p>
-      ) : (
-        <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
-          <MatchList partidos={partidos} onAddTicket={agregarAlTicket} />
+    <div className="app-container">
+      
+      {/* 1. EL BANNER PREMIUM (HERO SECTION) */}
+      <header className="hero-banner">
+        <div className="hero-content">
+          <h1 className="hero-title">
+            Poisson Predictor <span className="badge">PRO</span>
+          </h1>
+          <p className="hero-subtitle">Dashboard Estadístico de Probabilidades Deportivas</p>
           
-          {/* Pasamos las nuevas funciones al BetSlip */}
-          <BetSlip 
-            ticket={ticket} 
-            onRemove={removerDelTicket} 
-            onClear={limpiarTicket} 
-          />
+          {/* Indicadores Clave (KPIs) */}
+          <div className="kpi-container">
+            <div className="kpi-card">
+              <span className="kpi-value">{partidos.length}</span>
+              <span className="kpi-label">Partidos Analizados</span>
+            </div>
+            <div className="kpi-card">
+              <span className="kpi-value">Live</span>
+              <span className="kpi-label">Estado del Sistema</span>
+            </div>
+            <div className="kpi-card">
+              <span className="kpi-value">5</span>
+              <span className="kpi-label">Mercados Habilitados</span>
+            </div>
+          </div>
         </div>
-      )}
+      </header>
+
+      {/* 2. EL CONTENIDO PRINCIPAL */}
+      <main className="main-content">
+        {error && <div className="error-msg">⚠️ Error de conexión: {error}</div>}
+        
+        {cargando ? (
+          <div className="loader">Generando matriz de Poisson...</div>
+        ) : (
+          <div className="dashboard-grid">
+            <section className="matches-section">
+              <MatchList partidos={partidos} onAddTicket={agregarAlTicket} />
+            </section>
+            
+            <aside className="betslip-section">
+              <BetSlip ticket={ticket} onRemove={removerDelTicket} onClear={limpiarTicket} />
+            </aside>
+          </div>
+        )}
+      </main>
+      
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
