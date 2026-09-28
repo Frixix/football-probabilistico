@@ -340,3 +340,13 @@ body {
   color: #022c22;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
+/* --- ESTILOS PARA LOS SVG --- */
+.svg-icon {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.accent-icon {
+  color: var(--accent);
+}
