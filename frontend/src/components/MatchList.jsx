@@ -13,7 +13,6 @@ export default function MatchList({ partidos, onAddTicket }) {
     return `${hora}:${min} ${ampm}`;
   };
 
-  // NUEVO: Traductor automático para limpiar el formato de la API
   const traducirPais = (paisAPI) => {
     if (!paisAPI) return "Global";
     const p = paisAPI.trim();
@@ -39,20 +38,20 @@ export default function MatchList({ partidos, onAddTicket }) {
       "Ivory-Coast": "Costa de Marfil"
     };
 
-    // Si está en el diccionario lo traduce. Si no, elimina los guiones para que se vea limpio.
     return traducciones[p] || p.replace(/-/g, ' ');
   };
 
+  // EL CEREBRO DE PRIORIDADES (SISTEMA DE 5 NIVELES)
   const obtenerPrioridad = (nombreTorneo, paisAPI) => {
     const t = nombreTorneo.toLowerCase();
     const p = paisAPI.toLowerCase();
 
-    // Top 10 - Prioridades exactas
+    // 🥇 NIVEL 1: Tu Tabla Top Exacta (Máxima Prioridad)
     if (p === "colombia") {
       if (t.includes("primera a") || t.includes("betplay")) return 1;
       if (t.includes("copa colombia")) return 2;
       if (t.includes("primera b")) return 12;
-      return 13;
+      return 13; // Otras ligas de Colombia
     }
     if (t.includes("champions league")) return 3;
     if (t.includes("premier league") && p === "england") return 4;
@@ -64,9 +63,31 @@ export default function MatchList({ partidos, onAddTicket }) {
     if (t.includes("ligue 1") && p === "france") return 10;
     if (t.includes("mls") || t.includes("major league soccer")) return 11;
 
-    // Reducimos drásticamente la prioridad de "World" para que baje en la lista general
-    if (p === "world") return 50;
+    // 🥈 NIVEL 2: Potencias de Sudamérica y Concacaf (Muy Relevante para Colombia)
+    if (p === "argentina") return 20;
+    if (p === "brazil") return 21;
+    if (p === "mexico") return 22;
+    if (p === "uruguay") return 23;
+    if (p === "chile") return 24;
+    if (p === "ecuador") return 25;
+    if (p === "peru") return 26;
+    if (p === "paraguay") return 27;
+    if (p === "bolivia") return 28;
+    if (p === "venezuela") return 29;
 
+    // 🥉 NIVEL 3: Resto de Europa Relevante (Segundas divisiones de potencias y países vecinos)
+    if (p === "portugal") return 30;
+    if (p === "netherlands") return 31;
+    if (p === "england") return 32; 
+    if (p === "spain") return 33; 
+    if (p === "italy") return 34; 
+    if (p === "germany") return 35; 
+    if (p === "france") return 36; 
+
+    // 🏅 NIVEL 4: Torneos Internacionales (Selecciones, Amistosos)
+    if (p === "world" || t.includes("friendlies") || t.includes("qualification")) return 40;
+
+    // 🌎 NIVEL 5: Resto del Mundo (Bután, Noruega, Grecia, Irán, etc. van al fondo)
     return 99; 
   };
 
