@@ -81,6 +81,10 @@ def obtener_predicciones_api():
         visitante = p["teams"]["away"]["name"]
         torneo = p["league"]["name"]
         
+        # NUEVO: Extraer país y bandera directamente de la API
+        pais = p["league"].get("country", "Mundo")
+        bandera = p["league"].get("flag", "")
+        
         # CLASIFICACIÓN DE ESTADO PARA EL SEMÁFORO
         estado_short = p["fixture"]["status"]["short"]
         if estado_short == "NS":
@@ -142,6 +146,8 @@ def obtener_predicciones_api():
             "tipo": mejor_opcion["tipo"],
             "fecha": fecha_str,
             "torneo": torneo,
+            "pais": pais,         # ENVIAMOS EL PAÍS REAL
+            "bandera": bandera,   # ENVIAMOS EL SVG OFICIAL DE LA API
             "hora": hora_str,
             "estado_texto": estado_texto,
             "estado_clase": estado_clase
@@ -164,19 +170,22 @@ def obtener_predicciones_api():
                 "id": 991, "local": "Arsenal", "visitante": "Liverpool", 
                 "mercado": "Ambos Marcan: Sí", "prob": 82.5, "tipo": "btts", 
                 "fecha": hoy_dia, "torneo": "Premier League (Prueba)", "hora": "15:00", 
-                "estado_texto": "En Vivo", "estado_clase": "estado-amarillo" 
+                "estado_texto": "En Vivo", "estado_clase": "estado-amarillo",
+                "pais": "England", "bandera": "https://media.api-sports.io/flags/gb.svg"
             },
             { 
                 "id": 992, "local": "Millonarios", "visitante": "Nacional", 
                 "mercado": "Gana Millonarios", "prob": 65.0, "tipo": "1x2", 
                 "fecha": hoy_dia, "torneo": "Liga BetPlay (Prueba)", "hora": "20:00", 
-                "estado_texto": "No Iniciado", "estado_clase": "estado-verde" 
+                "estado_texto": "No Iniciado", "estado_clase": "estado-verde",
+                "pais": "Colombia", "bandera": "https://media.api-sports.io/flags/co.svg"
             },
             { 
                 "id": 993, "local": "Boca Juniors", "visitante": "River Plate", 
                 "mercado": "Menos de 2.5 Goles", "prob": 70.1, "tipo": "goles", 
                 "fecha": hoy_dia, "torneo": "Liga Argentina (Prueba)", "hora": "18:00", 
-                "estado_texto": "Terminado", "estado_clase": "estado-rojo" 
+                "estado_texto": "Terminado", "estado_clase": "estado-rojo",
+                "pais": "Argentina", "bandera": "https://media.api-sports.io/flags/ar.svg"
             }
         ]
 
