@@ -386,3 +386,71 @@ body {
   font-weight: 700;
   margin-left: 8px;
 }
+
+/* --- OPTIMIZACIÓN EXTREMA PARA CELULARES (MOBILE UX) --- */
+@media (max-width: 600px) {
+  /* 1. Reducir el tamaño del banner para ahorrar espacio */
+  .hero-banner {
+    padding: 2rem 1rem 1.5rem 1rem;
+  }
+  
+  .hero-title {
+    font-size: 1.8rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* 2. Transformar los KPIs en barras horizontales inteligentes */
+  .kpi-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .kpi-card {
+    width: 100%;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between; /* El número a la izquierda, el texto a la derecha */
+    align-items: center;
+    box-sizing: border-box;
+  }
+  
+  .kpi-value {
+    font-size: 1.5rem;
+  }
+  
+  .kpi-label {
+    margin-top: 0;
+    text-align: right;
+  }
+  
+  /* 3. Ajustar márgenes del contenido principal */
+  .main-content {
+    padding: 1rem;
+  }
+  
+  /* 4. Cabeceras del acordeón más compactas */
+  .tournament-header {
+    padding: 0.8rem 1rem;
+  }
+  
+  .tournament-title h3 {
+    font-size: 0.95rem;
+  }
+  
+  /* 5. Forzar una sola columna perfecta para los partidos */
+  .matches-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  
+  /* 6. Separación visual del Ticket de Apuesta al fondo de la pantalla */
+  .betslip-section {
+    margin-top: 2rem;
+    border-top: 2px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 2rem;
+  }
+}
