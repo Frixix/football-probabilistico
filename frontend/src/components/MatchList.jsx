@@ -13,18 +13,49 @@ export default function MatchList({ partidos, onAddTicket }) {
     return `${hora}:${min} ${ampm}`;
   };
 
-  // 1. SOLO ORDEN DE PRIORIDAD (La API ya nos da la información exacta)
-  const obtenerPrioridad = (nombreTorneo, pais) => {
+  // NUEVO: Traductor automático para limpiar el formato de la API
+  const traducirPais = (paisAPI) => {
+    if (!paisAPI) return "Global";
+    const p = paisAPI.trim();
+
+    const traducciones = {
+      "World": "Internacional",
+      "England": "Inglaterra",
+      "Spain": "España",
+      "Germany": "Alemania",
+      "France": "Francia",
+      "Italy": "Italia",
+      "Brazil": "Brasil",
+      "Mexico": "México",
+      "Japan": "Japón",
+      "South-Korea": "Corea del Sur",
+      "Netherlands": "Países Bajos",
+      "USA": "EE. UU.",
+      "United-Arab-Emirates": "Emiratos Árabes",
+      "Costa-Rica": "Costa Rica",
+      "Burkina-Faso": "Burkina Faso",
+      "New-Zealand": "Nueva Zelanda",
+      "Saudi-Arabia": "Arabia Saudita",
+      "Ivory-Coast": "Costa de Marfil"
+    };
+
+    // Si está en el diccionario lo traduce. Si no, elimina los guiones para que se vea limpio.
+    return traducciones[p] || p.replace(/-/g, ' ');
+  };
+
+  const obtenerPrioridad = (nombreTorneo, paisAPI) => {
     const t = nombreTorneo.toLowerCase();
-    const p = pais.toLowerCase();
-    
+    const p = paisAPI.toLowerCase();
+
+    // Top 10 - Prioridades exactas
     if (p === "colombia") {
       if (t.includes("primera a") || t.includes("betplay")) return 1;
       if (t.includes("copa colombia")) return 2;
       if (t.includes("primera b")) return 12;
+      return 13;
     }
     if (t.includes("champions league")) return 3;
-    if (t.includes("premier league")) return 4;
+    if (t.includes("premier league") && p === "england") return 4;
     if (t.includes("la liga") || (t.includes("primera division") && p === "spain")) return 5;
     if (t.includes("libertadores")) return 6;
     if (t.includes("serie a") && p === "italy") return 7;
@@ -33,25 +64,28 @@ export default function MatchList({ partidos, onAddTicket }) {
     if (t.includes("ligue 1") && p === "france") return 10;
     if (t.includes("mls") || t.includes("major league soccer")) return 11;
 
-    if (p === "world" || t.includes("friendlies") || t.includes("qualification")) return 15;
+    // Reducimos drásticamente la prioridad de "World" para que baje en la lista general
+    if (p === "world") return 50;
+
     return 99; 
   };
 
   const torneosAgrupados = useMemo(() => {
     const grupos = {};
     partidos.forEach(partido => {
-      // Tomamos el país y bandera exactos desde el Backend
       const nombreLiga = partido.torneo;
-      const nombrePais = partido.pais || "Mundo";
+      const paisAPI = partido.pais || "Mundo";
       const bandera = partido.bandera;
-      const prioridad = obtenerPrioridad(nombreLiga, nombrePais);
       
-      const keyUnica = `${nombrePais}-${nombreLiga}`; 
+      const prioridad = obtenerPrioridad(nombreLiga, paisAPI);
+      const nombrePaisLimpio = traducirPais(paisAPI);
+      
+      const keyUnica = `${nombrePaisLimpio}-${nombreLiga}`; 
       
       if (!grupos[keyUnica]) {
         grupos[keyUnica] = { 
           nombreLiga,
-          nombrePais,
+          nombrePais: nombrePaisLimpio,
           bandera,
           partidos: [], 
           prioridad 
@@ -90,7 +124,6 @@ export default function MatchList({ partidos, onAddTicket }) {
               onClick={() => toggleLiga(torneoKey)}
             >
               <div className="tournament-title">
-                {/* Renderiza el SVG oficial si existe, o un ícono genérico mundial */}
                 {grupo.bandera ? (
                   <img 
                     src={grupo.bandera} 
