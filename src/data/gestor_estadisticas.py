@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import time
 
 class GestorEstadisticas:
     def __init__(self, api_key):
@@ -26,18 +27,25 @@ class GestorEstadisticas:
     def obtener_mu_esperado(self, id_liga, temporada, local, visitante):
         llave_liga = f"{id_liga}_{temporada}"
         
-        # Si no tenemos la liga guardada, la buscamos
+        # Si NO tenemos la liga en nuestra base temporal, la descargamos
         if llave_liga not in self.cache:
-            print(f"📥 Descargando estadísticas reales de la liga {id_liga} (1 Token gastado)...")
+            print(f"📥 Descargando estadísticas reales de la liga {id_liga}...")
             url = "https://v3.football.api-sports.io/standings"
             params = {"league": id_liga, "season": temporada}
             headers = {'x-apisports-key': self.api_key}
             
-            datos_liga = {} # Inicializamos vacío por defecto
-            
             try:
                 res = requests.get(url, headers=headers, params=params).json()
-                # Verificamos que tenga respuesta y standings (Los amistosos/copas a veces no tienen)
+                
+                # 🛑 PROTECCIÓN TOTAL: Detecta límite de velocidad O límite diario
+                if res.get("errors"):
+                    print(f"🚨 Error API en liga {id_liga}: {res['errors']}")
+                    # Pausa breve por si es rate limit (10 peticiones/minuto)
+                    time.sleep(2)
+                    # Retorna Plan B (52.6%), pero NO guarda nada en el JSON para poder reintentar luego
+                    return {"mu_local": 1.4, "mu_visitante": 1.2} 
+
+                datos_liga = {}
                 if "response" in res and len(res["response"]) > 0:
                     liga_data = res["response"][0]["league"]
                     if "standings" in liga_data and len(liga_data["standings"]) > 0:
@@ -49,16 +57,23 @@ class GestorEstadisticas:
                                 gf = equipo["all"]["goals"]["for"] / partidos
                                 gc = equipo["all"]["goals"]["against"] / partidos
                                 datos_liga[nombre] = {"gf": gf, "gc": gc}
+                
+                # Solo guardamos en caché si la respuesta fue exitosa (así sea una copa sin tabla)
+                self.cache[llave_liga] = datos_liga
+                self._guardar_cache()
+                
+                # Pausa de 1 segundo entre descargas exitosas para no estresar la API
+                time.sleep(1)
+
             except Exception as e:
-                print(f"⚠️ Error obteniendo liga {id_liga}: {e}")
+                print(f"⚠️ Error crítico en liga {id_liga}: {e}")
+                # Plan B sin dañar el caché
+                return {"mu_local": 1.4, "mu_visitante": 1.2} 
                 
-            # 🛑 EL FIX: Guardamos en caché SIEMPRE, incluso si la liga estaba vacía o hubo error. 
-            # Así el código aprende y NO vuelve a gastar tokens intentando descargarla.
-            self.cache[llave_liga] = datos_liga
-            self._guardar_cache()
-                
-        # Calculamos MU
+        # Si la liga SI está en la base de datos temporal, la lee instantáneo (Costo: 0 tokens)
         liga_stats = self.cache.get(llave_liga, {})
+        
+        # Valores por defecto si la liga está guardada pero no tiene datos de esos equipos en específico
         stats_local = liga_stats.get(local, {"gf": 1.3, "gc": 1.3})
         stats_visitante = liga_stats.get(visitante, {"gf": 1.1, "gc": 1.5})
         
