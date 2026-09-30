@@ -8,17 +8,24 @@ export const usePartidos = () => {
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        const response = await fetch("https://football-probabilistico.vercel.app/api/partidos");
-        if (!response.ok) throw new Error("Error en la respuesta del servidor");
+        // 🔥 AQUÍ ESTÁ LA MAGIA: Apuntamos al nuevo servidor Python
+        const response = await fetch('http://127.0.0.1:8000/api/predicciones');
+        
+        if (!response.ok) {
+          throw new Error('Error en la respuesta del servidor');
+        }
+        
         const data = await response.json();
-        setPartidos(data);
+        
+        // FastAPI nos devuelve un objeto { partidos: [...] }
+        setPartidos(data.partidos || []);
       } catch (err) {
         setError(err.message);
       } finally {
         setCargando(false);
       }
     };
-    
+
     fetchPartidos();
   }, []);
 
