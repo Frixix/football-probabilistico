@@ -1,4 +1,4 @@
-import tempfile
+import time
 import requests
 import json
 import os
@@ -36,10 +36,11 @@ def validar_resultados_historicos():
         return
 
     try:
+        # LÍMITE DE 5 PARA PROTEGER LA API GRATUITA
         respuesta = supabase.table("historial_predicciones")\
             .select("*")\
             .is_("fue_acierto", "null")\
-            .limit(50)\
+            .limit(5)\
             .execute()
         
         partidos_pendientes = respuesta.data
@@ -47,7 +48,7 @@ def validar_resultados_historicos():
             print("✅ No hay partidos pendientes por evaluar.")
             return
             
-        print(f"🔄 Se encontraron {len(partidos_pendientes)} partidos para evaluar.")
+        print(f"🔄 Se encontraron {len(partidos_pendientes)} partidos para evaluar. (Protección de tokens activada)")
 
         for partido in partidos_pendientes:
             id_partido = partido["id_partido"]
@@ -59,6 +60,7 @@ def validar_resultados_historicos():
             try:
                 res_api = requests.get(url, headers=headers).json()
                 if not res_api.get("response"):
+                    time.sleep(1) # Dormir si la API rechaza
                     continue
                     
                 datos_reales = res_api["response"][0]
@@ -109,6 +111,9 @@ def validar_resultados_historicos():
                     print(f"Marcador guardado: {partido['local']} {goles_local} - {goles_visitante} {partido['visitante']} | ¿Acierto? {fue_acierto}")
             except Exception as e:
                 print(f"Error procesando validación del partido {id_partido}: {e}")
+            
+            # PAUSA DE 1 SEGUNDO PARA NO BLOQUEAR LA API DE FÚTBOL
+            time.sleep(1)
                 
     except Exception as e:
         print(f"Error consultando Supabase para validación: {e}")
@@ -135,7 +140,7 @@ def obtener_predicciones_api():
         except Exception:
             pass 
 
-    print("🌐 Conectando a API-Football...")
+    print("🌐 Conectando a API-Football para partidos de hoy...")
     url = "https://v3.football.api-sports.io/fixtures"
     
     querystring = {
