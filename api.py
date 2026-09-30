@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from main import obtener_predicciones_api  # Aquí importamos tu salvavidas de main.py
+from main import obtener_predicciones_api
 
-app = FastAPI()
+app = FastAPI(title="Poisson Predictor API")
 
-# Permisos para que el Frontend (React) pueda hablar con este Backend
+# Configuración de CORS para que React pueda conectarse sin bloqueos
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,7 +13,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/partidos")
-def partidos():
-    # Ejecuta tu código de main.py y devuelve el resultado
-    return obtener_predicciones_api()
+@app.get("/")
+def read_root():
+    return {"estado": "En línea", "mensaje": "API de Poisson Predictor conectada"}
+
+@app.get("/api/predicciones")
+def get_predicciones():
+    # Llama a la función matemática en main.py y guarda en Supabase
+    resultados = obtener_predicciones_api()
+    return {"partidos": resultados}
