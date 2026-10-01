@@ -12,7 +12,7 @@ api_estadisticas = os.getenv("API_KEY_ESTADISTICAS")
 print("--- INICIANDO BODEGA NOCTURNA ---")
 hoy_dia = (datetime.utcnow() - timedelta(hours=5)).strftime("%Y-%m-%d")
 
-# 1. Ver qué ligas juegan hoy (Gasta 1 token de la cuenta 1)
+# 1. Ver ligas de hoy (Cuenta 1)
 url = "https://v3.football.api-sports.io/fixtures"
 res = requests.get(url, headers={'x-apisports-key': api_partidos}, params={"date": hoy_dia, "timezone": "America/Bogota"}).json()
 
@@ -22,10 +22,9 @@ for p in res.get("response", []):
 
 print(f"Ligas únicas encontradas para hoy: {len(ligas_hoy)}")
 
-# 2. Descargar las tablas de esas ligas (Gasta tokens de la cuenta 2)
+# 2. Descargar tablas (Cuenta 2)
 gestor = GestorEstadisticas(api_estadisticas)
 for id_liga, temporada in ligas_hoy:
-    # Esto fuerza al gestor a descargar y guardar la liga si no la tiene
     gestor.obtener_mu_esperado(id_liga, temporada, "EquipoA", "EquipoB")
 
 print("✅ ¡Bodega llena! Base de datos local actualizada.")

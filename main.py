@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# NUEVA IMPORTACIÓN: Nuestro Gestor inteligente
+# Importaciones locales
 from src.data.gestor_estadisticas import GestorEstadisticas
 from src.models.poisson import (
     generar_matriz_partido,
@@ -15,12 +15,14 @@ from src.models.poisson import (
     calcular_probabilidades_btts
 )
 
-# 1. Cargar variables de entorno del archivo .env
+# 1. Cargar variables de entorno
 load_dotenv()
 
-# 2. Conectar a Supabase ANTES de cualquier función
+# 2. Conectar a Supabase y cargar llaves
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+API_KEY_PARTIDOS = os.getenv("API_KEY_PARTIDOS")
+API_KEY_ESTADISTICAS = os.getenv("API_KEY_ESTADISTICAS")
 
 if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -36,7 +38,7 @@ def validar_resultados_historicos():
         return
 
     try:
-        # LÍMITE DE 5 PARA PROTEGER LA API GRATUITA
+        # Límite de 5 para proteger la API de partidos
         respuesta = supabase.table("historial_predicciones")\
             .select("*")\
             .is_("fue_acierto", "null")\
@@ -50,17 +52,18 @@ def validar_resultados_historicos():
             
         print(f"🔄 Se encontraron {len(partidos_pendientes)} partidos para evaluar. (Protección de tokens activada)")
 
+        headers = {'x-apisports-key': API_KEY_PARTIDOS}
+
         for partido in partidos_pendientes:
             id_partido = partido["id_partido"]
             prediccion = partido["mercado_predicho"]
             
             url = f"https://v3.football.api-sports.io/fixtures?id={id_partido}"
-            headers = {'x-apisports-key': "dbb9e71d4b3320ceca52a903fd3c5bc8"}
             
             try:
                 res_api = requests.get(url, headers=headers).json()
                 if not res_api.get("response"):
-                    time.sleep(1) # Dormir si la API rechaza
+                    time.sleep(1)
                     continue
                     
                 datos_reales = res_api["response"][0]
@@ -112,8 +115,7 @@ def validar_resultados_historicos():
             except Exception as e:
                 print(f"Error procesando validación del partido {id_partido}: {e}")
             
-            # PAUSA DE 1 SEGUNDO PARA NO BLOQUEAR LA API DE FÚTBOL
-            time.sleep(1)
+            time.sleep(1) # Pausa para proteger API
                 
     except Exception as e:
         print(f"Error consultando Supabase para validación: {e}")
@@ -123,7 +125,7 @@ def simular_partido_real():
     pass
 
 def obtener_predicciones_api():
-    print("\n--- INICIANDO CÁLCULO DE API (MODO DESARROLLO / BLINDADO) ---")
+    print("\n--- INICIANDO CÁLCULO DE API (SISTEMA DE DOBLE LLAVE) ---")
     
     validar_resultados_historicos()
     
@@ -148,21 +150,20 @@ def obtener_predicciones_api():
         "timezone": "America/Bogota"
     }
     
-    api_key = "dbb9e71d4b3320ceca52a903fd3c5bc8"
-    headers = {'x-apisports-key': api_key}
+    headers_partidos = {'x-apisports-key': API_KEY_PARTIDOS}
 
     try:
-        response = requests.get(url, headers=headers, params=querystring)
+        response = requests.get(url, headers=headers_partidos, params=querystring)
         datos_api = response.json()
         if not datos_api.get("response"):
-            print("🚨 ALERTA API-FOOTBALL:", datos_api)
+            print("🚨 ALERTA API-FOOTBALL (Partidos):", datos_api)
         partidos_reales = datos_api.get("response", [])
     except Exception as e:
-        print(f"Error conectando a la API: {e}")
+        print(f"Error conectando a la API de partidos: {e}")
         partidos_reales = []
 
-    print("📊 Inicializando Gestor de Estadísticas Reales...")
-    gestor = GestorEstadisticas(api_key)
+    print("📊 Inicializando Gestor de Estadísticas Reales (Segunda Llave)...")
+    gestor = GestorEstadisticas(API_KEY_ESTADISTICAS)
 
     resultados_para_react = []
     identificador = 1
@@ -174,7 +175,6 @@ def obtener_predicciones_api():
         pais = p["league"].get("country", "Mundo")
         bandera = p["league"].get("flag", "")
         
-        # DATOS CLAVE PARA BUSCAR ESTADÍSTICAS REALES
         id_liga = p["league"]["id"]
         temporada = p["league"]["season"]
         
@@ -205,7 +205,6 @@ def obtener_predicciones_api():
             hora_str = "TBD"
             fecha_db = hoy_dia
 
-        # CONSEGUIMOS MU REAL DE LA LIGA ACTUAL
         esperados = gestor.obtener_mu_esperado(id_liga, temporada, local, visitante)
         mu_l = esperados["mu_local"]
         mu_v = esperados["mu_visitante"]
@@ -238,6 +237,13 @@ def obtener_predicciones_api():
                     "probabilidad": float(mejor_opcion["prob"])
                 }
                 supabase.table("historial_predicciones").upsert(registro_db).execute()
+                
+                # LIMITAR A 50 REGISTROS (Rotación FIFO)
+                historial = supabase.table("historial_predicciones").select("id_partido").execute()
+                if len(historial.data) > 50:
+                    id_mas_viejo = historial.data[0]["id_partido"]
+                    supabase.table("historial_predicciones").delete().eq("id_partido", id_mas_viejo).execute()
+                    
             except Exception as error_db:
                 print(f"Error guardando en Supabase el partido {local}: {error_db}")
 
@@ -260,6 +266,7 @@ def obtener_predicciones_api():
 
     if resultados_para_react:
         try:
+            os.makedirs("data", exist_ok=True)
             with open(archivo_cache, "w", encoding="utf-8") as f:
                 json.dump({"partidos": resultados_para_react}, f, indent=4)
         except Exception as e:
