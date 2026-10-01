@@ -1,0 +1,33 @@
+name: Actualizacion Bodega Nocturna
+
+on:
+  schedule:
+    # 08:00 UTC = 03:00 AM Hora Colombia
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Este comando nos permite un botón para probarlo manualmente
+
+jobs:
+  llenar-bodega:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar librerías
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ejecutar script de Bodega
+        env:
+          API_KEY_PARTIDOS: ${{ secrets.API_KEY_PARTIDOS }}
+          API_KEY_ESTADISTICAS: ${{ secrets.API_KEY_ESTADISTICAS }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python bodega.py
