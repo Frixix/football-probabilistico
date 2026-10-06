@@ -8,23 +8,23 @@ export const usePartidos = () => {
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        // 🔥 El '.trim()' elimina cualquier espacio o salto de línea invisible
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
         const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
         if (!supabaseUrl || !supabaseKey) {
-          throw new Error("Faltan las variables de entorno en Vercel.");
+          throw new Error("Faltan las variables de entorno.");
         }
 
         const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
         
-        // Construimos la URL limpia
-        const urlFinal = `${supabaseUrl}/rest/v1/historial_predicciones?fecha=eq.${hoy}&select=*`;
-        console.log("🚀 Disparando a:", urlFinal);
+        // 🔥 TRUCO DEFINITIVO: Pegamos la llave de acceso (?apikey=...) directamente al final de la URL
+        const urlFinal = `${supabaseUrl}/rest/v1/historial_predicciones?fecha=eq.${hoy}&select=*&apikey=${supabaseKey}`;
+        
+        console.log("🚀 Disparando URL blindada");
 
         const response = await fetch(urlFinal, {
           headers: {
-            'apikey': supabaseKey,
+            // Mantenemos el Authorization por protocolo estándar de Supabase
             'Authorization': `Bearer ${supabaseKey}`,
             'Content-Type': 'application/json'
           }
@@ -32,7 +32,7 @@ export const usePartidos = () => {
         
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
-          throw new Error(`Supabase rechazó la petición: ${errData.error || errData.message || 'Error Desconocido'}`);
+          throw new Error(`Error: ${errData.message || response.statusText}`);
         }
         
         const data = await response.json();
