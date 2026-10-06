@@ -8,20 +8,21 @@ export const usePartidos = () => {
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-        // 🚨 DETECTOR PARA LA CONSOLA
-        console.log("🔍 URL de Supabase:", supabaseUrl);
-        console.log("🔑 Llave Anon:", supabaseKey ? "¡Sí hay llave!" : "VACÍA / UNDEFINED");
+        // 🔥 El '.trim()' elimina cualquier espacio o salto de línea invisible
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
         if (!supabaseUrl || !supabaseKey) {
-          throw new Error("Faltan las variables de entorno en Vercel. Revisa los nombres.");
+          throw new Error("Faltan las variables de entorno en Vercel.");
         }
 
         const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+        
+        // Construimos la URL limpia
+        const urlFinal = `${supabaseUrl}/rest/v1/historial_predicciones?fecha=eq.${hoy}&select=*`;
+        console.log("🚀 Disparando a:", urlFinal);
 
-        const response = await fetch(`${supabaseUrl}/rest/v1/historial_predicciones?fecha=eq.${hoy}&select=*`, {
+        const response = await fetch(urlFinal, {
           headers: {
             'apikey': supabaseKey,
             'Authorization': `Bearer ${supabaseKey}`,
@@ -30,8 +31,8 @@ export const usePartidos = () => {
         });
         
         if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(`Supabase rechazó la petición: ${errData.message || response.statusText}`);
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(`Supabase rechazó la petición: ${errData.error || errData.message || 'Error Desconocido'}`);
         }
         
         const data = await response.json();
