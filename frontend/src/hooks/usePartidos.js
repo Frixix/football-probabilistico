@@ -8,28 +8,33 @@ export const usePartidos = () => {
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        // 1. Traemos las llaves secretas que guardaste en Vercel (y que Vite permite leer)
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-        // 2. Calculamos la fecha de hoy en hora de Colombia (YYYY-MM-DD)
+        // 🚨 DETECTOR PARA LA CONSOLA
+        console.log("🔍 URL de Supabase:", supabaseUrl);
+        console.log("🔑 Llave Anon:", supabaseKey ? "¡Sí hay llave!" : "VACÍA / UNDEFINED");
+
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error("Faltan las variables de entorno en Vercel. Revisa los nombres.");
+        }
+
         const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
 
-        // 3. 🔥 AQUÍ ESTÁ LA NUEVA MAGIA: Vamos directo a tu tabla en Supabase
         const response = await fetch(`${supabaseUrl}/rest/v1/historial_predicciones?fecha=eq.${hoy}&select=*`, {
           headers: {
             'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json'
           }
         });
         
         if (!response.ok) {
-          throw new Error('Error en la respuesta de Supabase');
+          const errData = await response.json();
+          throw new Error(`Supabase rechazó la petición: ${errData.message || response.statusText}`);
         }
         
         const data = await response.json();
-        
-        // Supabase nos devuelve directamente la lista de partidos en un arreglo [ {...}, {...} ]
         setPartidos(data || []);
       } catch (err) {
         setError(err.message);
