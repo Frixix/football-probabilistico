@@ -8,17 +8,29 @@ export const usePartidos = () => {
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        // 🔥 AQUÍ ESTÁ LA MAGIA: Apuntamos al nuevo servidor Python
-        const response = await fetch('http://127.0.0.1:8000/api/predicciones');
+        // 1. Traemos las llaves secretas que guardaste en Vercel (y que Vite permite leer)
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        // 2. Calculamos la fecha de hoy en hora de Colombia (YYYY-MM-DD)
+        const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+
+        // 3. 🔥 AQUÍ ESTÁ LA NUEVA MAGIA: Vamos directo a tu tabla en Supabase
+        const response = await fetch(`${supabaseUrl}/rest/v1/historial_predicciones?fecha=eq.${hoy}&select=*`, {
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`
+          }
+        });
         
         if (!response.ok) {
-          throw new Error('Error en la respuesta del servidor');
+          throw new Error('Error en la respuesta de Supabase');
         }
         
         const data = await response.json();
         
-        // FastAPI nos devuelve un objeto { partidos: [...] }
-        setPartidos(data.partidos || []);
+        // Supabase nos devuelve directamente la lista de partidos en un arreglo [ {...}, {...} ]
+        setPartidos(data || []);
       } catch (err) {
         setError(err.message);
       } finally {
