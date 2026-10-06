@@ -15,7 +15,7 @@ export const usePartidos = () => {
           throw new Error("Faltan las variables de entorno.");
         }
 
-        const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+        const hoy = '2026-10-01';
         
         // 🔥 TRUCO DEFINITIVO: Pegamos la llave de acceso (?apikey=...) directamente al final de la URL
         const urlFinal = `${supabaseUrl}/rest/v1/historial_predicciones?fecha=eq.${hoy}&select=*&apikey=${supabaseKey}`;
