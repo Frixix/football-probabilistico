@@ -149,17 +149,25 @@ export default function MatchList({ partidos, onAddTicket }) {
             {ligasAbiertas[torneoKey] && (
               <div className="matches-grid">
                 {grupo.partidos.map(partido => {
-                  // 🔥 CORRECCIONES CLAVE DE NOMBRES DE COLUMNAS 🔥
-                  const probabilidadReal = partido.probabilidad || 0; // Antes era partido.prob
-                  const probFormateada = probabilidadReal > 1 
-                    ? Number(probabilidadReal).toFixed(1) 
-                    : (Number(probabilidadReal) * 100).toFixed(1);
+                  // 🔥 EXTRACTOR BLINDADO ANTIFALLOS 🔥
+                  let probNum = parseFloat(partido.probabilidad);
+                  
+                  if (isNaN(probNum) || partido.probabilidad === null) {
+                    probNum = 0;
+                  }
+
+                  const probFormateada = probNum > 1 
+                    ? probNum.toFixed(1) 
+                    : (probNum * 100).toFixed(1);
                   
                   const hora12 = formatearHora12(partido.hora || "TBD");
-                  const mercadoReal = partido.mercado_predicho || "Sin Mercado"; // Antes era partido.mercado
-                  const idReal = partido.id_partido || Math.random(); // Antes era partido.id
+                  const mercadoReal = partido.mercado_predicho || "Sin Mercado"; 
+                  const idReal = partido.id_partido || Math.random(); 
                   const estadoClase = partido.estado_clase || "estado-gris";
                   const estadoTexto = partido.estado_texto || "PREVIA";
+
+                  // Detector para la consola por si acaso
+                  console.log(`🔍 Partido ${partido.local}:`, partido);
 
                   return (
                     <div key={idReal} className="match-card glass-card">
@@ -186,7 +194,6 @@ export default function MatchList({ partidos, onAddTicket }) {
                         <div className="market-prob">{probFormateada}%</div>
                       </div>
                       
-                      {/* Usamos el objeto completo para el ticket, pero asegurando que tenga un ID válido */}
                       <button className="btn-add-ticket" onClick={() => onAddTicket({...partido, id: idReal})}>
                         + Añadir al Ticket
                       </button>
