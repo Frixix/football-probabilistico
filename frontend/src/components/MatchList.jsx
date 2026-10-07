@@ -16,42 +16,28 @@ export default function MatchList({ partidos, onAddTicket }) {
   const traducirPais = (paisAPI) => {
     if (!paisAPI) return "Global";
     const p = paisAPI.trim();
-
     const traducciones = {
-      "World": "Internacional",
-      "England": "Inglaterra",
-      "Spain": "España",
-      "Germany": "Alemania",
-      "France": "Francia",
-      "Italy": "Italia",
-      "Brazil": "Brasil",
-      "Mexico": "México",
-      "Japan": "Japón",
-      "South-Korea": "Corea del Sur",
-      "Netherlands": "Países Bajos",
-      "USA": "EE. UU.",
-      "United-Arab-Emirates": "Emiratos Árabes",
-      "Costa-Rica": "Costa Rica",
-      "Burkina-Faso": "Burkina Faso",
-      "New-Zealand": "Nueva Zelanda",
-      "Saudi-Arabia": "Arabia Saudita",
+      "World": "Internacional", "England": "Inglaterra", "Spain": "España",
+      "Germany": "Alemania", "France": "Francia", "Italy": "Italia",
+      "Brazil": "Brasil", "Mexico": "México", "Japan": "Japón",
+      "South-Korea": "Corea del Sur", "Netherlands": "Países Bajos",
+      "USA": "EE. UU.", "United-Arab-Emirates": "Emiratos Árabes",
+      "Costa-Rica": "Costa Rica", "Burkina-Faso": "Burkina Faso",
+      "New-Zealand": "Nueva Zelanda", "Saudi-Arabia": "Arabia Saudita",
       "Ivory-Coast": "Costa de Marfil"
     };
-
     return traducciones[p] || p.replace(/-/g, ' ');
   };
 
-  // EL CEREBRO DE PRIORIDADES (SISTEMA DE 5 NIVELES)
   const obtenerPrioridad = (nombreTorneo, paisAPI) => {
     const t = nombreTorneo.toLowerCase();
     const p = paisAPI.toLowerCase();
 
-    // 🥇 NIVEL 1: Tu Tabla Top Exacta (Máxima Prioridad)
     if (p === "colombia") {
       if (t.includes("primera a") || t.includes("betplay")) return 1;
       if (t.includes("copa colombia")) return 2;
       if (t.includes("primera b")) return 12;
-      return 13; // Otras ligas de Colombia
+      return 13;
     }
     if (t.includes("champions league")) return 3;
     if (t.includes("premier league") && p === "england") return 4;
@@ -63,31 +49,18 @@ export default function MatchList({ partidos, onAddTicket }) {
     if (t.includes("ligue 1") && p === "france") return 10;
     if (t.includes("mls") || t.includes("major league soccer")) return 11;
 
-    // 🥈 NIVEL 2: Potencias de Sudamérica y Concacaf (Muy Relevante para Colombia)
-    if (p === "argentina") return 20;
-    if (p === "brazil") return 21;
-    if (p === "mexico") return 22;
-    if (p === "uruguay") return 23;
-    if (p === "chile") return 24;
-    if (p === "ecuador") return 25;
-    if (p === "peru") return 26;
-    if (p === "paraguay") return 27;
-    if (p === "bolivia") return 28;
-    if (p === "venezuela") return 29;
+    if (p === "argentina") return 20; if (p === "brazil") return 21;
+    if (p === "mexico") return 22; if (p === "uruguay") return 23;
+    if (p === "chile") return 24; if (p === "ecuador") return 25;
+    if (p === "peru") return 26; if (p === "paraguay") return 27;
+    if (p === "bolivia") return 28; if (p === "venezuela") return 29;
 
-    // 🥉 NIVEL 3: Resto de Europa Relevante (Segundas divisiones de potencias y países vecinos)
-    if (p === "portugal") return 30;
-    if (p === "netherlands") return 31;
-    if (p === "england") return 32; 
-    if (p === "spain") return 33; 
-    if (p === "italy") return 34; 
-    if (p === "germany") return 35; 
+    if (p === "portugal") return 30; if (p === "netherlands") return 31;
+    if (p === "england") return 32; if (p === "spain") return 33; 
+    if (p === "italy") return 34; if (p === "germany") return 35; 
     if (p === "france") return 36; 
 
-    // 🏅 NIVEL 4: Torneos Internacionales (Selecciones, Amistosos)
     if (p === "world" || t.includes("friendlies") || t.includes("qualification")) return 40;
-
-    // 🌎 NIVEL 5: Resto del Mundo (Bután, Noruega, Grecia, Irán, etc. van al fondo)
     return 99; 
   };
 
@@ -95,8 +68,8 @@ export default function MatchList({ partidos, onAddTicket }) {
     const grupos = {};
     partidos.forEach(partido => {
       const nombreLiga = partido.torneo;
-      const paisAPI = partido.pais || "Mundo";
-      const bandera = partido.bandera;
+      const paisAPI = partido.pais || "Mundo"; 
+      const bandera = partido.bandera || null; 
       
       const prioridad = obtenerPrioridad(nombreLiga, paisAPI);
       const nombrePaisLimpio = traducirPais(paisAPI);
@@ -176,13 +149,20 @@ export default function MatchList({ partidos, onAddTicket }) {
             {ligasAbiertas[torneoKey] && (
               <div className="matches-grid">
                 {grupo.partidos.map(partido => {
-                  const probFormateada = partido.prob > 1 
-                    ? partido.prob.toFixed(1) 
-                    : (partido.prob * 100).toFixed(1);
-                  const hora12 = formatearHora12(partido.hora);
+                  // 🔥 CORRECCIONES CLAVE DE NOMBRES DE COLUMNAS 🔥
+                  const probabilidadReal = partido.probabilidad || 0; // Antes era partido.prob
+                  const probFormateada = probabilidadReal > 1 
+                    ? Number(probabilidadReal).toFixed(1) 
+                    : (Number(probabilidadReal) * 100).toFixed(1);
+                  
+                  const hora12 = formatearHora12(partido.hora || "TBD");
+                  const mercadoReal = partido.mercado_predicho || "Sin Mercado"; // Antes era partido.mercado
+                  const idReal = partido.id_partido || Math.random(); // Antes era partido.id
+                  const estadoClase = partido.estado_clase || "estado-gris";
+                  const estadoTexto = partido.estado_texto || "PREVIA";
 
                   return (
-                    <div key={partido.id} className="match-card glass-card">
+                    <div key={idReal} className="match-card glass-card">
                       <div className="match-header">
                         <span className="match-time" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -190,8 +170,8 @@ export default function MatchList({ partidos, onAddTicket }) {
                           </svg>
                           {hora12}
                         </span>
-                        <span className={`status-badge ${partido.estado_clase}`}>
-                          {partido.estado_texto}
+                        <span className={`status-badge ${estadoClase}`}>
+                          {estadoTexto}
                         </span>
                       </div>
                       
@@ -202,11 +182,12 @@ export default function MatchList({ partidos, onAddTicket }) {
                       </div>
                       
                       <div className="match-prediction">
-                        <div className="market-name">{partido.mercado}</div>
+                        <div className="market-name">{mercadoReal}</div>
                         <div className="market-prob">{probFormateada}%</div>
                       </div>
                       
-                      <button className="btn-add-ticket" onClick={() => onAddTicket(partido)}>
+                      {/* Usamos el objeto completo para el ticket, pero asegurando que tenga un ID válido */}
+                      <button className="btn-add-ticket" onClick={() => onAddTicket({...partido, id: idReal})}>
                         + Añadir al Ticket
                       </button>
                     </div>
