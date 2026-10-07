@@ -1,6 +1,17 @@
 export default function BetSlip({ ticket, onRemove, onClear }) {
-  const probabilidadTotal = ticket.reduce((acc, partido) => acc * partido.prob, 1);
-  const cuotaFinal = ticket.length > 0 ? (1 / probabilidadTotal) : 0;
+  // 🔥 Matemática blindada: extrae la probabilidad correcta y la pasa a decimal (ej: 65.0 -> 0.65)
+  const probabilidadTotal = ticket.reduce((acc, partido) => {
+    let probNum = parseFloat(partido.probabilidad);
+    if (isNaN(probNum)) probNum = 0;
+    
+    // Convertimos a porcentaje decimal si viene como número entero desde Python
+    let probDecimal = probNum > 1 ? probNum / 100 : probNum;
+    
+    return acc * probDecimal;
+  }, 1);
+
+  // Protegemos la cuota contra divisiones por cero si hay un error
+  const cuotaFinal = ticket.length > 0 && probabilidadTotal > 0 ? (1 / probabilidadTotal) : 0;
 
   const obtenerColorSemaforo = (prob) => {
     if (prob > 0.40) return '#4caf50'; // Verde
@@ -27,21 +38,26 @@ export default function BetSlip({ ticket, onRemove, onClear }) {
       ) : (
         <div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-            {ticket.map(item => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #dee2e6' }}>
-                <div>
-                  <strong style={{ fontSize: '14px', display: 'block' }}>{item.local} vs {item.visitante}</strong>
-                  <span style={{ color: '#6c757d', fontSize: '13px' }}>{item.mercado}</span>
+            {ticket.map(item => {
+              // Ajustamos el nombre para que lea el mercado real de Supabase
+              const mercadoReal = item.mercado_predicho || "Sin Mercado";
+              
+              return (
+                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '10px', borderRadius: '6px', border: '1px solid #dee2e6' }}>
+                  <div>
+                    <strong style={{ fontSize: '14px', display: 'block' }}>{item.local} vs {item.visitante}</strong>
+                    <span style={{ color: '#6c757d', fontSize: '13px' }}>{mercadoReal}</span>
+                  </div>
+                  <button 
+                    onClick={() => onRemove(item.id)}
+                    style={{ background: '#ff4d4f', color: '#fff', border: 'none', borderRadius: '4px', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                    title="Eliminar partido"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button 
-                  onClick={() => onRemove(item.id)}
-                  style={{ background: '#ff4d4f', color: '#fff', border: 'none', borderRadius: '4px', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
-                  title="Eliminar partido"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+              )
+            })}
           </div>
           
           <hr style={{ border: 'none', borderTop: '1px dashed #ced4da', margin: '15px 0' }} />
