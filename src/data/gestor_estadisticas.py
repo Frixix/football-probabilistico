@@ -41,21 +41,17 @@ class GestorEstadisticas:
                 if res.get("errors"):
                     errores = res["errors"]
                     if "plan" in errores and "try from" in str(errores["plan"]):
-                        # Busca años (4 números seguidos) en el mensaje de error
                         anios = re.findall(r'\d{4}', str(errores["plan"]))
                         if len(anios) >= 2:
-                            temp_maxima = int(anios[-1]) # Toma el último año (ej. 2024)
+                            temp_maxima = int(anios[-1])
                             print(f"🔄 Temporada {temporada} bloqueada. Reintentando con ({temp_maxima})...")
-                            
-                            # Actualiza parámetro y vuelve a descargar
                             params["season"] = temp_maxima
-                            time.sleep(7) # 🛑 Pausa larga antes del reintento para evitar rate limit
+                            time.sleep(7)
                             res = requests.get(url, headers=headers, params=params).json()
                     
-                    # Si falla por límite de peticiones u otro error
                     if res.get("errors"):
                         print(f"🚨 Error API en liga {id_liga}: {res['errors']}")
-                        time.sleep(7) # 🛑 Pausa larga en caso de error
+                        time.sleep(7)
                         return {"mu_local": 1.4, "mu_visitante": 1.2} 
 
                 datos_liga = {}
@@ -71,18 +67,25 @@ class GestorEstadisticas:
                                 gc = equipo["all"]["goals"]["against"] / partidos
                                 datos_liga[nombre] = {"gf": gf, "gc": gc}
                 
-                # Guarda con la llave original (ej: "915_2026") para no volver a intentarlo hoy
-                self.cache[llave_original] = datos_liga
-                self._guardar_cache()
+                # 🔥 CORRECCIÓN CLAVE: Solo guardar en caché si realmente encontramos datos
+                if len(datos_liga) > 0:
+                    self.cache[llave_original] = datos_liga
+                    self._guardar_cache()
+                    print(f"✅ Estadísticas guardadas con éxito para la liga {id_liga}")
+                else:
+                    print(f"⚠️ La liga {id_liga} no tiene tabla de posiciones (Probablemente es Copa o Amistoso). Usando base genérica.")
                 
-                time.sleep(7) # 🛑 PAUSA DE ORO: Garantiza que no pases las 10 peticiones por minuto
+                time.sleep(7)
 
             except Exception as e:
                 print(f"⚠️ Error crítico en liga {id_liga}: {e}")
-                time.sleep(7) # 🛑 Pausa protectora en caso de fallo crítico
+                time.sleep(7)
                 return {"mu_local": 1.4, "mu_visitante": 1.2} 
                 
+        # Buscar en caché
         liga_stats = self.cache.get(llave_original, {})
+        
+        # Si la liga no tenía tabla (Amistosos), usa una base genérica
         stats_local = liga_stats.get(local, {"gf": 1.3, "gc": 1.3})
         stats_visitante = liga_stats.get(visitante, {"gf": 1.1, "gc": 1.5})
         
