@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// 🔥 Reconectamos Supabase directamente aquí
-// Nota: Si tenías tus llaves escritas entre comillas, pégalas aquí. 
-// Si usabas variables de entorno, import.meta.env las leerá automáticamente.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'PEGA_AQUI_TU_URL_SI_LA_TENIAS_QUEMADA';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'PEGA_AQUI_TU_LLAVE_SI_LA_TENIAS_QUEMADA';
+// 🔥 TUS LLAVES (Asegúrate de que queden DENTRO de las comillas simples ' ' )
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'PEGA_AQUI_TU_URL';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'PEGA_AQUI_TU_LLAVE';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export function usePartidos() {
@@ -18,19 +16,16 @@ export function usePartidos() {
       try {
         setCargando(true);
         
-        // Fecha dinámica anclada a la zona horaria de Bogotá
+        // Fecha dinámica anclada a Bogotá
         const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-        console.log(`📅 Buscando partidos frescos para la fecha: ${hoy}`);
-
-        // Consultamos a Supabase solo los partidos de hoy
+        
+        // Consulta a Supabase
         const { data, error } = await supabase
           .from('historial_predicciones')
           .select('*')
           .eq('fecha', hoy);
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
         
         setPartidos(data || []);
       } catch (err) {
