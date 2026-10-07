@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient'; // Asegúrate de que esta ruta coincida con tu archivo de conexión
 
-export const usePartidos = () => {
+export function usePartidos() {
   const [partidos, setPartidos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -8,36 +9,28 @@ export const usePartidos = () => {
   useEffect(() => {
     const fetchPartidos = async () => {
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+        setCargando(true);
+        
+        // 🔥 Tu lógica exacta: Fecha dinámica anclada a la zona horaria de Bogotá
+        const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+        
+        console.log(`📅 Buscando partidos frescos para la fecha: ${hoy}`);
 
-        if (!supabaseUrl || !supabaseKey) {
-          throw new Error("Faltan las variables de entorno.");
+        // Consultamos a Supabase solo los partidos del día actual
+        const { data, error } = await supabase
+          .from('historial_predicciones')
+          .select('*')
+          .eq('fecha', hoy);
+
+        if (error) {
+          throw error;
         }
 
-        const hoy = '2026-10-01';
+        console.log("📦 Datos que llegaron de Supabase:", data);
         
-        // 🔥 TRUCO DEFINITIVO: Pegamos la llave de acceso (?apikey=...) directamente al final de la URL
-        const urlFinal = `${supabaseUrl}/rest/v1/historial_predicciones?fecha=eq.${hoy}&select=*&apikey=${supabaseKey}`;
-        
-        console.log("🚀 Disparando URL blindada");
-
-        const response = await fetch(urlFinal, {
-          headers: {
-            // Mantenemos el Authorization por protocolo estándar de Supabase
-            'Authorization': `Bearer ${supabaseKey}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(`Error: ${errData.message || response.statusText}`);
-        }
-        
-        const data = await response.json();
         setPartidos(data || []);
       } catch (err) {
+        console.error("Error obteniendo los partidos:", err);
         setError(err.message);
       } finally {
         setCargando(false);
@@ -48,4 +41,4 @@ export const usePartidos = () => {
   }, []);
 
   return { partidos, cargando, error };
-};
+}
