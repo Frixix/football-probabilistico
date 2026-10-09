@@ -147,6 +147,12 @@ Para incrementar de forma genuina la tasa de aciertos y el valor esperado ($EV$)
     * **Líneas de Goles Múltiples:** Más/Menos de 1.5, Más/Menos de 2.5 y Más/Menos de 3.5 goles calculadas desde las diagonales de la matriz bivariada.
     * **Ambos Marcan (BTTS):** $P(\text{Sí})$ y $P(\text{No})$ con corrección de correlación Dixon-Coles.
   * Nuevos filtros de cabecera: **Doble Oportunidad** y **Líneas (+/- 1.5 y 3.5)** con adaptación automática de la tarjeta destacada.
+* **Historial de Enfrentamientos Directos (Head-to-Head / H2H):**
+  * Botón interactivo `H2H` en la cabecera de cada partido que despliega un modal Glassmorphism con el historial de duelos directos cara a cara.
+  * Barra horizontal de dominancia histórica con distribución porcentual de victorias local, empates y victorias visitante.
+  * 4 KPIs de duelo: Total de partidos, promedio de goles por clásico, % Ambos Marcan y % Over 2.5 goles.
+  * Línea de tiempo cronológica con fechas, marcadores exactos y ganadores resaltados.
+  * Regularización Bayesiana de estilo táctico con modulación controlada de $\pm 3.5\%$ sobre las tasas de Poisson.
 
 ---
 

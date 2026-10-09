@@ -2,10 +2,11 @@ import { useState, useMemo } from 'react';
 import { obtenerInfoTorneo, obtenerUrlBandera } from '../utils/leagues';
 import { 
   TrophyIcon, ClockIcon, ChevronDownIcon, 
-  BallIcon, SearchIcon, CheckIcon, LayersIcon 
+  BallIcon, SearchIcon, CheckIcon, LayersIcon, SwordsIcon 
 } from './Icons';
 import { useBankroll } from '../hooks/useBankroll';
 import { generarMercadosCompletos } from '../utils/markets';
+import H2HModal from './H2HModal';
 
 // Horarios programados locales (UTC-5 Colombia) para fixtures del día
 const HORAS_PROGRAMADAS = {
@@ -31,6 +32,7 @@ const HORAS_PROGRAMADAS = {
 export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMercado = 'todos' }) {
   const [ligasAbiertas, setLigasAbiertas] = useState({});
   const [partidosExpandidos, setPartidosExpandidos] = useState({});
+  const [partidoH2H, setPartidoH2H] = useState(null);
   const { bankroll, calcularStakeOptimo } = useBankroll();
 
   const toggleMercados = (id) => {
@@ -283,7 +285,17 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                           </div>
                           {renderRacha(partido.forma_local)}
                         </div>
-                        <div className="vs-divider">VS</div>
+                        <div className="vs-divider-row">
+                          <button 
+                            type="button" 
+                            className="btn-h2h-trigger" 
+                            onClick={(e) => { e.stopPropagation(); setPartidoH2H(partido); }}
+                            title="Ver historial de duelos directos cara a cara (H2H)"
+                          >
+                            <SwordsIcon size={12} className="swords-icon-mini" />
+                            <span>H2H</span>
+                          </button>
+                        </div>
                         <div className="team-row">
                           <div className="team-identity-left">
                             <span className="team-avatar avatar-away">{iniVis}</span>
@@ -479,6 +491,11 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
           </div>
         );
       })}
+
+      {/* Modal de Enfrentamientos Directos (H2H) */}
+      {partidoH2H && (
+        <H2HModal partido={partidoH2H} onClose={() => setPartidoH2H(null)} />
+      )}
     </div>
   );
 }

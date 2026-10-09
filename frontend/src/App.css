@@ -2695,3 +2695,443 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ==========================================================================
+   ENFRENTAMIENTOS DIRECTOS (HEAD-TO-HEAD / H2H)
+   ========================================================================== */
+
+/* Botón disparador H2H en el VS de la tarjeta */
+.vs-divider-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.25rem 0;
+}
+
+.btn-h2h-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-h2h-trigger:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  transform: scale(1.05);
+}
+
+.swords-icon-mini {
+  color: #10b981;
+}
+
+/* Backdrop y Modal de H2H */
+.h2h-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.75);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.h2h-modal-content {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.75rem 2rem;
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 16, 26, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(16, 185, 129, 0.15);
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleUp {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Header del Modal */
+.h2h-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.h2h-title-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.h2h-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.h2h-subtitle {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #10b981;
+  text-transform: uppercase;
+}
+
+.h2h-match-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0.15rem 0;
+}
+
+.h2h-tournament {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.btn-close-h2h {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-close-h2h:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+/* Tarjeta de Dominio Histórico */
+.h2h-dominance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 1.25rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+.dominance-labels-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+}
+
+.dom-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.dom-home {
+  text-align: left;
+}
+
+.dom-draw {
+  text-align: center;
+}
+
+.dom-away {
+  text-align: right;
+}
+
+.dom-team {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.dom-stat {
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.dom-home .dom-stat {
+  color: #34d399;
+}
+
+.dom-draw .dom-stat {
+  color: #fbbf24;
+}
+
+.dom-away .dom-stat {
+  color: #60a5fa;
+}
+
+.dominance-bar-track {
+  display: flex;
+  height: 8px;
+  width: 100%;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dom-segment {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.seg-home {
+  background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+}
+
+.seg-draw {
+  background: #f59e0b;
+}
+
+.seg-away {
+  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+}
+
+/* Grid de Métricas H2H */
+.h2h-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.h2h-kpi-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.h2h-kpi-pill .kpi-label {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.h2h-kpi-pill .kpi-number {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f1f5f9;
+}
+
+/* Insight Táctico */
+.h2h-insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0.85rem 1rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+}
+
+.insight-shield-svg {
+  color: #10b981;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.insight-text strong {
+  display: block;
+  font-size: 0.75rem;
+  color: #34d399;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.insight-text p {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Sección de Encuentros Recientes */
+.h2h-matches-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.h2h-section-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.history-svg {
+  color: #38bdf8;
+}
+
+.h2h-section-header h3 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin: 0;
+  color: #f1f5f9;
+}
+
+.h2h-encuentros-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.h2h-match-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  transition: all 0.15s ease;
+  font-size: 0.8rem;
+}
+
+.h2h-match-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.h2h-match-date {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-family: monospace;
+  width: 75px;
+}
+
+.h2h-match-teams {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: center;
+}
+
+.h2h-team-name {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.h2h-team-name.winner-team {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.h2h-match-score {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fbbf24;
+  font-family: monospace;
+  padding: 0.15rem 0.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+}
+
+.h2h-match-badge {
+  width: 90px;
+  text-align: right;
+}
+
+.badge-h2h {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-home {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-draw {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-away {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+@media (max-width: 640px) {
+  .h2h-modal-content {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  .h2h-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .h2h-match-title {
+    font-size: 1.1rem;
+  }
+
+  .h2h-match-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .h2h-match-badge {
+    width: 100%;
+    text-align: center;
+  }
+}
