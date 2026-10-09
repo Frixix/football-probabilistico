@@ -208,6 +208,8 @@ def obtener_predicciones_api():
             fecha_db = hoy_dia
 
         esperados = gestor.obtener_mu_esperado(id_liga, temporada, local, visitante)
+        if not esperados:
+            continue
         mu_l = esperados["mu_local"]
         mu_v = esperados["mu_visitante"]
             

@@ -68,8 +68,11 @@ for p in partidos:
 
     # Calculamos la fuerza y los goles esperados (mu)
     calculo = gestor.obtener_mu_esperado(id_liga, temporada, equipo_local, equipo_visitante)
-    mu_local = calculo.get("mu_local", 1.4)
-    mu_visitante = calculo.get("mu_visitante", 1.2)
+    if not calculo:
+        continue
+
+    mu_local = calculo["mu_local"]
+    mu_visitante = calculo["mu_visitante"]
 
     # Motor probabilístico de Poisson
     matriz = generar_matriz_partido(mu_local, mu_visitante)

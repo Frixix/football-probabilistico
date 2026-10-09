@@ -52,7 +52,7 @@ class GestorEstadisticas:
                     if res.get("errors"):
                         print(f"🚨 Error API en liga {id_liga}: {res['errors']}")
                         time.sleep(7)
-                        return {"mu_local": 1.4, "mu_visitante": 1.2} 
+                        return None
 
                 datos_liga = {}
                 if "response" in res and len(res["response"]) > 0:
@@ -73,7 +73,7 @@ class GestorEstadisticas:
                     self._guardar_cache()
                     print(f"✅ Estadísticas guardadas con éxito para la liga {id_liga}")
                 else:
-                    print(f"⚠️ La liga {id_liga} no tiene tabla de posiciones (Probablemente es Copa o Amistoso). Usando base genérica.")
+                    print(f"⚠️ La liga {id_liga} no tiene tabla de posiciones (Probablemente es Copa o Amistoso).")
                     self.cache[llave_original] = {} 
                     self._guardar_cache()
                 time.sleep(7)
@@ -81,16 +81,20 @@ class GestorEstadisticas:
             except Exception as e:
                 print(f"⚠️ Error crítico en liga {id_liga}: {e}")
                 time.sleep(7)
-                return {"mu_local": 1.4, "mu_visitante": 1.2} 
+                return None 
                 
         # Buscar en caché
         liga_stats = self.cache.get(llave_original, {})
+        if not liga_stats:
+            return None
+            
+        if local not in liga_stats or visitante not in liga_stats:
+            return None
         
-        # Si la liga no tenía tabla (Amistosos), usa una base genérica
-        stats_local = liga_stats.get(local, {"gf": 1.3, "gc": 1.3})
-        stats_visitante = liga_stats.get(visitante, {"gf": 1.1, "gc": 1.5})
+        stats_local = liga_stats[local]
+        stats_visitante = liga_stats[visitante]
         
         mu_local = (stats_local["gf"] + stats_visitante["gc"]) / 2
         mu_visitante = (stats_visitante["gf"] + stats_local["gc"]) / 2
         
-        return {"mu_local": max(0.1, mu_local), "mu_visitante": max(0.1, mu_visitante)}
+        return {"mu_local": round(max(0.1, mu_local), 4), "mu_visitante": round(max(0.1, mu_visitante), 4)}
