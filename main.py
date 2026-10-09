@@ -62,6 +62,9 @@ def validar_resultados_historicos():
             
             try:
                 res_api = requests.get(url, headers=headers).json()
+                if res_api.get("errors"):
+                    print(f"🚨 Límite o error de API al validar: {res_api.get('errors')}")
+                    break
                 if not res_api.get("response"):
                     time.sleep(1)
                     continue
@@ -133,9 +136,11 @@ def obtener_predicciones_api():
         try:
             with open(archivo_cache, "r", encoding="utf-8") as f:
                 datos_cache = json.load(f)
-                if len(datos_cache.get("partidos", [])) > 0:
-                    print("🛠️ MODO DESARROLLO: Usando caché bloqueado (0 peticiones gastadas para los pronósticos).")
-                    return datos_cache["partidos"]
+                if isinstance(datos_cache, dict):
+                    partidos_guardados = datos_cache.get("partidos", [])
+                    if datos_cache.get("fecha") == hoy_dia and len(partidos_guardados) > 0:
+                        print("🛠️ MODO DESARROLLO: Usando caché de hoy (0 peticiones gastadas para los pronósticos).")
+                        return partidos_guardados
         except Exception:
             pass 
 
@@ -231,16 +236,9 @@ def obtener_predicciones_api():
                     "local": local,
                     "visitante": visitante,
                     "mercado_predicho": mejor_opcion["mercado"],
-                    "probabilidad": float(mejor_opcion["prob"])
+                    "probabilidad": round(float(mejor_opcion["prob"]) * 100, 2)
                 }
                 supabase.table("historial_predicciones").upsert(registro_db).execute()
-                
-                # LIMITAR A 50 REGISTROS (Rotación FIFO)
-                historial = supabase.table("historial_predicciones").select("id_partido").execute()
-                if len(historial.data) > 50:
-                    id_mas_viejo = historial.data[0]["id_partido"]
-                    supabase.table("historial_predicciones").delete().eq("id_partido", id_mas_viejo).execute()
-                    
             except Exception as error_db:
                 print(f"Error guardando en Supabase el partido {local}: {error_db}")
 
@@ -265,7 +263,7 @@ def obtener_predicciones_api():
         try:
             os.makedirs("data", exist_ok=True)
             with open(archivo_cache, "w", encoding="utf-8") as f:
-                json.dump({"partidos": resultados_para_react}, f, indent=4)
+                json.dump({"fecha": hoy_dia, "partidos": resultados_para_react}, f, indent=4)
         except Exception as e:
             print(f"Error guardando caché temporal: {e}")
             

@@ -64,15 +64,71 @@ export default function MatchList({ partidos, onAddTicket }) {
     return 99; 
   };
 
+  const inferirPaisYPrioridad = (nombreTorneo, paisAPI) => {
+    const t = (nombreTorneo || "").toLowerCase();
+    let p = (paisAPI || "").trim().toLowerCase();
+
+    // Si viene país explícito de la API y no es "mundo", lo traducimos
+    if (p && p !== "mundo" && p !== "world") {
+      const paisTraducido = traducirPais(paisAPI);
+      return { pais: paisTraducido, prioridad: obtenerPrioridad(nombreTorneo, p) };
+    }
+
+    // Inferencia inteligente por nombre de torneo cuando viene de Supabase:
+    if (t.includes("primera a") || t.includes("betplay") || t.includes("copa colombia") || t.includes("primera b")) {
+      return { pais: "Colombia", prioridad: 1 };
+    }
+    if (t.includes("champions league")) {
+      return { pais: "Internacional", prioridad: 3 };
+    }
+    if (t.includes("premier league") || t.includes("championship") || t.includes("fa cup") || t.includes("efl")) {
+      return { pais: "Inglaterra", prioridad: 4 };
+    }
+    if (t.includes("la liga") || t.includes("primera division") || t.includes("laliga") || t.includes("copa del rey")) {
+      return { pais: "España", prioridad: 5 };
+    }
+    if (t.includes("libertadores") || t.includes("sudamericana")) {
+      return { pais: "Sudamérica", prioridad: 6 };
+    }
+    if (t.includes("serie a") || t.includes("serie b") || t.includes("coppa italia")) {
+      return { pais: "Italia", prioridad: 7 };
+    }
+    if (t.includes("bundesliga") || t.includes("dfb pokal")) {
+      return { pais: "Alemania", prioridad: 8 };
+    }
+    if (t.includes("europa league") || t.includes("conference league")) {
+      return { pais: "Internacional", prioridad: 9 };
+    }
+    if (t.includes("ligue 1") || t.includes("ligue 2")) {
+      return { pais: "Francia", prioridad: 10 };
+    }
+    if (t.includes("mls") || t.includes("major league soccer")) {
+      return { pais: "EE. UU.", prioridad: 11 };
+    }
+    if (t.includes("k league")) {
+      return { pais: "Corea del Sur", prioridad: 25 };
+    }
+    if (t.includes("ligi kuu bara")) {
+      return { pais: "Tanzania", prioridad: 45 };
+    }
+    if (t.includes("friendlies") || t.includes("amistoso")) {
+      return { pais: "Amistosos", prioridad: 40 };
+    }
+    if (t.includes("cup") || t.includes("copa")) {
+      return { pais: "Copas", prioridad: 35 };
+    }
+
+    return { pais: "Global", prioridad: 99 };
+  };
+
   const torneosAgrupados = useMemo(() => {
     const grupos = {};
     partidos.forEach(partido => {
-      const nombreLiga = partido.torneo;
-      const paisAPI = partido.pais || "Mundo"; 
+      const nombreLiga = partido.torneo || "Torneo General";
+      const info = inferirPaisYPrioridad(nombreLiga, partido.pais);
+      const nombrePaisLimpio = info.pais;
+      const prioridad = info.prioridad;
       const bandera = partido.bandera || null; 
-      
-      const prioridad = obtenerPrioridad(nombreLiga, paisAPI);
-      const nombrePaisLimpio = traducirPais(paisAPI);
       
       const keyUnica = `${nombrePaisLimpio}-${nombreLiga}`; 
       
@@ -163,8 +219,9 @@ export default function MatchList({ partidos, onAddTicket }) {
                   const hora12 = formatearHora12(partido.hora || "TBD");
                   const mercadoReal = partido.mercado_predicho || "Sin Mercado"; 
                   const idReal = partido.id_partido || Math.random(); 
-                  const estadoClase = partido.estado_clase || "estado-gris";
-                  const estadoTexto = partido.estado_texto || "PREVIA";
+                  const terminado = partido.goles_local !== null && partido.goles_local !== undefined;
+                  const estadoClase = partido.estado_clase || (terminado ? "estado-rojo" : "estado-verde");
+                  const estadoTexto = partido.estado_texto || (terminado ? `${partido.goles_local} - ${partido.goles_visitante} (FT)` : "Programado");
 
                   // Detector para la consola por si acaso
                   console.log(`🔍 Partido ${partido.local}:`, partido);
