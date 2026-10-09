@@ -87,4 +87,37 @@ def test_dixon_coles():
     # Comprobar matriz Dixon-Coles
     matriz_dc = generar_matriz_dixon_coles(mu_l, mu_v)
     assert matriz_dc.shape == (11, 11)
-    assert round(float(np.sum(matriz_dc)), 4) == 1.0000
+    assert round(float(np.sum(matriz_dc)), 4) == 1.0000
+
+def test_criterio_kelly():
+    from src.probabilities.calculations import calcular_criterio_kelly
+    
+    # Caso 1: Apuesta con valor positivo (+EV)
+    # Probabilidad = 55% (0.55), Cuota = 2.00
+    # EV = (0.55 * 2.00) - 1 = +10.0%
+    # b = 2.0 - 1 = 1.0
+    # Full Kelly = 0.10 / 1.0 = 10.0%
+    # 1/4 Kelly = 2.5%
+    res = calcular_criterio_kelly(probabilidad=0.55, cuota=2.00, fraccion=0.25)
+    assert res["es_valido"] is True
+    assert res["ev_pct"] == 10.0
+    assert res["kelly_full_pct"] == 10.0
+    assert res["kelly_frac_pct"] == 2.5
+    
+    # Caso 2: Apuesta sin valor esperado (EV <= 0)
+    # Probabilidad = 40% (0.40), Cuota = 2.00
+    # EV = (0.40 * 2.00) - 1 = -20.0%
+    res_neg = calcular_criterio_kelly(probabilidad=0.40, cuota=2.00, fraccion=0.25)
+    assert res_neg["es_valido"] is False
+    assert res_neg["kelly_frac_pct"] == 0.0
+    
+    # Caso 3: Tope de seguridad (safety cap)
+    # Probabilidad = 80%, Cuota = 3.00 (gran ventaja teórica)
+    # EV = (0.80 * 3.0) - 1 = 1.40
+    # Full Kelly = 1.40 / 2.0 = 70%
+    # 1/4 Kelly bruto = 17.5% -> Debe limitarse al 5.0% máximo
+    res_cap = calcular_criterio_kelly(probabilidad=0.80, cuota=3.00, fraccion=0.25, max_stake_pct=0.05)
+    assert res_cap["es_valido"] is True
+    assert res_cap["kelly_frac_pct"] == 5.0
+    assert res_cap["tope_alcanzado"] is True
+

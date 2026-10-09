@@ -137,6 +137,10 @@ Para incrementar de forma genuina la tasa de aciertos y el valor esperado ($EV$)
   * Curva de balance acumulado (*Equity Curve*) con trazado vectorial dinámico SVG y ROI global.
   * Desglose porcentual por mercado (1X2 Ganador, Over/Under 2.5 y Ambos Marcan).
   * Tabla de auditoría con buscador en tiempo real, filtros por estado (*Acertados*, *Fallados*, *Pendientes*) y marcador oficial FT.
+* **Gestor de Bankroll con Criterio de Kelly Fraccional:**
+  * Asistente interactivo en el ticket con persistencia local de banca (`$ COP`) y selección de estrategia ($\frac{1}{4}$ Kelly conservador, $\frac{1}{2}$ Kelly moderado, $\frac{1}{8}$ Kelly ultra-seguro).
+  * Recomendación matemática de stake óptimo ($f^* = \frac{1}{4} \cdot \frac{EV}{Cuota - 1}$) con tope de seguridad de 5.0% y botón de aplicación inmediata al simulador.
+  * Distintivo dinámico de stake de Kelly visible directamente en cada tarjeta de partido que presente Valor Esperado Positivo ($+EV$).
 
 ---
 

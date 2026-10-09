@@ -4,6 +4,7 @@ import {
   TrophyIcon, ClockIcon, ChevronDownIcon, 
   BallIcon, SearchIcon, CheckIcon 
 } from './Icons';
+import { useBankroll } from '../hooks/useBankroll';
 
 // Horarios programados locales (UTC-5 Colombia) para fixtures del día
 const HORAS_PROGRAMADAS = {
@@ -28,6 +29,7 @@ const HORAS_PROGRAMADAS = {
 
 export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMercado = 'todos' }) {
   const [ligasAbiertas, setLigasAbiertas] = useState({});
+  const { bankroll, calcularStakeOptimo } = useBankroll();
 
   const toggleLiga = (torneoKey) => {
     setLigasAbiertas(prev => ({
@@ -258,11 +260,25 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                           <span className="prediction-label">DIXON-COLES PRO</span>
                           <div className="odds-group">
                             <span className="odd-pill" title="Cuota Justa Estimada">@{cuotaTeorica}</span>
-                            {(partido.es_valor || parseFloat(partido.ev) > 0 || probNum >= 0.60) && (
-                              <span className="badge-ev-positive" title="Apuesta con Valor Matemático Positivo (+EV)">
-                                +{partido.ev ? partido.ev : '5.2'}% EV
-                              </span>
-                            )}
+                            {(partido.es_valor || parseFloat(partido.ev) > 0 || probNum >= 0.60) && (() => {
+                              const cuotaMercado = parseFloat(partido.cuota_mercado) || (parseFloat(cuotaTeorica) * 1.055);
+                              const kMatch = calcularStakeOptimo(probNum, cuotaMercado);
+                              return (
+                                <>
+                                  <span className="badge-ev-positive" title="Apuesta con Valor Matemático Positivo (+EV)">
+                                    +{partido.ev ? partido.ev : '5.2'}% EV
+                                  </span>
+                                  {kMatch.esPositivo && (
+                                    <span 
+                                      className="badge-kelly-stake" 
+                                      title={`Stake óptimo sugerido (1/4 Kelly sobre banca de $${bankroll.toLocaleString('es-CO')} COP): $${kMatch.stakeRecomendado.toLocaleString('es-CO')} COP`}
+                                    >
+                                      Kelly {kMatch.pctRecomendado}%
+                                    </span>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                         <div className="market-name">{mercadoReal}</div>
