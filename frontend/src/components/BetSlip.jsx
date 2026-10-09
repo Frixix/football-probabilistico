@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TicketIcon, ReceiptIcon, CloseIcon } from './Icons';
 
 export default function BetSlip({ ticket = [], onRemove, onClear }) {
   const [monto, setMonto] = useState(10000);
@@ -33,7 +34,9 @@ export default function BetSlip({ ticket = [], onRemove, onClear }) {
     <div className="betslip-container glass-card">
       <div className="betslip-header">
         <div className="betslip-title">
-          <span className="betslip-icon">🎟️</span>
+          <span className="betslip-icon">
+            <TicketIcon size={20} className="ticket-svg-icon" />
+          </span>
           <h3>Ticket Combinado</h3>
           <span className="ticket-badge">{ticket.length}</span>
         </div>
@@ -46,7 +49,9 @@ export default function BetSlip({ ticket = [], onRemove, onClear }) {
 
       {ticket.length === 0 ? (
         <div className="betslip-empty">
-          <div className="empty-ticket-art">📊</div>
+          <div className="empty-ticket-art">
+            <ReceiptIcon size={40} className="empty-receipt-svg" />
+          </div>
           <p className="empty-main-text">Tu ticket está vacío</p>
           <span className="empty-sub-text">Selecciona uno o más partidos para simular la probabilidad conjunta y la cuota combinada.</span>
         </div>
@@ -76,7 +81,7 @@ export default function BetSlip({ ticket = [], onRemove, onClear }) {
                     className="btn-remove-item"
                     title="Eliminar del ticket"
                   >
-                    ✕
+                    <CloseIcon size={13} />
                   </button>
                 </div>
               );

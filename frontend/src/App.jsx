@@ -2,6 +2,10 @@ import { useState, useMemo } from 'react';
 import MatchList from './components/MatchList';
 import BetSlip from './components/BetSlip';
 import { usePartidos } from './hooks/usePartidos';
+import { 
+  BallIcon, ChartIcon, TrophyIcon, TargetIcon, 
+  TicketIcon, SearchIcon, StarIcon, CloseIcon, AlertTriangleIcon 
+} from './components/Icons';
 import './App.css';
 
 function App() {
@@ -15,7 +19,6 @@ function App() {
   const agregarAlTicket = (partido) => {
     const id = partido.id_partido || partido.id;
     if (ticket.some(item => (item.id_partido || item.id) === id)) {
-      // Si ya está, al hacer clic lo removemos (toggle)
       removerDelTicket(id);
     } else {
       setTicket(prev => [...prev, partido]);
@@ -72,7 +75,9 @@ function App() {
       <header className="main-navbar">
         <div className="navbar-content">
           <div className="brand-logo">
-            <span className="logo-icon">⚽</span>
+            <span className="logo-icon">
+              <BallIcon size={26} className="brand-svg-icon" />
+            </span>
             <div className="logo-text">
               <span className="brand-title">POISSON <span className="brand-highlight">PREDICTOR</span></span>
               <span className="brand-version">PRO v2.0</span>
@@ -98,10 +103,10 @@ function App() {
             Cálculo estadístico bivariado de marcadores exactos, mercados de valor y análisis riguroso sin sesgos.
           </p>
 
-          {/* Widgets de KPIs */}
+          {/* Widgets de KPIs con iconos SVG profesionales */}
           <div className="kpi-grid">
             <div className="kpi-card">
-              <span className="kpi-icon">📊</span>
+              <span className="kpi-icon"><ChartIcon size={24} /></span>
               <div className="kpi-data">
                 <span className="kpi-value">{partidos.length}</span>
                 <span className="kpi-label">Partidos Analizados</span>
@@ -109,7 +114,7 @@ function App() {
             </div>
 
             <div className="kpi-card">
-              <span className="kpi-icon">🏆</span>
+              <span className="kpi-icon"><TrophyIcon size={24} /></span>
               <div className="kpi-data">
                 <span className="kpi-value">{totalLigas}</span>
                 <span className="kpi-label">Ligas Disponibles</span>
@@ -117,7 +122,7 @@ function App() {
             </div>
 
             <div className="kpi-card">
-              <span className="kpi-icon">🎯</span>
+              <span className="kpi-icon"><TargetIcon size={24} /></span>
               <div className="kpi-data">
                 <span className="kpi-value">{probPromedio}%</span>
                 <span className="kpi-label">Confianza Promedio</span>
@@ -125,7 +130,7 @@ function App() {
             </div>
 
             <div className="kpi-card highlight-kpi">
-              <span className="kpi-icon">🎟️</span>
+              <span className="kpi-icon"><TicketIcon size={24} /></span>
               <div className="kpi-data">
                 <span className="kpi-value">{ticket.length}</span>
                 <span className="kpi-label">En Tu Ticket</span>
@@ -140,7 +145,7 @@ function App() {
         <div className="controls-wrapper">
           {/* Buscador */}
           <div className="search-box">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><SearchIcon size={18} /></span>
             <input 
               type="text" 
               placeholder="Buscar equipo o torneo (ej. Real Madrid, BetPlay, Ibiza)..."
@@ -149,7 +154,9 @@ function App() {
               className="search-input"
             />
             {busqueda && (
-              <button onClick={() => setBusqueda('')} className="btn-clear-search">✕</button>
+              <button onClick={() => setBusqueda('')} className="btn-clear-search">
+                <CloseIcon size={14} />
+              </button>
             )}
           </div>
 
@@ -164,8 +171,9 @@ function App() {
             <button 
               className={`filter-pill ${soloTopLigas ? 'active' : ''}`}
               onClick={() => setSoloTopLigas(!soloTopLigas)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              ⭐ Solo Top Ligas
+              <StarIcon size={13} /> Solo Top Ligas
             </button>
             <button 
               className={`filter-pill ${filtroMercado === '1x2' ? 'active' : ''}`}
@@ -193,7 +201,7 @@ function App() {
       <main className="main-content">
         {error && (
           <div className="error-banner glass-card">
-            <span className="error-icon">⚠️</span>
+            <span className="error-icon"><AlertTriangleIcon size={22} /></span>
             <div>
               <strong>Error de sincronización con Supabase:</strong> {error}
             </div>

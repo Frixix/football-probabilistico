@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react';
 import { obtenerInfoTorneo, obtenerUrlBandera } from '../utils/leagues';
+import { 
+  TrophyIcon, ClockIcon, ChevronDownIcon, 
+  BallIcon, SearchIcon, CheckIcon 
+} from './Icons';
 
 export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMercado = 'todos' }) {
-  // Inicializar con las ligas top abiertas por defecto
   const [ligasAbiertas, setLigasAbiertas] = useState({});
 
   const toggleLiga = (torneoKey) => {
@@ -36,7 +39,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
     });
   }, [partidos, filtroMercado]);
 
-  // Agrupar y ordenar torneos con algoritmo de prioridad (Top primero, desconocidos al final)
+  // Agrupar torneos con algoritmo de prioridad (Top arriba, torneos menores abajo)
   const torneosAgrupados = useMemo(() => {
     const grupos = {};
     partidosFiltrados.forEach(partido => {
@@ -65,7 +68,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
     return grupos;
   }, [partidosFiltrados]);
 
-  // Ordenar ligas: menor número de prioridad primero, torneos desconocidos (>=85) al final
+  // Ordenar torneos
   const ligasOrdenadas = useMemo(() => {
     return Object.keys(torneosAgrupados).sort((a, b) => {
       const prioA = torneosAgrupados[a].prioridad;
@@ -75,18 +78,17 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
     });
   }, [torneosAgrupados]);
 
-  // Determinar si una liga está abierta: ligas con prioridad < 60 están abiertas por defecto
   const estaAbierta = (torneoKey, prioridad) => {
     if (ligasAbiertas[torneoKey] !== undefined) {
       return ligasAbiertas[torneoKey];
     }
-    return prioridad < 60; // Abiertas automáticamente las principales
+    return prioridad < 60;
   };
 
   if (!partidos || partidos.length === 0) {
     return (
       <div className="empty-state glass-card">
-        <div className="empty-icon">⚽</div>
+        <div className="empty-icon-wrap"><BallIcon size={46} className="empty-svg-icon" /></div>
         <h3>No hay partidos disponibles para la fecha</h3>
         <p>Los pronósticos se sincronizan automáticamente cada madrugada según el calendario de partidos.</p>
       </div>
@@ -96,7 +98,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
   if (partidosFiltrados.length === 0) {
     return (
       <div className="empty-state glass-card">
-        <div className="empty-icon">🔍</div>
+        <div className="empty-icon-wrap"><SearchIcon size={44} className="empty-svg-icon" /></div>
         <h3>No se encontraron partidos con el filtro actual</h3>
         <p>Prueba seleccionando otro mercado o restableciendo la búsqueda.</p>
       </div>
@@ -129,7 +131,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   />
                 ) : (
                   <div className="league-icon-fallback">
-                    🏆
+                    <TrophyIcon size={18} className="fallback-trophy-svg" />
                   </div>
                 )}
                 
@@ -144,7 +146,9 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
               
               <div className="tournament-controls">
                 <span className="match-count">{grupo.partidos.length} {grupo.partidos.length === 1 ? 'partido' : 'partidos'}</span>
-                <span className={`toggle-chevron ${abierta ? 'rotated' : ''}`}>▼</span>
+                <span className={`toggle-chevron ${abierta ? 'rotated' : ''}`}>
+                  <ChevronDownIcon size={16} />
+                </span>
               </div>
             </div>
             
@@ -166,11 +170,11 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
 
                   const yaEnTicket = ticket.some(item => (item.id_partido || item.id) === idReal);
 
-                  // Obtener iniciales de equipos
+                  // Iniciales de equipos
                   const iniLocal = (partido.local || 'L').substring(0, 2).toUpperCase();
                   const iniVis = (partido.visitante || 'V').substring(0, 2).toUpperCase();
 
-                  // Clasificar tipo de mercado para color
+                  // Clasificar tipo de mercado
                   let claseMercado = 'mercado-1x2';
                   if (mercadoReal.toLowerCase().includes('goles') || mercadoReal.toLowerCase().includes('2.5')) claseMercado = 'mercado-goles';
                   if (mercadoReal.toLowerCase().includes('marcan')) claseMercado = 'mercado-btts';
@@ -179,10 +183,10 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                     <div key={idReal} className={`match-card glass-card ${yaEnTicket ? 'in-ticket-card' : ''}`}>
                       <div className="match-header">
                         <span className="match-time">
-                          <span className="clock-icon">🕒</span> {hora12}
+                          <ClockIcon size={13} className="clock-svg" /> {hora12}
                         </span>
                         <span className={`status-badge ${estadoClase}`}>
-                          {terminado ? '● ' : '○ '} {estadoTexto}
+                          {terminado ? 'FT ' : 'LIVE '} {estadoTexto}
                         </span>
                       </div>
                       
@@ -222,7 +226,11 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                         className={`btn-add-ticket ${yaEnTicket ? 'btn-selected' : ''}`} 
                         onClick={() => onAddTicket({...partido, id: idReal})}
                       >
-                        {yaEnTicket ? '✓ En el Ticket' : '+ Añadir al Ticket'}
+                        {yaEnTicket ? (
+                          <span className="btn-inner-content"><CheckIcon size={15} /> En el Ticket</span>
+                        ) : (
+                          <span className="btn-inner-content">+ Añadir al Ticket</span>
+                        )}
                       </button>
                     </div>
                   );
