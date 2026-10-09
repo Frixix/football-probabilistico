@@ -74,7 +74,8 @@ class GestorEstadisticas:
                     print(f"✅ Estadísticas guardadas con éxito para la liga {id_liga}")
                 else:
                     print(f"⚠️ La liga {id_liga} no tiene tabla de posiciones (Probablemente es Copa o Amistoso). Usando base genérica.")
-                
+                    self.cache[llave_original] = {} 
+                    self._guardar_cache()
                 time.sleep(7)
 
             except Exception as e:

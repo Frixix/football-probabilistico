@@ -121,9 +121,6 @@ def validar_resultados_historicos():
         print(f"Error consultando Supabase para validación: {e}")
 
 # 4. Función Principal de la API
-def simular_partido_real():
-    pass
-
 def obtener_predicciones_api():
     print("\n--- INICIANDO CÁLCULO DE API (SISTEMA DE DOBLE LLAVE) ---")
     
@@ -279,4 +276,5 @@ def obtener_predicciones_api():
     return resultados_para_react
 
 if __name__ == "__main__":
-    simular_partido_real()
+    # ¡Aquí estaba el error! Ahora sí llama a la función correcta
+    obtener_predicciones_api()
