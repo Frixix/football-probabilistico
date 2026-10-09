@@ -512,9 +512,70 @@
   box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
+/* Hover dinámico por estado del acierto: Agua Marina (acierto), Rojo (fallo), Gris (pendiente) */
+.match-card.hover-acertado:hover {
+  background: linear-gradient(145deg, rgba(6, 182, 212, 0.20) 0%, rgba(20, 184, 166, 0.15) 100%) !important;
+  border-color: rgba(34, 211, 238, 0.65) !important;
+  box-shadow: 0 14px 32px -4px rgba(6, 182, 212, 0.35), 0 0 20px rgba(34, 211, 238, 0.25) !important;
+  transform: translateY(-4px);
+}
+
+.match-card.hover-fallado:hover {
+  background: linear-gradient(145deg, rgba(239, 68, 68, 0.20) 0%, rgba(185, 28, 28, 0.15) 100%) !important;
+  border-color: rgba(248, 113, 113, 0.65) !important;
+  box-shadow: 0 14px 32px -4px rgba(239, 68, 68, 0.35), 0 0 20px rgba(239, 68, 68, 0.2) !important;
+  transform: translateY(-4px);
+}
+
+.match-card.hover-pendiente:hover {
+  background: linear-gradient(145deg, rgba(148, 163, 184, 0.15) 0%, rgba(100, 116, 139, 0.12) 100%) !important;
+  border-color: rgba(148, 163, 184, 0.5) !important;
+  box-shadow: 0 14px 30px -4px rgba(100, 116, 139, 0.25), 0 0 15px rgba(148, 163, 184, 0.15) !important;
+  transform: translateY(-4px);
+}
+
 .match-card.in-ticket-card {
   border-color: rgba(16, 185, 129, 0.5);
   background: linear-gradient(180deg, rgba(20, 32, 53, 0.85) 0%, rgba(16, 185, 129, 0.08) 100%);
+}
+
+.match-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.acierto-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.acierto-badge.badge-aquamarine {
+  background: rgba(6, 182, 212, 0.18);
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  color: #22d3ee;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.2);
+}
+
+.acierto-badge.badge-red {
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #f87171;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+}
+
+.acierto-badge.badge-gray {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #94a3b8;
 }
 
 .match-header {
@@ -2055,6 +2116,18 @@
 
 .audit-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.02);
+}
+
+.audit-table tbody tr.row-acertado:hover {
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.audit-table tbody tr.row-fallado:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.audit-table tbody tr.row-pendiente:hover {
+  background: rgba(148, 163, 184, 0.05);
 }
 
 .audit-table tbody tr:last-child td {

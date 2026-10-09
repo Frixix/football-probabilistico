@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { obtenerInfoTorneo, obtenerUrlBandera } from '../utils/leagues';
 import { 
   TrophyIcon, ClockIcon, ChevronDownIcon, 
-  BallIcon, SearchIcon, CheckIcon, LayersIcon, SwordsIcon 
+  BallIcon, SearchIcon, CheckIcon, CloseIcon, LayersIcon, SwordsIcon 
 } from './Icons';
 import { useBankroll } from '../hooks/useBankroll';
 import { generarMercadosCompletos } from '../utils/markets';
@@ -265,15 +265,65 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   if (mercadoDestacado.toLowerCase().includes('marcan')) claseMercado = 'mercado-btts';
                   if (mercadoDestacado.toLowerCase().includes('1x') || mercadoDestacado.toLowerCase().includes('x2') || mercadoDestacado.toLowerCase().includes('12')) claseMercado = 'mercado-dc';
 
+                  // Evaluación cuantitativa del acierto del pronóstico: acertado (agua marina), fallado (rojo), pendiente (gris)
+                  const evaluacionAcierto = (() => {
+                    if (partido.fue_acierto === true) return 'acertado';
+                    if (partido.fue_acierto === false) return 'fallado';
+                    if (terminado) {
+                      const gl = parseInt(partido.goles_local, 10);
+                      const gv = parseInt(partido.goles_visitante, 10);
+                      const pred = (partido.mercado_predicho || partido.mercado || '').toLowerCase();
+                      const localL = (partido.local || '').toLowerCase();
+                      const visL = (partido.visitante || '').toLowerCase();
+                      const suma = gl + gv;
+
+                      let ok = false;
+                      if (pred.includes('gana') && pred.includes(localL)) ok = gl > gv;
+                      else if (pred.includes('gana') && pred.includes(visL)) ok = gv > gl;
+                      else if (pred.includes('empate')) ok = gl === gv;
+                      else if (pred.includes('1x')) ok = gl >= gv;
+                      else if (pred.includes('x2')) ok = gv >= gl;
+                      else if (pred.includes('12')) ok = gl !== gv;
+                      else if (pred.includes('más de 2.5') || pred.includes('mas de 2.5') || pred.includes('+2.5')) ok = suma > 2.5;
+                      else if (pred.includes('menos de 2.5') || pred.includes('-2.5')) ok = suma < 2.5;
+                      else if (pred.includes('más de 1.5') || pred.includes('+1.5')) ok = suma > 1.5;
+                      else if (pred.includes('menos de 1.5') || pred.includes('-1.5')) ok = suma < 1.5;
+                      else if (pred.includes('más de 3.5') || pred.includes('+3.5')) ok = suma > 3.5;
+                      else if (pred.includes('menos de 3.5') || pred.includes('-3.5')) ok = suma < 3.5;
+                      else if (pred.includes('marcan: sí') || pred.includes('marcan: si')) ok = gl > 0 && gv > 0;
+                      else if (pred.includes('marcan: no')) ok = gl === 0 || gv === 0;
+
+                      return ok ? 'acertado' : 'fallado';
+                    }
+                    return 'pendiente';
+                  })();
+
                   return (
-                    <div key={idReal} className={`match-card glass-card ${yaEnTicket ? 'in-ticket-card' : ''}`}>
+                    <div key={idReal} className={`match-card glass-card hover-${evaluacionAcierto} ${yaEnTicket ? 'in-ticket-card' : ''}`}>
                       <div className="match-header">
                         <span className="match-time">
                           <ClockIcon size={13} className="clock-svg" /> {hora12}
                         </span>
-                        <span className={`status-badge ${estadoClase}`}>
-                          {terminado ? 'FT ' : 'LIVE '} {estadoTexto}
-                        </span>
+                        <div className="match-header-badges">
+                          {evaluacionAcierto === 'acertado' && (
+                            <span className="acierto-badge badge-aquamarine" title="Pronóstico acertado">
+                              <CheckIcon size={11} /> Acertado
+                            </span>
+                          )}
+                          {evaluacionAcierto === 'fallado' && (
+                            <span className="acierto-badge badge-red" title="Pronóstico no acertado">
+                              <CloseIcon size={11} /> No acertó
+                            </span>
+                          )}
+                          {evaluacionAcierto === 'pendiente' && (
+                            <span className="acierto-badge badge-gray" title="Aún no ha jugado">
+                              <ClockIcon size={11} /> Por jugar
+                            </span>
+                          )}
+                          <span className={`status-badge ${estadoClase}`}>
+                            {terminado ? 'FT ' : 'LIVE '} {estadoTexto}
+                          </span>
+                        </div>
                       </div>
                       
                       {/* Enfrentamiento visual */}
