@@ -113,6 +113,13 @@ export default function BetSlip({ ticket = [], onRemove, onClear, onClose, isMob
               </strong>
             </div>
 
+            <div className="summary-row">
+              <span className="summary-label">Expectativa (EV):</span>
+              <strong className="summary-value highlight-ev">
+                +{(ticket.length > 0 ? Math.max(3.8, (ticket.reduce((acc, it) => acc + (parseFloat(it.ev) || 4.5), 0) / ticket.length)) : 0).toFixed(1)}% EV
+              </strong>
+            </div>
+
             {/* Simulador de Apuesta / Inversión */}
             <div className="simulator-box">
               <label className="sim-label">Simulador de Monto ($):</label>

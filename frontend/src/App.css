@@ -613,6 +613,52 @@
   text-overflow: ellipsis;
 }
 
+.team-identity-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Racha reciente (EWMA) */
+.form-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.form-dot {
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.dot-win {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.dot-draw {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.dot-loss {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
 .vs-divider {
   font-size: 0.65rem;
   font-weight: 800;
@@ -657,6 +703,32 @@
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--text-muted);
+}
+
+/* Cuotas y Badge de Valor Esperado */
+.odds-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-ev-positive {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.3) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+  display: inline-flex;
+  align-items: center;
+}
+
+.highlight-ev {
+  color: #fbbf24;
+  font-size: 1.05rem;
 }
 
 .odd-pill {

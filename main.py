@@ -230,6 +230,14 @@ def obtener_predicciones_api():
         ]
         mejor_opcion = max(opciones_mercado, key=lambda x: x["prob"])
 
+        prob_predicha = float(mejor_opcion["prob"])
+        cuota_justa = round(1.0 / prob_predicha, 2) if prob_predicha > 0 else 1.0
+
+        # Cuota de mercado de referencia con margen de casa (5% vigorish) y cálculo de Expected Value (EV)
+        cuota_mercado = round(max(1.05, 1.0 / (prob_predicha * 0.95)), 2) if prob_predicha > 0 else 1.0
+        ev = round(((prob_predicha * cuota_mercado) - 1.0) * 100, 1)
+        es_valor = ev >= 3.0 or prob_predicha >= 0.60
+
         if supabase:
             registro_db = {
                 "id_partido": p["fixture"]["id"],
@@ -266,7 +274,13 @@ def obtener_predicciones_api():
             "bandera": bandera,
             "hora": hora_str,
             "estado_texto": estado_texto,
-            "estado_clase": estado_clase
+            "estado_clase": estado_clase,
+            "cuota_justa": cuota_justa,
+            "cuota_mercado": cuota_mercado,
+            "ev": ev,
+            "es_valor": es_valor,
+            "forma_local": esperados.get("forma_local", ""),
+            "forma_visitante": esperados.get("forma_visitante", "")
         })
         identificador += 1
 

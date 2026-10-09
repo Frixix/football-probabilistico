@@ -60,3 +60,15 @@ def test_gestor_equipo_no_encontrado():
     }
     mu_dict = gestor.obtener_mu_esperado(777, 2026, "EquipoExiste", "EquipoInexistente")
     assert mu_dict is None
+
+def test_calcular_factor_forma():
+    from src.data.gestor_estadisticas import calcular_factor_forma
+    # Racha perfecta de victorias debe dar boost > 1.05
+    assert calcular_factor_forma("WWWWW") > 1.05
+    # Racha de derrotas debe dar penalización < 0.95
+    assert calcular_factor_forma("LLLLL") < 0.95
+    # Racha mixta debe estar cerca de 1.0 (neutro)
+    assert 0.95 <= calcular_factor_forma("WDLDW") <= 1.05
+    # Cadena vacía o None debe ser exactamente 1.0
+    assert calcular_factor_forma("") == 1.0
+    assert calcular_factor_forma(None) == 1.0

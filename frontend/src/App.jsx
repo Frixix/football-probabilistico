@@ -214,6 +214,12 @@ function App() {
             >
               Ambos Marcan
             </button>
+            <button 
+              className={`filter-pill ${filtroMercado === 'valor' ? 'active' : ''}`}
+              onClick={() => setFiltroMercado(filtroMercado === 'valor' ? 'todos' : 'valor')}
+            >
+              Solo Valor (+EV)
+            </button>
           </div>
         </div>
       </section>

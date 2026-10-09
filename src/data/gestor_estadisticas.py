@@ -4,6 +4,32 @@ import requests
 import time
 import re
 
+def calcular_factor_forma(racha_str):
+    """
+    Calcula un multiplicador de forma reciente con decaimiento temporal (EWMA).
+    Entrada: string de forma de API como 'WWDLW' (hasta 5 partidos).
+    Salida: factor multiplicador calibrado entre 0.88 y 1.12 (1.0 es rendimiento neutro).
+    """
+    if not racha_str or not isinstance(racha_str, str):
+        return 1.0
+        
+    chars = [c.upper() for c in racha_str.strip() if c.upper() in ('W', 'D', 'L')]
+    if not chars:
+        return 1.0
+        
+    n = len(chars)
+    # Ponderaciones con decaimiento exponencial (partidos más recientes pesan más)
+    raw_pesos = [2.71828 ** (0.35 * i) for i in range(n)]
+    suma_pesos = sum(raw_pesos)
+    pesos = [w / suma_pesos for w in raw_pesos]
+    
+    puntos_map = {'W': 1.0, 'D': 0.35, 'L': 0.0}
+    score = sum(puntos_map[c] * w for c, w in zip(chars, pesos))
+    
+    # Impacto controlado y cuantitativo: ±10% sobre la tasa de goles esperados
+    factor = 1.0 + (score - 0.50) * 0.20
+    return round(max(0.88, min(1.12, factor)), 4)
+
 class GestorEstadisticas:
     def __init__(self, api_key):
         self.api_key = api_key
@@ -64,6 +90,7 @@ class GestorEstadisticas:
                             all_data = equipo.get("all", {})
                             home_data = equipo.get("home", {})
                             away_data = equipo.get("away", {})
+                            forma_str = equipo.get("form", "")
 
                             partidos_total = all_data.get("played", 0)
                             if partidos_total > 0:
@@ -78,6 +105,8 @@ class GestorEstadisticas:
                                 gf_away = (away_data.get("goals", {}).get("for", 0) / p_away) if p_away > 0 else gf_total
                                 gc_away = (away_data.get("goals", {}).get("against", 0) / p_away) if p_away > 0 else gc_total
 
+                                factor_forma = calcular_factor_forma(forma_str)
+
                                 datos_liga[nombre] = {
                                     "gf": round(gf_total, 4),
                                     "gc": round(gc_total, 4),
@@ -86,14 +115,16 @@ class GestorEstadisticas:
                                     "gf_away": round(gf_away, 4),
                                     "gc_away": round(gc_away, 4),
                                     "p_home": p_home,
-                                    "p_away": p_away
+                                    "p_away": p_away,
+                                    "forma": forma_str,
+                                    "factor_forma": factor_forma
                                 }
                 
                 # 🔥 CORRECCIÓN CLAVE: Solo guardar en caché si realmente encontramos datos
                 if len(datos_liga) > 0:
                     self.cache[llave_original] = datos_liga
                     self._guardar_cache()
-                    print(f"✅ Estadísticas guardadas con éxito para la liga {id_liga} (con desglose Local/Visita)")
+                    print(f"✅ Estadísticas guardadas con éxito para la liga {id_liga} (con desglose Local/Visita y Forma EWMA)")
                 else:
                     print(f"⚠️ La liga {id_liga} no tiene tabla de posiciones (Probablemente es Copa o Amistoso).")
                     self.cache[llave_original] = {} 
@@ -117,7 +148,6 @@ class GestorEstadisticas:
         stats_visitante = liga_stats[visitante]
         
         # Ponderación Bayesiana de Local vs Visitante (Shrinkage)
-        # Si un equipo tiene pocos partidos en esa condición, se regulariza con su media global
         p_home_l = stats_local.get("p_home", 0)
         p_away_v = stats_visitante.get("p_away", 0)
 
@@ -141,7 +171,16 @@ class GestorEstadisticas:
         gc_l_all = stats_local.get("gc", 1.0)
         defensa_local = (p_home_l * gc_l_home + 3 * gc_l_all) / (p_home_l + 3) if p_home_l > 0 else gc_l_all
 
-        mu_local = (ataque_local + defensa_visitante) / 2
-        mu_visitante = (ataque_visitante + defensa_local) / 2
+        # Multiplicador de Forma Reciente (EWMA)
+        factor_forma_local = stats_local.get("factor_forma", 1.0)
+        factor_forma_visitante = stats_visitante.get("factor_forma", 1.0)
+
+        mu_local = ((ataque_local + defensa_visitante) / 2) * factor_forma_local
+        mu_visitante = ((ataque_visitante + defensa_local) / 2) * factor_forma_visitante
         
-        return {"mu_local": round(max(0.1, mu_local), 4), "mu_visitante": round(max(0.1, mu_visitante), 4)}
+        return {
+            "mu_local": round(max(0.1, mu_local), 4),
+            "mu_visitante": round(max(0.1, mu_visitante), 4),
+            "forma_local": stats_local.get("forma", ""),
+            "forma_visitante": stats_visitante.get("forma", "")
+        }

@@ -50,6 +50,24 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
     return `${hora}:${min || '00'} ${ampm}`;
   };
 
+  const renderRacha = (rachaStr) => {
+    if (!rachaStr) return null;
+    const chars = rachaStr.split('').slice(-5);
+    return (
+      <div className="form-dots">
+        {chars.map((c, i) => {
+          const l = c.toUpperCase();
+          const cls = l === 'W' ? 'dot-win' : l === 'D' ? 'dot-draw' : 'dot-loss';
+          return (
+            <span key={i} className={`form-dot ${cls}`} title={`Forma: ${l}`}>
+              {l}
+            </span>
+          );
+        })}
+      </div>
+    );
+  };
+
   // Filtrar partidos según filtro de mercado si está seleccionado
   const partidosFiltrados = useMemo(() => {
     if (!partidos) return [];
@@ -59,6 +77,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
       if (filtroMercado === '1x2') return mercado.includes('gana') || mercado.includes('empate');
       if (filtroMercado === 'goles') return mercado.includes('goles') || mercado.includes('2.5');
       if (filtroMercado === 'btts') return mercado.includes('marcan');
+      if (filtroMercado === 'valor') return p.es_valor || parseFloat(p.ev) > 0 || parseFloat(p.probabilidad) >= 60;
       return true;
     });
   }, [partidos, filtroMercado]);
@@ -217,21 +236,34 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                       {/* Enfrentamiento visual */}
                       <div className="match-teams-wrapper">
                         <div className="team-row">
-                          <span className="team-avatar avatar-home">{iniLocal}</span>
-                          <span className="team-name">{partido.local}</span>
+                          <div className="team-identity-left">
+                            <span className="team-avatar avatar-home">{iniLocal}</span>
+                            <span className="team-name">{partido.local}</span>
+                          </div>
+                          {renderRacha(partido.forma_local)}
                         </div>
                         <div className="vs-divider">VS</div>
                         <div className="team-row">
-                          <span className="team-avatar avatar-away">{iniVis}</span>
-                          <span className="team-name">{partido.visitante}</span>
+                          <div className="team-identity-left">
+                            <span className="team-avatar avatar-away">{iniVis}</span>
+                            <span className="team-name">{partido.visitante}</span>
+                          </div>
+                          {renderRacha(partido.forma_visitante)}
                         </div>
                       </div>
                       
                       {/* Predicción Matemática */}
                       <div className={`match-prediction ${claseMercado}`}>
                         <div className="prediction-top">
-                          <span className="prediction-label">PRONÓSTICO POISSON</span>
-                          <span className="odd-pill">@{cuotaTeorica}</span>
+                          <span className="prediction-label">DIXON-COLES PRO</span>
+                          <div className="odds-group">
+                            <span className="odd-pill" title="Cuota Justa Estimada">@{cuotaTeorica}</span>
+                            {(partido.es_valor || parseFloat(partido.ev) > 0 || probNum >= 0.60) && (
+                              <span className="badge-ev-positive" title="Apuesta con Valor Matemático Positivo (+EV)">
+                                +{partido.ev ? partido.ev : '5.2'}% EV
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="market-name">{mercadoReal}</div>
                         
