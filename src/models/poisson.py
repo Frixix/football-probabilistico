@@ -19,7 +19,24 @@ def calcular_distribucion_goles(mu, max_goles=10):
     # 5. Devolvemos la lista completa
     return distribucion
 
-def generar_matriz_partido(mu_local, mu_visitante, max_goles=10):
+def dixon_coles_tau(x, y, mu_local, mu_visitante, rho=-0.11):
+    """
+    Función tau de corrección de Dixon y Coles (1997).
+    Ajusta la correlación entre goles para marcadores bajos (0-0, 1-0, 0-1, 1-1),
+    elevando la precisión empírica de empates y marcadores cerrados.
+    """
+    if x == 0 and y == 0:
+        return 1.0 - (mu_local * mu_visitante * rho)
+    elif x == 0 and y == 1:
+        return 1.0 + (mu_local * rho)
+    elif x == 1 and y == 0:
+        return 1.0 + (mu_visitante * rho)
+    elif x == 1 and y == 1:
+        return 1.0 - rho
+    else:
+        return 1.0
+
+def generar_matriz_partido(mu_local, mu_visitante, max_goles=10, ajustar_dixon_coles=False, rho=-0.11):
     # 1. Calculamos las probabilidades individuales de cada equipo
     dist_local = calcular_distribucion_goles(mu_local, max_goles)
     dist_visitante = calcular_distribucion_goles(mu_visitante, max_goles)
@@ -31,11 +48,26 @@ def generar_matriz_partido(mu_local, mu_visitante, max_goles=10):
     # 3. Cruzamos las filas (Local) con las columnas (Visitante)
     for goles_local in range(dimension):
         for goles_visitante in range(dimension):
-            # La magia matemática: multiplicamos las probabilidades independientes
-            matriz[goles_local][goles_visitante] = dist_local[goles_local] * dist_visitante[goles_visitante]
+            prob = dist_local[goles_local] * dist_visitante[goles_visitante]
+            if ajustar_dixon_coles:
+                tau = dixon_coles_tau(goles_local, goles_visitante, mu_local, mu_visitante, rho)
+                prob = prob * tau
+            matriz[goles_local][goles_visitante] = max(0.0, prob)
             
+    # Si se aplica Dixon-Coles, normalizamos para que la probabilidad total sume exactamente 1.0
+    if ajustar_dixon_coles:
+        suma_total = np.sum(matriz)
+        if suma_total > 0:
+            matriz = matriz / suma_total
+
     # 4. Devolvemos la matriz completa
     return matriz
+
+def generar_matriz_dixon_coles(mu_local, mu_visitante, max_goles=10, rho=-0.11):
+    """
+    Genera la matriz de probabilidades aplicando el modelo Dixon-Coles calibrado.
+    """
+    return generar_matriz_partido(mu_local, mu_visitante, max_goles=max_goles, ajustar_dixon_coles=True, rho=rho)
 
 def calcular_probabilidades_1x2(matriz):
     # 1. Empate (X): Sumamos la diagonal principal

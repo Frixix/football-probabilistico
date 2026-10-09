@@ -9,7 +9,7 @@ from supabase import create_client, Client
 # Importaciones locales
 from src.data.gestor_estadisticas import GestorEstadisticas
 from src.models.poisson import (
-    generar_matriz_partido,
+    generar_matriz_dixon_coles,
     calcular_probabilidades_1x2,
     calcular_probabilidades_over_under,
     calcular_probabilidades_btts
@@ -213,7 +213,8 @@ def obtener_predicciones_api():
         mu_l = esperados["mu_local"]
         mu_v = esperados["mu_visitante"]
             
-        matriz = generar_matriz_partido(mu_l, mu_v)
+        # Motor probabilístico calibrado de Dixon-Coles
+        matriz = generar_matriz_dixon_coles(mu_l, mu_v)
         prob_1x2 = calcular_probabilidades_1x2(matriz)
         prob_goles = calcular_probabilidades_over_under(matriz, limite=2.5)
         prob_btts = calcular_probabilidades_btts(matriz)
@@ -230,19 +231,27 @@ def obtener_predicciones_api():
         mejor_opcion = max(opciones_mercado, key=lambda x: x["prob"])
 
         if supabase:
+            registro_db = {
+                "id_partido": p["fixture"]["id"],
+                "fecha": fecha_db,
+                "torneo": torneo,
+                "local": local,
+                "visitante": visitante,
+                "mercado_predicho": mejor_opcion["mercado"],
+                "probabilidad": round(float(mejor_opcion["prob"]) * 100, 2),
+                "hora": hora_str
+            }
             try:
-                registro_db = {
-                    "id_partido": p["fixture"]["id"],
-                    "fecha": fecha_db,
-                    "torneo": torneo,
-                    "local": local,
-                    "visitante": visitante,
-                    "mercado_predicho": mejor_opcion["mercado"],
-                    "probabilidad": round(float(mejor_opcion["prob"]) * 100, 2)
-                }
                 supabase.table("historial_predicciones").upsert(registro_db).execute()
             except Exception as error_db:
-                print(f"Error guardando en Supabase el partido {local}: {error_db}")
+                if "hora" in registro_db:
+                    registro_sin_hora = {k: v for k, v in registro_db.items() if k != "hora"}
+                    try:
+                        supabase.table("historial_predicciones").upsert(registro_sin_hora).execute()
+                    except Exception as error_db2:
+                        print(f"Error guardando en Supabase el partido {local}: {error_db2}")
+                else:
+                    print(f"Error guardando en Supabase el partido {local}: {error_db}")
 
         resultados_para_react.append({
             "id": identificador,

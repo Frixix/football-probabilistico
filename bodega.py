@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from src.data.gestor_estadisticas import GestorEstadisticas
 from src.models.poisson import (
-    generar_matriz_partido,
+    generar_matriz_dixon_coles,
     calcular_probabilidades_1x2,
     calcular_probabilidades_over_under,
     calcular_probabilidades_btts
@@ -64,7 +64,16 @@ for p in partidos:
     equipo_local = p["teams"]["home"]["name"]
     equipo_visitante = p["teams"]["away"]["name"]
 
-    print(f"Procesando ({partidos_procesados + 1}/{len(partidos)}): {equipo_local} vs {equipo_visitante}")
+    # Extraer y convertir hora local colombiana (UTC-5)
+    fecha_hora_utc = p.get("fixture", {}).get("date", "")
+    try:
+        utc_dt = datetime.strptime(fecha_hora_utc[:19], "%Y-%m-%dT%H:%M:%S")
+        colombia_dt = utc_dt - timedelta(hours=5)
+        hora_str = colombia_dt.strftime("%H:%M")
+    except Exception:
+        hora_str = "TBD"
+
+    print(f"Procesando ({partidos_procesados + 1}/{len(partidos)}): {equipo_local} vs {equipo_visitante} [{hora_str}]")
 
     # Calculamos la fuerza y los goles esperados (mu)
     calculo = gestor.obtener_mu_esperado(id_liga, temporada, equipo_local, equipo_visitante)
@@ -74,8 +83,8 @@ for p in partidos:
     mu_local = calculo["mu_local"]
     mu_visitante = calculo["mu_visitante"]
 
-    # Motor probabilístico de Poisson
-    matriz = generar_matriz_partido(mu_local, mu_visitante)
+    # Motor probabilístico calibrado de Dixon-Coles
+    matriz = generar_matriz_dixon_coles(mu_local, mu_visitante)
     prob_1x2 = calcular_probabilidades_1x2(matriz)
     prob_goles = calcular_probabilidades_over_under(matriz, limite=2.5)
     prob_btts = calcular_probabilidades_btts(matriz)
@@ -99,15 +108,24 @@ for p in partidos:
         "local": equipo_local,
         "visitante": equipo_visitante,
         "mercado_predicho": mejor_opcion["mercado"],
-        "probabilidad": round(float(mejor_opcion["prob"]) * 100, 2)
+        "probabilidad": round(float(mejor_opcion["prob"]) * 100, 2),
+        "hora": hora_str
     }
 
-    # Enviar a Supabase usando UPSERT
+    # Enviar a Supabase usando UPSERT (con fallback si la columna 'hora' aún no ha sido creada)
     if supabase:
         try:
             supabase.table("historial_predicciones").upsert(datos_para_guardar).execute()
             partidos_procesados += 1
         except Exception as e:
-            print(f"Error guardando partido {id_partido} en Supabase: {e}")
+            if "hora" in datos_para_guardar:
+                datos_sin_hora = {k: v for k, v in datos_para_guardar.items() if k != "hora"}
+                try:
+                    supabase.table("historial_predicciones").upsert(datos_sin_hora).execute()
+                    partidos_procesados += 1
+                except Exception as e2:
+                    print(f"Error guardando partido {id_partido} en Supabase: {e2}")
+            else:
+                print(f"Error guardando partido {id_partido} en Supabase: {e}")
 
-print(f"✅ ¡Bodega completa! Se procesaron y enviaron {partidos_procesados} partidos con Poisson a Supabase.")
+print(f"✅ ¡Bodega completa! Se procesaron y enviaron {partidos_procesados} partidos con Dixon-Coles a Supabase.")

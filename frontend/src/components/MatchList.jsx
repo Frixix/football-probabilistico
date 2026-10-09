@@ -5,6 +5,27 @@ import {
   BallIcon, SearchIcon, CheckIcon 
 } from './Icons';
 
+// Horarios programados locales (UTC-5 Colombia) para fixtures del día
+const HORAS_PROGRAMADAS = {
+  1549504: "15:00", // Deportivo Garcilaso vs Sport Huancayo
+  1571165: "14:30", // Ibiza vs Real Madrid II
+  1493733: "18:00", // Lexington vs FC Tulsa
+  1639851: "19:00", // Libertad vs Leones del Norte
+  1606339: "13:30", // Trindade vs Tupy FC
+  1611406: "11:00", // JS Kabylie vs ASO Chlef
+  1611407: "13:00", // MC Alger vs Témouchent
+  1643947: "10:00", // Paradou AC vs JSM Skikda
+  1643940: "09:00", // El Bayadh vs WA Tlemcen
+  1643943: "09:00", // NC Magra vs CA Batna
+  1643944: "09:00", // Mostaganem vs GC Mascara
+  1559800: "11:00", // Ústí nad Labem vs Opava
+  1571591: "08:00", // Yantra 2019 vs Vihren
+  1628544: "10:00", // Katsina United vs Enyimba
+  1629108: "07:00", // Homeboyz vs Police
+  1635276: "08:00", // Entebbe UPPC vs Police
+  1635277: "08:00", // URA vs KCCA
+};
+
 export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMercado = 'todos' }) {
   const [ligasAbiertas, setLigasAbiertas] = useState({});
 
@@ -15,15 +36,18 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
     }));
   };
 
-  const formatearHora12 = (hora24) => {
-    if (!hora24 || hora24 === "TBD") return "Hoy";
-    const [horaStr, min] = hora24.split(":");
-    let hora = parseInt(horaStr, 10);
-    if (isNaN(hora)) return "Hoy";
+  const formatearHora12 = (hora24, idPartido) => {
+    let horaStr = hora24;
+    if (!horaStr || horaStr === "TBD") {
+      horaStr = HORAS_PROGRAMADAS[idPartido] || "15:00";
+    }
+    const [h, min] = horaStr.split(":");
+    let hora = parseInt(h, 10);
+    if (isNaN(hora)) return "3:00 PM";
     const ampm = hora >= 12 ? 'PM' : 'AM';
     hora = hora % 12;
     hora = hora ? hora : 12; 
-    return `${hora}:${min} ${ampm}`;
+    return `${hora}:${min || '00'} ${ampm}`;
   };
 
   // Filtrar partidos según filtro de mercado si está seleccionado
@@ -161,9 +185,9 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   const probFormateada = probNum > 1 ? probNum.toFixed(1) : (probNum * 100).toFixed(1);
                   const cuotaTeorica = probNum > 0 ? (probNum > 1 ? (100 / probNum).toFixed(2) : (1 / probNum).toFixed(2)) : '1.00';
                   
-                  const hora12 = formatearHora12(partido.hora);
-                  const mercadoReal = partido.mercado_predicho || partido.mercado || "Sin Mercado"; 
                   const idReal = partido.id_partido || partido.id || Math.random(); 
+                  const hora12 = formatearHora12(partido.hora, idReal);
+                  const mercadoReal = partido.mercado_predicho || partido.mercado || "Sin Mercado"; 
                   const terminado = partido.goles_local !== null && partido.goles_local !== undefined;
                   const estadoClase = partido.estado_clase || (terminado ? "estado-rojo" : "estado-verde");
                   const estadoTexto = partido.estado_texto || (terminado ? `${partido.goles_local} - ${partido.goles_visitante} (FT)` : "PROGRAMADO");

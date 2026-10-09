@@ -69,3 +69,22 @@ def test_probabilidades_a_cuotas():
     assert cuotas["1"] == 2.00
     assert cuotas["X"] == 4.00
     assert cuotas["2"] == 4.00
+
+def test_dixon_coles():
+    from src.models.poisson import dixon_coles_tau, generar_matriz_dixon_coles
+    # Comprobar factores tau
+    mu_l, mu_v, rho = 1.2, 1.0, -0.11
+    # 0-0 debe tener corrección > 1
+    assert dixon_coles_tau(0, 0, mu_l, mu_v, rho) > 1.0
+    # 1-1 debe tener corrección > 1
+    assert dixon_coles_tau(1, 1, mu_l, mu_v, rho) > 1.0
+    # 1-0 y 0-1 deben tener corrección < 1
+    assert dixon_coles_tau(1, 0, mu_l, mu_v, rho) < 1.0
+    assert dixon_coles_tau(0, 1, mu_l, mu_v, rho) < 1.0
+    # Marcadores mayores no se modifican (tau == 1.0)
+    assert dixon_coles_tau(2, 1, mu_l, mu_v, rho) == 1.0
+    
+    # Comprobar matriz Dixon-Coles
+    matriz_dc = generar_matriz_dixon_coles(mu_l, mu_v)
+    assert matriz_dc.shape == (11, 11)
+    assert round(float(np.sum(matriz_dc)), 4) == 1.0000
