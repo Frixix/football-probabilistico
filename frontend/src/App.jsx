@@ -14,6 +14,7 @@ function App() {
   const [busqueda, setBusqueda] = useState('');
   const [filtroMercado, setFiltroMercado] = useState('todos');
   const [soloTopLigas, setSoloTopLigas] = useState(false);
+  const [mostrarTicketMobile, setMostrarTicketMobile] = useState(false);
 
   // Manejadores de Ticket
   const agregarAlTicket = (partido) => {
@@ -26,10 +27,30 @@ function App() {
   };
 
   const removerDelTicket = (id) => {
-    setTicket(prev => prev.filter(item => (item.id_partido || item.id) !== id));
+    setTicket(prev => {
+      const nuevo = prev.filter(item => (item.id_partido || item.id) !== id);
+      if (nuevo.length === 0) setMostrarTicketMobile(false);
+      return nuevo;
+    });
   };
 
-  const limpiarTicket = () => setTicket([]);
+  const limpiarTicket = () => {
+    setTicket([]);
+    setMostrarTicketMobile(false);
+  };
+
+  // Cuota y probabilidad compuesta para visualización en barra móvil
+  const { probabilidadTotal, cuotaFinal } = useMemo(() => {
+    if (!ticket.length) return { probabilidadTotal: 0, cuotaFinal: 0 };
+    const prob = ticket.reduce((acc, p) => {
+      let num = parseFloat(p.probabilidad);
+      if (isNaN(num)) num = 0;
+      let dec = num > 1 ? num / 100 : num;
+      return acc * dec;
+    }, 1);
+    const cuota = prob > 0 ? (1 / prob) : 0;
+    return { probabilidadTotal: prob, cuotaFinal: cuota };
+  }, [ticket]);
 
   // Filtrado reactivo por buscador y por top ligas
   const partidosFiltrados = useMemo(() => {
@@ -70,7 +91,7 @@ function App() {
   }, [partidos]);
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${ticket.length > 0 ? 'has-mobile-ticket' : ''}`}>
       {/* 1. TOP NAVBAR HEADER */}
       <header className="main-navbar">
         <div className="navbar-content">
@@ -247,6 +268,46 @@ function App() {
       <footer className="main-footer">
         <p>© 2026 Poisson Predictor PRO • Sistema Estadístico Cuantitativo de Fútbol</p>
       </footer>
+
+      {/* 6. BARRA FLOTANTE MÓVIL (VISIBLE EN CELULARES SI HAY TICKETS) */}
+      {ticket.length > 0 && (
+        <div className="mobile-ticket-bar">
+          <div className="mobile-bar-summary" onClick={() => setMostrarTicketMobile(true)}>
+            <div className="mobile-bar-badge">
+              <TicketIcon size={16} />
+              <span>{ticket.length}</span>
+            </div>
+            <div className="mobile-bar-data">
+              <span className="mobile-bar-label">Mi Ticket</span>
+              <div className="mobile-bar-odds-row">
+                <strong className="mobile-bar-odd">@{cuotaFinal.toFixed(2)}</strong>
+                <span className="mobile-bar-prob">({(probabilidadTotal * 100).toFixed(1)}%)</span>
+              </div>
+            </div>
+          </div>
+          <button 
+            className="btn-open-mobile-ticket"
+            onClick={() => setMostrarTicketMobile(true)}
+          >
+            Ver Ticket
+          </button>
+        </div>
+      )}
+
+      {/* 7. DRAWER MODAL DESPLEGABLE PARA CELULARES */}
+      {mostrarTicketMobile && (
+        <div className="mobile-ticket-drawer-backdrop" onClick={() => setMostrarTicketMobile(false)}>
+          <div className="mobile-ticket-drawer-content" onClick={(e) => e.stopPropagation()}>
+            <BetSlip 
+              ticket={ticket} 
+              onRemove={removerDelTicket} 
+              onClear={limpiarTicket} 
+              onClose={() => setMostrarTicketMobile(false)}
+              isMobile={true}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TicketIcon, ReceiptIcon, CloseIcon } from './Icons';
 
-export default function BetSlip({ ticket = [], onRemove, onClear }) {
+export default function BetSlip({ ticket = [], onRemove, onClear, onClose, isMobile = false }) {
   const [monto, setMonto] = useState(10000);
 
   // Probabilidad compuesta (regla del producto para eventos independientes)
@@ -31,7 +31,7 @@ export default function BetSlip({ ticket = [], onRemove, onClear }) {
   const riesgo = getRiesgoInfo(probabilidadTotal);
 
   return (
-    <div className="betslip-container glass-card">
+    <div className={`betslip-container glass-card ${isMobile ? 'betslip-in-modal' : ''}`}>
       <div className="betslip-header">
         <div className="betslip-title">
           <span className="betslip-icon">
@@ -40,11 +40,18 @@ export default function BetSlip({ ticket = [], onRemove, onClear }) {
           <h3>Ticket Combinado</h3>
           <span className="ticket-badge">{ticket.length}</span>
         </div>
-        {ticket.length > 0 && (
-          <button onClick={onClear} className="btn-clear-ticket" title="Vaciar ticket">
-            Limpiar
-          </button>
-        )}
+        <div className="betslip-header-actions">
+          {ticket.length > 0 && (
+            <button onClick={onClear} className="btn-clear-ticket" title="Vaciar ticket">
+              Limpiar
+            </button>
+          )}
+          {onClose && (
+            <button onClick={onClose} className="btn-close-betslip-modal" title="Cerrar ticket">
+              <CloseIcon size={16} />
+            </button>
+          )}
+        </div>
       </div>
 
       {ticket.length === 0 ? (
