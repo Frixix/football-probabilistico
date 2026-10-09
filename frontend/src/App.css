@@ -1,456 +1,1132 @@
-/* VARIABLES GLOBALES (Toque profesional) */
-:root {
-  --bg-dark: #0f172a; /* Fondo azul noche profundo */
-  --bg-card: rgba(30, 41, 59, 0.7); /* Transparencia para efecto cristal */
-  --accent: #10b981; /* Verde esmeralda tecnológico */
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-}
-
-body {
-  background-color: var(--bg-dark);
-  color: var(--text-main);
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+/* ========================================================
+   POISSON PREDICTOR PRO - ESTILOS PRINCIPALES Y GLASSMORPHISM
+   ======================================================== */
 
 .app-container {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
-/* --- BANNER PRINCIPAL --- */
-.hero-banner {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 1) 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 4rem 2rem 3rem 2rem;
-  text-align: center;
-}
-
-.hero-title {
-  font-size: 3rem;
-  font-weight: 800;
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -1px;
-}
-
-.badge {
-  background: var(--accent);
-  color: #022c22;
-  font-size: 0.9rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 8px;
-  vertical-align: middle;
-  margin-left: 10px;
-  font-weight: bold;
-}
-
-.hero-subtitle {
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  margin-bottom: 2.5rem;
-}
-
-/* --- TARJETAS KPI (INDICADORES) --- */
-.kpi-container {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.kpi-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px); /* Efecto cristal (Glassmorphism) */
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 15px 30px;
-  min-width: 130px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease;
-}
-
-.kpi-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(16, 185, 129, 0.4);
-}
-
-.kpi-value {
-  display: block;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--accent);
-  font-family: 'Courier New', Courier, monospace; /* Estilo de terminal/datos */
-}
-
-.kpi-label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-top: 5px;
-  display: block;
-}
-
-/* --- ESTRUCTURA DEL DASHBOARD --- */
-.main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.dashboard-grid {
-  display: flex;
-  gap: 30px;
-  align-items: flex-start;
-}
-
-.matches-section {
-  flex: 1; /* Ocupa el espacio restante */
-}
-
-.betslip-section {
-  width: 350px; /* Ancho fijo */
+/* --- 1. NAVBAR SUPERIOR --- */
+.main-navbar {
+  background: rgba(9, 13, 22, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
   position: sticky;
-  top: 20px; /* Se queda fijo al hacer scroll */
+  top: 0;
+  z-index: 100;
+  padding: 0.85rem 2rem;
 }
 
-/* --- ANIMACIÓN DE CARGA --- */
-.loader {
-  text-align: center;
-  padding: 4rem;
-  font-size: 1.2rem;
-  color: var(--accent);
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* --- RESPONSIVO PARA MÓVILES --- */
-@media (max-width: 1000px) {
-  .dashboard-grid {
-    flex-direction: column;
-  }
-  .betslip-section {
-    width: 100%;
-    position: static;
-  }
-  .hero-title {
-    font-size: 2.2rem;
-  }
-}
-
-/* --- ESTILOS DE LA LISTA DE PARTIDOS (MATCHLIST) --- */
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  background: var(--bg-card);
-  border-radius: 12px;
-}
-
-.tournament-group {
-  margin-bottom: 1rem;
-}
-
-/* Acordeón Cabecera */
-.tournament-header {
-  background: linear-gradient(90deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 4px solid var(--accent);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
+.navbar-content {
+  max-width: 1440px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: all 0.2s ease;
 }
 
-.tournament-header:hover {
-  background: rgba(30, 41, 59, 1);
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.tournament-title {
+.brand-logo {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.tournament-title h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-main);
+.logo-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
 }
 
-.match-count {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.toggle-icon {
-  color: var(--accent);
-  font-size: 0.9rem;
-}
-
-/* Grid de Tarjetas */
-.matches-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  padding: 1rem 0 1.5rem 0;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Tarjeta de Partido individual */
-.match-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 1.2rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.logo-text {
   display: flex;
   flex-direction: column;
 }
 
+.brand-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.brand-highlight {
+  color: var(--accent-green);
+  text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
+.brand-version {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+  margin-top: -2px;
+}
+
+.navbar-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.8rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-green-neon);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-green-neon);
+  box-shadow: 0 0 8px var(--accent-green-neon);
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.system-time {
+  color: var(--text-muted);
+}
+
+/* --- 2. HERO SECTION --- */
+.hero-banner {
+  padding: 3.5rem 2rem 2.5rem 2rem;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.04) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.hero-content {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 2.75rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+  margin-bottom: 0.8rem;
+  line-height: 1.2;
+}
+
+.title-gradient {
+  background: linear-gradient(135deg, #34d399 0%, #3b82f6 50%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  color: var(--text-secondary);
+  font-size: 1.15rem;
+  max-width: 720px;
+  margin: 0 auto 2.5rem auto;
+  line-height: 1.6;
+}
+
+/* --- KPI GRID --- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  max-width: 950px;
+  margin: 0 auto;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s ease;
+  text-align: left;
+}
+
+.kpi-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 12px 25px -4px rgba(16, 185, 129, 0.15);
+}
+
+.kpi-card.highlight-kpi {
+  border-color: rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, rgba(18, 26, 43, 0.8) 0%, rgba(30, 58, 138, 0.25) 100%);
+}
+
+.kpi-icon {
+  font-size: 1.8rem;
+}
+
+.kpi-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  line-height: 1.1;
+}
+
+.kpi-card:nth-child(1) .kpi-value { color: var(--accent-green-neon); }
+.kpi-card:nth-child(2) .kpi-value { color: #60a5fa; }
+.kpi-card:nth-child(3) .kpi-value { color: #c084fc; }
+.kpi-card:nth-child(4) .kpi-value { color: #f59e0b; }
+
+.kpi-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* --- 3. BARRA DE CONTROLES, BÚSQUEDA Y FILTROS --- */
+.controls-bar-container {
+  background: rgba(14, 20, 33, 0.6);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 1.25rem 2rem;
+}
+
+.controls-wrapper {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  max-width: 480px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 2.6rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  background: rgba(22, 32, 54, 0.9);
+}
+
+.btn-clear-search {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 4px;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.filter-pill:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.filter-pill.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green-neon);
+  border-color: var(--accent-green);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+/* --- 4. DASHBOARD GRID PRINCIPAL --- */
+.main-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+  flex: 1;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.8rem;
+}
+
+.section-header-row h2 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.matches-subtitle {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.betslip-section {
+  position: sticky;
+  top: 85px;
+}
+
+/* --- 5. MATCH LIST & ACORDEÓN --- */
+.match-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tournament-group {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: rgba(14, 21, 35, 0.4);
+  transition: border-color 0.2s ease;
+}
+
+.tournament-group:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.tournament-group.torneo-secundario {
+  opacity: 0.9;
+}
+
+.tournament-header {
+  background: linear-gradient(90deg, rgba(20, 29, 48, 0.9) 0%, rgba(13, 20, 33, 0.9) 100%);
+  padding: 1rem 1.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.tournament-header:hover {
+  background: linear-gradient(90deg, rgba(28, 40, 66, 0.95) 0%, rgba(18, 27, 46, 0.95) 100%);
+}
+
+.tournament-header.header-top {
+  border-left: 4px solid var(--accent-green);
+}
+
+.tournament-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.league-flag {
+  width: 28px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.league-icon-fallback {
+  width: 28px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.tournament-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.country-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.league-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 1px 0 0 0;
+}
+
+.badge-top {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green-neon);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 0.65rem;
+  padding: 3px 7px;
+  border-radius: 4px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.badge-menor {
+  background: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.tournament-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.match-count {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.toggle-chevron {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: transform 0.25s ease;
+}
+
+.toggle-chevron.rotated {
+  transform: rotate(180deg);
+  color: var(--accent-green);
+}
+
+/* --- 6. MATCH CARDS GRID --- */
+.matches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 16px;
+  padding: 1.2rem;
+  background: rgba(9, 13, 22, 0.5);
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.match-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
 .match-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.5);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.match-card.in-ticket-card {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: linear-gradient(180deg, rgba(20, 32, 53, 0.85) 0%, rgba(16, 185, 129, 0.08) 100%);
 }
 
 .match-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  margin-bottom: 1.1rem;
+  font-size: 0.8rem;
 }
 
-/* --- COLORES DEL SEMÁFORO (MODO OSCURO) --- */
+.match-time {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
 .status-badge {
-  padding: 0.2rem 0.6rem;
+  padding: 3px 8px;
   border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 700;
   letter-spacing: 0.5px;
 }
 
 .estado-verde {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399; /* Verde Neón */
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-green-neon);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.estado-rojo {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .estado-amarillo {
   background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24; /* Amarillo Neón */
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  box-shadow: 0 0 8px rgba(251, 191, 36, 0.2); /* Resplandor para "En vivo" */
-}
-
-.estado-rojo {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171; /* Rojo Neón */
-  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
 }
 
 .estado-gris {
-  background: rgba(148, 163, 184, 0.15);
+  background: rgba(100, 116, 139, 0.15);
   color: #94a3b8;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
-/* Nombres de los equipos */
-.match-teams {
-  text-align: center;
-  margin-bottom: 1.2rem;
+/* Equipos & Enfrentamiento */
+.match-teams-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1.3rem;
 }
 
-.team {
-  font-size: 1.1rem;
+.team-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.team-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+.avatar-home {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+}
+
+.avatar-away {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: #ffffff;
+}
+
+.team-name {
+  font-size: 1.05rem;
   font-weight: 700;
-  color: var(--text-main);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.vs {
-  font-size: 0.8rem;
+.vs-divider {
+  font-size: 0.65rem;
+  font-weight: 800;
   color: var(--text-muted);
-  margin: 0.3rem 0;
+  letter-spacing: 1.5px;
+  padding-left: 44px;
 }
 
-/* Predicción */
+/* Caja de Predicción Poisson */
 .match-prediction {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  padding: 0.8rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  margin-top: auto;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.match-prediction.mercado-1x2 {
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.08) 0%, rgba(0, 0, 0, 0.25) 100%);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.match-prediction.mercado-goles {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(0, 0, 0, 0.25) 100%);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.match-prediction.mercado-btts {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(0, 0, 0, 0.25) 100%);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.prediction-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.prediction-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.odd-pill {
+  background: rgba(255, 255, 255, 0.1);
+  color: #60a5fa;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-family: ui-monospace, monospace;
 }
 
 .market-name {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 0.3rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+/* Barra de progreso de probabilidad */
+.prob-bar-container {
+  height: 6px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.prob-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.prob-value-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
 .market-prob {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--accent);
-  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--accent-green-neon);
+  font-family: ui-monospace, monospace;
 }
 
 /* Botón Añadir Ticket */
 .btn-add-ticket {
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  padding: 0.7rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
   width: 100%;
+  padding: 0.8rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green-neon);
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
 .btn-add-ticket:hover {
-  background: var(--accent);
-  color: #022c22;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-/* --- ESTILOS PARA LOS SVG --- */
-.svg-icon {
-  flex-shrink: 0;
-  display: inline-block;
-  vertical-align: middle;
+  background: var(--accent-green);
+  color: #064e3b;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
 }
 
-.accent-icon {
-  color: var(--accent);
+.btn-add-ticket.btn-selected {
+  background: #059669;
+  color: #ffffff;
+  border-color: #34d399;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
 }
 
-/* --- ESTILOS PARA BANDERAS Y CABECERAS FLASHSCORE --- */
-.league-flag {
-  border-radius: 2px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-  object-fit: cover;
+/* --- 7. BETSLIP (TICKET DE APUESTAS) --- */
+.betslip-container {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.6);
 }
 
-.tournament-title h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 500;
-  color: var(--text-main);
+.betslip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.betslip-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
 }
 
-.country-label {
+.betslip-title h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.ticket-badge {
+  background: var(--accent-green);
+  color: #022c22;
+  font-size: 0.75rem;
+  font-weight: 800;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-clear-ticket {
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+.btn-clear-ticket:hover {
+  color: #ef4444;
+}
+
+.betslip-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.empty-ticket-art {
+  font-size: 3rem;
+  margin-bottom: 0.8rem;
+  opacity: 0.6;
+}
+
+.empty-main-text {
+  font-size: 1.05rem;
   font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.empty-sub-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  display: block;
+}
+
+/* Lista de Selecciones */
+.ticket-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ticket-item {
+  background: rgba(10, 15, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticket-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.ticket-match-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ticket-match-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ticket-market-tag {
+  color: var(--accent-green-neon);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.ticket-odd-tag {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
+.btn-remove-item {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.btn-remove-item:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.betslip-divider {
+  height: 1px;
+  background: dashed var(--border-subtle);
+  margin: 1.2rem 0;
+}
+
+/* Resumen del Ticket */
+.betslip-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.summary-label {
+  color: var(--text-secondary);
+}
+
+.summary-value {
+  font-family: ui-monospace, monospace;
+  font-weight: 800;
+}
+
+.highlight-prob {
+  color: var(--accent-green-neon);
+  font-size: 1.05rem;
+}
+
+.highlight-odd {
+  color: #60a5fa;
+  font-size: 1.35rem;
+}
+
+/* Simulador de inversión */
+.simulator-box {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 4px;
+}
+
+.sim-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.sim-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  outline: none;
+  font-family: monospace;
+}
+
+.sim-input:focus {
+  border-color: #60a5fa;
+}
+
+.quick-amounts {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 10px 0;
+}
+
+.btn-quick-amount {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  padding: 4px;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.btn-quick-amount:hover, .btn-quick-amount.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.return-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.return-value {
+  color: var(--accent-green-neon);
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+/* Semáforo */
+.risk-indicator-box {
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid;
+  margin-top: 6px;
+}
+
+.risk-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  margin-bottom: 4px;
+}
+
+.risk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.risk-description {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* --- 8. EMPTY STATES & LOADERS --- */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  border-radius: 16px;
+}
+
+.empty-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.loader-container {
+  text-align: center;
+  padding: 5rem 2rem;
+  border-radius: 16px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(16, 185, 129, 0.15);
+  border-top-color: var(--accent-green);
+  border-radius: 50%;
+  margin: 0 auto 1.5rem auto;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loader-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+
+.loader-sub {
   color: var(--text-muted);
   font-size: 0.9rem;
 }
 
-/* Modificar el match-count para que parezca un indicador tipo píldora */
-.match-count {
-  background: var(--bg-dark);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
+.error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 1rem 1.5rem;
   border-radius: 12px;
-  font-size: 0.8rem;
-  color: var(--accent);
-  font-weight: 700;
-  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
 }
 
-/* --- OPTIMIZACIÓN EXTREMA PARA CELULARES (MOBILE UX) --- */
-@media (max-width: 600px) {
-  /* 1. Reducir el tamaño del banner para ahorrar espacio */
+/* --- 9. FOOTER --- */
+.main-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin-top: auto;
+}
+
+/* --- 10. RESPONSIVE MEDIA QUERIES --- */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .betslip-section {
+    position: static;
+    width: 100%;
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
   .hero-banner {
-    padding: 2rem 1rem 1.5rem 1rem;
+    padding: 2.5rem 1rem 1.8rem 1rem;
   }
-  
   .hero-title {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
-  
   .hero-subtitle {
     font-size: 1rem;
     margin-bottom: 1.5rem;
   }
-  
-  /* 2. Transformar los KPIs en barras horizontales inteligentes */
-  .kpi-container {
+  .controls-wrapper {
     flex-direction: column;
-    gap: 10px;
+    align-items: stretch;
   }
-  
-  .kpi-card {
-    width: 100%;
-    padding: 12px 20px;
-    display: flex;
-    justify-content: space-between; /* El número a la izquierda, el texto a la derecha */
-    align-items: center;
-    box-sizing: border-box;
+  .search-box {
+    max-width: 100%;
   }
-  
-  .kpi-value {
-    font-size: 1.5rem;
-  }
-  
-  .kpi-label {
-    margin-top: 0;
-    text-align: right;
-  }
-  
-  /* 3. Ajustar márgenes del contenido principal */
   .main-content {
     padding: 1rem;
   }
-  
-  /* 4. Cabeceras del acordeón más compactas */
-  .tournament-header {
-    padding: 0.8rem 1rem;
-  }
-  
-  .tournament-title h3 {
-    font-size: 0.95rem;
-  }
-  
-  /* 5. Forzar una sola columna perfecta para los partidos */
   .matches-grid {
     grid-template-columns: 1fr;
-    gap: 0.8rem;
-  }
-  
-  /* 6. Separación visual del Ticket de Apuesta al fondo de la pantalla */
-  .betslip-section {
-    margin-top: 2rem;
-    border-top: 2px dashed rgba(255, 255, 255, 0.1);
-    padding-top: 2rem;
+    padding: 0.8rem;
   }
 }

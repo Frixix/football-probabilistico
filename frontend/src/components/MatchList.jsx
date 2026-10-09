@@ -1,142 +1,61 @@
 import { useState, useMemo } from 'react';
+import { obtenerInfoTorneo, obtenerUrlBandera } from '../utils/leagues';
 
-export default function MatchList({ partidos, onAddTicket }) {
+export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMercado = 'todos' }) {
+  // Inicializar con las ligas top abiertas por defecto
   const [ligasAbiertas, setLigasAbiertas] = useState({});
 
+  const toggleLiga = (torneoKey) => {
+    setLigasAbiertas(prev => ({
+      ...prev,
+      [torneoKey]: prev[torneoKey] === undefined ? false : !prev[torneoKey]
+    }));
+  };
+
   const formatearHora12 = (hora24) => {
-    if (!hora24 || hora24 === "TBD") return "TBD";
+    if (!hora24 || hora24 === "TBD") return "Hoy";
     const [horaStr, min] = hora24.split(":");
     let hora = parseInt(horaStr, 10);
+    if (isNaN(hora)) return "Hoy";
     const ampm = hora >= 12 ? 'PM' : 'AM';
     hora = hora % 12;
     hora = hora ? hora : 12; 
     return `${hora}:${min} ${ampm}`;
   };
 
-  const traducirPais = (paisAPI) => {
-    if (!paisAPI) return "Global";
-    const p = paisAPI.trim();
-    const traducciones = {
-      "World": "Internacional", "England": "Inglaterra", "Spain": "España",
-      "Germany": "Alemania", "France": "Francia", "Italy": "Italia",
-      "Brazil": "Brasil", "Mexico": "México", "Japan": "Japón",
-      "South-Korea": "Corea del Sur", "Netherlands": "Países Bajos",
-      "USA": "EE. UU.", "United-Arab-Emirates": "Emiratos Árabes",
-      "Costa-Rica": "Costa Rica", "Burkina-Faso": "Burkina Faso",
-      "New-Zealand": "Nueva Zelanda", "Saudi-Arabia": "Arabia Saudita",
-      "Ivory-Coast": "Costa de Marfil"
-    };
-    return traducciones[p] || p.replace(/-/g, ' ');
-  };
+  // Filtrar partidos según filtro de mercado si está seleccionado
+  const partidosFiltrados = useMemo(() => {
+    if (!partidos) return [];
+    if (filtroMercado === 'todos') return partidos;
+    return partidos.filter(p => {
+      const mercado = (p.mercado_predicho || p.mercado || '').toLowerCase();
+      if (filtroMercado === '1x2') return mercado.includes('gana') || mercado.includes('empate');
+      if (filtroMercado === 'goles') return mercado.includes('goles') || mercado.includes('2.5');
+      if (filtroMercado === 'btts') return mercado.includes('marcan');
+      return true;
+    });
+  }, [partidos, filtroMercado]);
 
-  const obtenerPrioridad = (nombreTorneo, paisAPI) => {
-    const t = nombreTorneo.toLowerCase();
-    const p = paisAPI.toLowerCase();
-
-    if (p === "colombia") {
-      if (t.includes("primera a") || t.includes("betplay")) return 1;
-      if (t.includes("copa colombia")) return 2;
-      if (t.includes("primera b")) return 12;
-      return 13;
-    }
-    if (t.includes("champions league")) return 3;
-    if (t.includes("premier league") && p === "england") return 4;
-    if (t.includes("la liga") || (t.includes("primera division") && p === "spain")) return 5;
-    if (t.includes("libertadores")) return 6;
-    if (t.includes("serie a") && p === "italy") return 7;
-    if (t.includes("bundesliga") && p === "germany") return 8;
-    if (t.includes("europa league")) return 9;
-    if (t.includes("ligue 1") && p === "france") return 10;
-    if (t.includes("mls") || t.includes("major league soccer")) return 11;
-
-    if (p === "argentina") return 20; if (p === "brazil") return 21;
-    if (p === "mexico") return 22; if (p === "uruguay") return 23;
-    if (p === "chile") return 24; if (p === "ecuador") return 25;
-    if (p === "peru") return 26; if (p === "paraguay") return 27;
-    if (p === "bolivia") return 28; if (p === "venezuela") return 29;
-
-    if (p === "portugal") return 30; if (p === "netherlands") return 31;
-    if (p === "england") return 32; if (p === "spain") return 33; 
-    if (p === "italy") return 34; if (p === "germany") return 35; 
-    if (p === "france") return 36; 
-
-    if (p === "world" || t.includes("friendlies") || t.includes("qualification")) return 40;
-    return 99; 
-  };
-
-  const inferirPaisYPrioridad = (nombreTorneo, paisAPI) => {
-    const t = (nombreTorneo || "").toLowerCase();
-    let p = (paisAPI || "").trim().toLowerCase();
-
-    // Si viene país explícito de la API y no es "mundo", lo traducimos
-    if (p && p !== "mundo" && p !== "world") {
-      const paisTraducido = traducirPais(paisAPI);
-      return { pais: paisTraducido, prioridad: obtenerPrioridad(nombreTorneo, p) };
-    }
-
-    // Inferencia inteligente por nombre de torneo cuando viene de Supabase:
-    if (t.includes("primera a") || t.includes("betplay") || t.includes("copa colombia") || t.includes("primera b")) {
-      return { pais: "Colombia", prioridad: 1 };
-    }
-    if (t.includes("champions league")) {
-      return { pais: "Internacional", prioridad: 3 };
-    }
-    if (t.includes("premier league") || t.includes("championship") || t.includes("fa cup") || t.includes("efl")) {
-      return { pais: "Inglaterra", prioridad: 4 };
-    }
-    if (t.includes("la liga") || t.includes("primera division") || t.includes("laliga") || t.includes("copa del rey")) {
-      return { pais: "España", prioridad: 5 };
-    }
-    if (t.includes("libertadores") || t.includes("sudamericana")) {
-      return { pais: "Sudamérica", prioridad: 6 };
-    }
-    if (t.includes("serie a") || t.includes("serie b") || t.includes("coppa italia")) {
-      return { pais: "Italia", prioridad: 7 };
-    }
-    if (t.includes("bundesliga") || t.includes("dfb pokal")) {
-      return { pais: "Alemania", prioridad: 8 };
-    }
-    if (t.includes("europa league") || t.includes("conference league")) {
-      return { pais: "Internacional", prioridad: 9 };
-    }
-    if (t.includes("ligue 1") || t.includes("ligue 2")) {
-      return { pais: "Francia", prioridad: 10 };
-    }
-    if (t.includes("mls") || t.includes("major league soccer")) {
-      return { pais: "EE. UU.", prioridad: 11 };
-    }
-    if (t.includes("k league")) {
-      return { pais: "Corea del Sur", prioridad: 25 };
-    }
-    if (t.includes("ligi kuu bara")) {
-      return { pais: "Tanzania", prioridad: 45 };
-    }
-    if (t.includes("friendlies") || t.includes("amistoso")) {
-      return { pais: "Amistosos", prioridad: 40 };
-    }
-    if (t.includes("cup") || t.includes("copa")) {
-      return { pais: "Copas", prioridad: 35 };
-    }
-
-    return { pais: "Global", prioridad: 99 };
-  };
-
+  // Agrupar y ordenar torneos con algoritmo de prioridad (Top primero, desconocidos al final)
   const torneosAgrupados = useMemo(() => {
     const grupos = {};
-    partidos.forEach(partido => {
+    partidosFiltrados.forEach(partido => {
       const nombreLiga = partido.torneo || "Torneo General";
-      const info = inferirPaisYPrioridad(nombreLiga, partido.pais);
-      const nombrePaisLimpio = info.pais;
+      const info = obtenerInfoTorneo(nombreLiga, partido.pais);
+      const nombrePais = info.pais;
       const prioridad = info.prioridad;
-      const bandera = partido.bandera || null; 
+      const flagCode = info.flagCode;
+      const flagUrl = obtenerUrlBandera(flagCode) || partido.bandera || null;
       
-      const keyUnica = `${nombrePaisLimpio}-${nombreLiga}`; 
+      const keyUnica = `${nombrePais}-${nombreLiga}`; 
       
       if (!grupos[keyUnica]) {
         grupos[keyUnica] = { 
+          key: keyUnica,
           nombreLiga,
-          nombrePais: nombrePaisLimpio,
-          bandera,
+          nombrePais,
+          flagUrl,
+          esTop: info.esTop,
           partidos: [], 
           prioridad 
         };
@@ -144,115 +63,166 @@ export default function MatchList({ partidos, onAddTicket }) {
       grupos[keyUnica].partidos.push(partido);
     });
     return grupos;
-  }, [partidos]);
+  }, [partidosFiltrados]);
 
-  const ligasOrdenadas = Object.keys(torneosAgrupados).sort((a, b) => {
-    const prioA = torneosAgrupados[a].prioridad;
-    const prioB = torneosAgrupados[b].prioridad;
-    if (prioA !== prioB) return prioA - prioB; 
-    return a.localeCompare(b);
-  });
+  // Ordenar ligas: menor número de prioridad primero, torneos desconocidos (>=85) al final
+  const ligasOrdenadas = useMemo(() => {
+    return Object.keys(torneosAgrupados).sort((a, b) => {
+      const prioA = torneosAgrupados[a].prioridad;
+      const prioB = torneosAgrupados[b].prioridad;
+      if (prioA !== prioB) return prioA - prioB; 
+      return torneosAgrupados[a].nombreLiga.localeCompare(torneosAgrupados[b].nombreLiga);
+    });
+  }, [torneosAgrupados]);
 
-  const toggleLiga = (torneoKey) => {
-    setLigasAbiertas(prev => ({ ...prev, [torneoKey]: !prev[torneoKey] }));
+  // Determinar si una liga está abierta: ligas con prioridad < 60 están abiertas por defecto
+  const estaAbierta = (torneoKey, prioridad) => {
+    if (ligasAbiertas[torneoKey] !== undefined) {
+      return ligasAbiertas[torneoKey];
+    }
+    return prioridad < 60; // Abiertas automáticamente las principales
   };
 
   if (!partidos || partidos.length === 0) {
-    return <div className="empty-state">No hay partidos disponibles.</div>;
+    return (
+      <div className="empty-state glass-card">
+        <div className="empty-icon">⚽</div>
+        <h3>No hay partidos disponibles para la fecha</h3>
+        <p>Los pronósticos se sincronizan automáticamente cada madrugada según el calendario de partidos.</p>
+      </div>
+    );
+  }
+
+  if (partidosFiltrados.length === 0) {
+    return (
+      <div className="empty-state glass-card">
+        <div className="empty-icon">🔍</div>
+        <h3>No se encontraron partidos con el filtro actual</h3>
+        <p>Prueba seleccionando otro mercado o restableciendo la búsqueda.</p>
+      </div>
+    );
   }
 
   return (
     <div className="match-list-container">
       {ligasOrdenadas.map(torneoKey => {
         const grupo = torneosAgrupados[torneoKey];
+        const abierta = estaAbierta(torneoKey, grupo.prioridad);
+        const esLigaSecundaria = grupo.prioridad >= 80;
         
         return (
-          <div key={torneoKey} className="tournament-group">
+          <div key={torneoKey} className={`tournament-group ${esLigaSecundaria ? 'torneo-secundario' : ''}`}>
             
+            {/* Header del Torneo con Bandera Oficial */}
             <div 
-              className={`tournament-header ${ligasAbiertas[torneoKey] ? 'active' : ''}`} 
+              className={`tournament-header ${abierta ? 'active' : ''} ${grupo.esTop ? 'header-top' : ''}`} 
               onClick={() => toggleLiga(torneoKey)}
             >
               <div className="tournament-title">
-                {grupo.bandera ? (
+                {grupo.flagUrl ? (
                   <img 
-                    src={grupo.bandera} 
+                    src={grupo.flagUrl} 
                     alt={grupo.nombrePais} 
                     className="league-flag"
-                    style={{ width: '24px', height: '18px', objectFit: 'cover', borderRadius: '3px' }}
+                    loading="lazy"
+                    onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 ) : (
-                  <svg className="svg-icon accent-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                  </svg>
+                  <div className="league-icon-fallback">
+                    🏆
+                  </div>
                 )}
                 
-                <h3>
-                  <span className="country-label">{grupo.nombrePais}:</span> {grupo.nombreLiga}
-                </h3> 
-                <span className="match-count">{grupo.partidos.length}</span>
+                <div className="tournament-text">
+                  <span className="country-label">{grupo.nombrePais}</span>
+                  <h3 className="league-name">{grupo.nombreLiga}</h3>
+                </div>
+
+                {grupo.esTop && <span className="badge-top">DESTACADO</span>}
+                {esLigaSecundaria && <span className="badge-menor">REGIONAL</span>}
               </div>
               
-              <svg 
-                className="svg-icon toggle-icon" 
-                style={{ transform: ligasAbiertas[torneoKey] ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} 
-                xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+              <div className="tournament-controls">
+                <span className="match-count">{grupo.partidos.length} {grupo.partidos.length === 1 ? 'partido' : 'partidos'}</span>
+                <span className={`toggle-chevron ${abierta ? 'rotated' : ''}`}>▼</span>
+              </div>
             </div>
             
-            {ligasAbiertas[torneoKey] && (
+            {/* Grid de Partidos */}
+            {abierta && (
               <div className="matches-grid">
                 {grupo.partidos.map(partido => {
-                  // 🔥 EXTRACTOR BLINDADO ANTIFALLOS 🔥
                   let probNum = parseFloat(partido.probabilidad);
+                  if (isNaN(probNum) || partido.probabilidad === null) probNum = 0;
+                  const probFormateada = probNum > 1 ? probNum.toFixed(1) : (probNum * 100).toFixed(1);
+                  const cuotaTeorica = probNum > 0 ? (probNum > 1 ? (100 / probNum).toFixed(2) : (1 / probNum).toFixed(2)) : '1.00';
                   
-                  if (isNaN(probNum) || partido.probabilidad === null) {
-                    probNum = 0;
-                  }
-
-                  const probFormateada = probNum > 1 
-                    ? probNum.toFixed(1) 
-                    : (probNum * 100).toFixed(1);
-                  
-                  const hora12 = formatearHora12(partido.hora || "TBD");
-                  const mercadoReal = partido.mercado_predicho || "Sin Mercado"; 
-                  const idReal = partido.id_partido || Math.random(); 
+                  const hora12 = formatearHora12(partido.hora);
+                  const mercadoReal = partido.mercado_predicho || partido.mercado || "Sin Mercado"; 
+                  const idReal = partido.id_partido || partido.id || Math.random(); 
                   const terminado = partido.goles_local !== null && partido.goles_local !== undefined;
                   const estadoClase = partido.estado_clase || (terminado ? "estado-rojo" : "estado-verde");
-                  const estadoTexto = partido.estado_texto || (terminado ? `${partido.goles_local} - ${partido.goles_visitante} (FT)` : "Programado");
+                  const estadoTexto = partido.estado_texto || (terminado ? `${partido.goles_local} - ${partido.goles_visitante} (FT)` : "PROGRAMADO");
 
-                  // Detector para la consola por si acaso
-                  console.log(`🔍 Partido ${partido.local}:`, partido);
+                  const yaEnTicket = ticket.some(item => (item.id_partido || item.id) === idReal);
+
+                  // Obtener iniciales de equipos
+                  const iniLocal = (partido.local || 'L').substring(0, 2).toUpperCase();
+                  const iniVis = (partido.visitante || 'V').substring(0, 2).toUpperCase();
+
+                  // Clasificar tipo de mercado para color
+                  let claseMercado = 'mercado-1x2';
+                  if (mercadoReal.toLowerCase().includes('goles') || mercadoReal.toLowerCase().includes('2.5')) claseMercado = 'mercado-goles';
+                  if (mercadoReal.toLowerCase().includes('marcan')) claseMercado = 'mercado-btts';
 
                   return (
-                    <div key={idReal} className="match-card glass-card">
+                    <div key={idReal} className={`match-card glass-card ${yaEnTicket ? 'in-ticket-card' : ''}`}>
                       <div className="match-header">
-                        <span className="match-time" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
-                          </svg>
-                          {hora12}
+                        <span className="match-time">
+                          <span className="clock-icon">🕒</span> {hora12}
                         </span>
                         <span className={`status-badge ${estadoClase}`}>
-                          {estadoTexto}
+                          {terminado ? '● ' : '○ '} {estadoTexto}
                         </span>
                       </div>
                       
-                      <div className="match-teams">
-                        <div className="team">{partido.local}</div>
-                        <div className="vs">vs</div>
-                        <div className="team">{partido.visitante}</div>
+                      {/* Enfrentamiento visual */}
+                      <div className="match-teams-wrapper">
+                        <div className="team-row">
+                          <span className="team-avatar avatar-home">{iniLocal}</span>
+                          <span className="team-name">{partido.local}</span>
+                        </div>
+                        <div className="vs-divider">VS</div>
+                        <div className="team-row">
+                          <span className="team-avatar avatar-away">{iniVis}</span>
+                          <span className="team-name">{partido.visitante}</span>
+                        </div>
                       </div>
                       
-                      <div className="match-prediction">
+                      {/* Predicción Matemática */}
+                      <div className={`match-prediction ${claseMercado}`}>
+                        <div className="prediction-top">
+                          <span className="prediction-label">PRONÓSTICO POISSON</span>
+                          <span className="odd-pill">@{cuotaTeorica}</span>
+                        </div>
                         <div className="market-name">{mercadoReal}</div>
-                        <div className="market-prob">{probFormateada}%</div>
+                        
+                        {/* Barra de probabilidad */}
+                        <div className="prob-bar-container">
+                          <div className="prob-bar-fill" style={{ width: `${Math.min(100, Math.max(10, probNum > 1 ? probNum : probNum * 100))}%` }}></div>
+                        </div>
+                        <div className="prob-value-row">
+                          <span>Confianza Modelo:</span>
+                          <strong className="market-prob">{probFormateada}%</strong>
+                        </div>
                       </div>
                       
-                      <button className="btn-add-ticket" onClick={() => onAddTicket({...partido, id: idReal})}>
-                        + Añadir al Ticket
+                      {/* Botón de Acción */}
+                      <button 
+                        className={`btn-add-ticket ${yaEnTicket ? 'btn-selected' : ''}`} 
+                        onClick={() => onAddTicket({...partido, id: idReal})}
+                      >
+                        {yaEnTicket ? '✓ En el Ticket' : '+ Añadir al Ticket'}
                       </button>
                     </div>
                   );
