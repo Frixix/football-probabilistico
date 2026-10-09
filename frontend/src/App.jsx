@@ -20,17 +20,24 @@ function App() {
 
   // Manejadores de Ticket
   const agregarAlTicket = (partido) => {
-    const id = partido.id_partido || partido.id;
-    if (ticket.some(item => (item.id_partido || item.id) === id)) {
-      removerDelTicket(id);
+    const idKey = partido.id_seleccion || (partido.id_partido ? `${partido.id_partido}-${partido.mercado_predicho || partido.mercado}` : (partido.id || Math.random()));
+    const partidoConId = { ...partido, id_seleccion: idKey };
+
+    const yaSeleccionado = ticket.some(item => (item.id_seleccion === idKey) || ((item.id_partido || item.id) === (partido.id_partido || partido.id) && (item.mercado_predicho || item.mercado) === (partido.mercado_predicho || partido.mercado)));
+
+    if (yaSeleccionado) {
+      removerDelTicket(idKey);
     } else {
-      setTicket(prev => [...prev, partido]);
+      // Reemplaza cualquier selección previa del MISMO partido para evitar combinadas contradictorias
+      const idBase = partido.id_partido || partido.id;
+      const sinMismoPartido = ticket.filter(item => (item.id_partido || item.id) !== idBase);
+      setTicket([...sinMismoPartido, partidoConId]);
     }
   };
 
   const removerDelTicket = (id) => {
     setTicket(prev => {
-      const nuevo = prev.filter(item => (item.id_partido || item.id) !== id);
+      const nuevo = prev.filter(item => item.id_seleccion !== id && (item.id_partido || item.id) !== id && item.id !== id);
       if (nuevo.length === 0) setMostrarTicketMobile(false);
       return nuevo;
     });
@@ -228,10 +235,22 @@ function App() {
                   1X2 Ganador
                 </button>
                 <button 
+                  className={`filter-pill ${filtroMercado === 'doble_oportunidad' ? 'active' : ''}`}
+                  onClick={() => setFiltroMercado('doble_oportunidad')}
+                >
+                  Doble Oportunidad
+                </button>
+                <button 
                   className={`filter-pill ${filtroMercado === 'goles' ? 'active' : ''}`}
                   onClick={() => setFiltroMercado('goles')}
                 >
                   +/- 2.5 Goles
+                </button>
+                <button 
+                  className={`filter-pill ${filtroMercado === 'goles_lineas' ? 'active' : ''}`}
+                  onClick={() => setFiltroMercado('goles_lineas')}
+                >
+                  Líneas (+/- 1.5 y 3.5)
                 </button>
                 <button 
                   className={`filter-pill ${filtroMercado === 'btts' ? 'active' : ''}`}

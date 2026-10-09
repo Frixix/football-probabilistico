@@ -147,3 +147,30 @@ def calcular_probabilidades_btts(matriz):
         "Si": prob_si,
         "No": prob_no
     }
+
+def calcular_probabilidades_doble_oportunidad(matriz):
+    """
+    Calcula el mercado de Doble Oportunidad a partir de la matriz de Dixon-Coles / Poisson:
+    - 1X: Local o Empate (prob_local + prob_empate)
+    - X2: Empate o Visitante (prob_empate + prob_visitante)
+    - 12: Local o Visitante (sin empate, prob_local + prob_visitante)
+    """
+    p_1x2 = calcular_probabilidades_1x2(matriz)
+    p_1 = p_1x2["1"]
+    p_x = p_1x2["X"]
+    p_2 = p_1x2["2"]
+    
+    return {
+        "1X": p_1 + p_x,
+        "X2": p_x + p_2,
+        "12": p_1 + p_2
+    }
+
+def calcular_lineas_goles(matriz, limites=[1.5, 2.5, 3.5]):
+    """
+    Calcula las probabilidades analíticas de Over y Under para múltiples líneas de gol (1.5, 2.5, 3.5).
+    """
+    lineas = {}
+    for lim in limites:
+        lineas[str(lim)] = calcular_probabilidades_over_under(matriz, limite=lim)
+    return lineas

@@ -141,6 +141,12 @@ Para incrementar de forma genuina la tasa de aciertos y el valor esperado ($EV$)
   * Asistente interactivo en el ticket con persistencia local de banca (`$ COP`) y selección de estrategia ($\frac{1}{4}$ Kelly conservador, $\frac{1}{2}$ Kelly moderado, $\frac{1}{8}$ Kelly ultra-seguro).
   * Recomendación matemática de stake óptimo ($f^* = \frac{1}{4} \cdot \frac{EV}{Cuota - 1}$) con tope de seguridad de 5.0% y botón de aplicación inmediata al simulador.
   * Distintivo dinámico de stake de Kelly visible directamente en cada tarjeta de partido que presente Valor Esperado Positivo ($+EV$).
+* **Expansión de Mercados Derivados (11 Opciones Analíticas por Partido):**
+  * Desplegable interactivo en cada tarjeta para explorar y añadir selecciones alternativas directamente al ticket:
+    * **Doble Oportunidad:** $1X$ ($P(1) + P(X)$), $X2$ ($P(X) + P(2)$), $12$ ($P(1) + P(2)$).
+    * **Líneas de Goles Múltiples:** Más/Menos de 1.5, Más/Menos de 2.5 y Más/Menos de 3.5 goles calculadas desde las diagonales de la matriz bivariada.
+    * **Ambos Marcan (BTTS):** $P(\text{Sí})$ y $P(\text{No})$ con corrección de correlación Dixon-Coles.
+  * Nuevos filtros de cabecera: **Doble Oportunidad** y **Líneas (+/- 1.5 y 3.5)** con adaptación automática de la tarjeta destacada.
 
 ---
 

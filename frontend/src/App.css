@@ -2518,3 +2518,180 @@
   text-align: center;
   padding: 0.25rem 0;
 }
+
+/* ==========================================================================
+   EXPANSIÓN DE MERCADOS DERIVADOS (DOBLE OPORTUNIDAD, LÍNEAS DE GOLES, BTTS)
+   ========================================================================== */
+
+/* Estilo para tarjetas con predicción de Doble Oportunidad */
+.mercado-dc {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(59, 130, 246, 0.08) 100%) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+.mercado-dc .prediction-label {
+  color: #22d3ee !important;
+}
+
+/* Botón desplegable para ver todos los mercados */
+.btn-toggle-derived {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.25rem;
+}
+
+.btn-toggle-derived:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #f1f5f9;
+}
+
+.btn-toggle-derived.expanded {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.btn-toggle-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.layers-svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.chevron-toggle {
+  transition: transform 0.2s ease;
+  color: #94a3b8;
+}
+
+.chevron-toggle.rotated {
+  transform: rotate(180deg);
+  color: #10b981;
+}
+
+/* Panel Acordeón de Mercados Derivados */
+.derived-markets-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  background: rgba(10, 16, 26, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  animation: fadeIn 0.22s ease-in-out;
+  margin-top: 0.35rem;
+}
+
+.derived-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.derived-group-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  padding-left: 2px;
+}
+
+.derived-chips-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.derived-chips-grid.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.derived-chips-grid.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Chip de Selección Individual */
+.derived-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0.45rem 0.35rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.derived-chip:hover {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+.derived-chip.chip-selected {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%);
+  border-color: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
+.chip-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.chip-odds-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chip-odd {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fbbf24;
+  font-family: monospace;
+}
+
+.chip-prob {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.derived-chip.chip-selected .chip-odd {
+  color: #34d399;
+}
+
+.derived-chip.chip-selected .chip-prob {
+  color: #a7f3d0;
+}
+
+@media (max-width: 480px) {
+  .derived-chips-grid.grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

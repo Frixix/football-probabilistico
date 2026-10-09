@@ -120,4 +120,37 @@ def test_criterio_kelly():
     assert res_cap["es_valido"] is True
     assert res_cap["kelly_frac_pct"] == 5.0
     assert res_cap["tope_alcanzado"] is True
+
+def test_mercados_derivados():
+    from src.models.poisson import (
+        generar_matriz_dixon_coles, calcular_probabilidades_1x2,
+        calcular_probabilidades_doble_oportunidad, calcular_lineas_goles
+    )
+    matriz = generar_matriz_dixon_coles(1.5, 1.1)
+    
+    # 1. Probar Doble Oportunidad
+    p_1x2 = calcular_probabilidades_1x2(matriz)
+    p_dc = calcular_probabilidades_doble_oportunidad(matriz)
+    
+    assert round(p_dc["1X"], 4) == round(p_1x2["1"] + p_1x2["X"], 4)
+    assert round(p_dc["X2"], 4) == round(p_1x2["X"] + p_1x2["2"], 4)
+    assert round(p_dc["12"], 4) == round(p_1x2["1"] + p_1x2["2"], 4)
+    
+    # Coherencia matemática: 1X + X2 + 12 = 2 * (1 + X + 2) = 2.0
+    assert round(p_dc["1X"] + p_dc["X2"] + p_dc["12"], 3) == 2.0
+    
+    # 2. Probar Líneas de Goles (1.5, 2.5, 3.5)
+    lineas = calcular_lineas_goles(matriz, limites=[1.5, 2.5, 3.5])
+    assert "1.5" in lineas
+    assert "2.5" in lineas
+    assert "3.5" in lineas
+    
+    # Monotonía: P(Over 1.5) > P(Over 2.5) > P(Over 3.5)
+    assert lineas["1.5"]["Over"] > lineas["2.5"]["Over"] > lineas["3.5"]["Over"]
+    # Monotonía inversa: P(Under 1.5) < P(Under 2.5) < P(Under 3.5)
+    assert lineas["1.5"]["Under"] < lineas["2.5"]["Under"] < lineas["3.5"]["Under"]
+    # Cada línea suma 1.0
+    for lim in ["1.5", "2.5", "3.5"]:
+        assert round(lineas[lim]["Over"] + lineas[lim]["Under"], 4) == 1.0
+
 
