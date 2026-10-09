@@ -131,6 +131,12 @@ Para incrementar de forma genuina la tasa de aciertos y el valor esperado ($EV$)
 * **Ticket de Apuestas con Panorama Completo:**
   * **En Escritorio:** Fijado a la pantalla (`position: sticky`), con altura máxima adaptada a la ventana y lista con desplazamiento interno independiente; el resumen, cuota combinada y simulador están siempre visibles sin hacer scroll en la página.
   * **En Celulares:** Barra flotante inferior fija (`mobile-ticket-bar`) que aparece dinámicamente con las selecciones y abre un **Drawer Modal desplegable** con controles táctiles adaptados.
+* **Panel de Auditoría & Backtesting en Vivo:**
+  * Pestaña dedicada en la barra de navegación para evaluar la rentabilidad real y precisión matemática del motor contra marcadores finales en Supabase.
+  * Métricas ejecutivas: pronósticos registrados, partidos finalizados, tasa de acierto (*Hit Rate*), y P&L neto con apuesta plana ($10,000 COP).
+  * Curva de balance acumulado (*Equity Curve*) con trazado vectorial dinámico SVG y ROI global.
+  * Desglose porcentual por mercado (1X2 Ganador, Over/Under 2.5 y Ambos Marcan).
+  * Tabla de auditoría con buscador en tiempo real, filtros por estado (*Acertados*, *Fallados*, *Pendientes*) y marcador oficial FT.
 
 ---
 

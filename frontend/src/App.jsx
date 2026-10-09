@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import MatchList from './components/MatchList';
 import BetSlip from './components/BetSlip';
+import BacktestDashboard from './components/BacktestDashboard';
 import { usePartidos } from './hooks/usePartidos';
 import { 
   BallIcon, ChartIcon, TrophyIcon, TargetIcon, 
@@ -15,6 +16,7 @@ function App() {
   const [filtroMercado, setFiltroMercado] = useState('todos');
   const [soloTopLigas, setSoloTopLigas] = useState(false);
   const [mostrarTicketMobile, setMostrarTicketMobile] = useState(false);
+  const [pestanaActiva, setPestanaActiva] = useState('cartelera');
 
   // Manejadores de Ticket
   const agregarAlTicket = (partido) => {
@@ -105,6 +107,23 @@ function App() {
             </div>
           </div>
 
+          <div className="navbar-nav-tabs">
+            <button 
+              className={`nav-tab-btn ${pestanaActiva === 'cartelera' ? 'active' : ''}`}
+              onClick={() => setPestanaActiva('cartelera')}
+            >
+              <BallIcon size={16} />
+              <span>Cartelera</span>
+            </button>
+            <button 
+              className={`nav-tab-btn ${pestanaActiva === 'backtest' ? 'active' : ''}`}
+              onClick={() => setPestanaActiva('backtest')}
+            >
+              <ChartIcon size={16} />
+              <span>Auditoría & Backtesting</span>
+            </button>
+          </div>
+
           <div className="navbar-status">
             <span className="status-indicator">
               <span className="status-dot"></span> MOTOR ACTIVO
@@ -114,169 +133,177 @@ function App() {
         </div>
       </header>
 
-      {/* 2. HERO SECTION CON KPIS */}
-      <section className="hero-banner">
-        <div className="hero-content">
-          <h1 className="hero-title">
-            Inteligencia Probabilística <span className="title-gradient">de Fútbol</span>
-          </h1>
-          <p className="hero-subtitle">
-            Cálculo estadístico bivariado de marcadores exactos, mercados de valor y análisis riguroso sin sesgos.
-          </p>
+      {pestanaActiva === 'backtest' ? (
+        <main className="main-content">
+          <BacktestDashboard />
+        </main>
+      ) : (
+        <>
+          {/* 2. HERO SECTION CON KPIS */}
+          <section className="hero-banner">
+            <div className="hero-content">
+              <h1 className="hero-title">
+                Inteligencia Probabilística <span className="title-gradient">de Fútbol</span>
+              </h1>
+              <p className="hero-subtitle">
+                Cálculo estadístico bivariado de marcadores exactos, mercados de valor y análisis riguroso sin sesgos.
+              </p>
 
-          {/* Widgets de KPIs con iconos SVG profesionales */}
-          <div className="kpi-grid">
-            <div className="kpi-card">
-              <span className="kpi-icon"><ChartIcon size={24} /></span>
-              <div className="kpi-data">
-                <span className="kpi-value">{partidos.length}</span>
-                <span className="kpi-label">Partidos Analizados</span>
+              {/* Widgets de KPIs con iconos SVG profesionales */}
+              <div className="kpi-grid">
+                <div className="kpi-card">
+                  <span className="kpi-icon"><ChartIcon size={24} /></span>
+                  <div className="kpi-data">
+                    <span className="kpi-value">{partidos.length}</span>
+                    <span className="kpi-label">Partidos Analizados</span>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <span className="kpi-icon"><TrophyIcon size={24} /></span>
+                  <div className="kpi-data">
+                    <span className="kpi-value">{totalLigas}</span>
+                    <span className="kpi-label">Ligas Disponibles</span>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <span className="kpi-icon"><TargetIcon size={24} /></span>
+                  <div className="kpi-data">
+                    <span className="kpi-value">{probPromedio}%</span>
+                    <span className="kpi-label">Confianza Promedio</span>
+                  </div>
+                </div>
+
+                <div className="kpi-card highlight-kpi">
+                  <span className="kpi-icon"><TicketIcon size={24} /></span>
+                  <div className="kpi-data">
+                    <span className="kpi-value">{ticket.length}</span>
+                    <span className="kpi-label">En Tu Ticket</span>
+                  </div>
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="kpi-card">
-              <span className="kpi-icon"><TrophyIcon size={24} /></span>
-              <div className="kpi-data">
-                <span className="kpi-value">{totalLigas}</span>
-                <span className="kpi-label">Ligas Disponibles</span>
+          {/* 3. BARRA DE CONTROLES, BÚSQUEDA Y FILTROS */}
+          <section className="controls-bar-container">
+            <div className="controls-wrapper">
+              {/* Buscador */}
+              <div className="search-box">
+                <span className="search-icon"><SearchIcon size={18} /></span>
+                <input 
+                  type="text" 
+                  placeholder="Buscar equipo o torneo (ej. Real Madrid, BetPlay, Ibiza)..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="search-input"
+                />
+                {busqueda && (
+                  <button onClick={() => setBusqueda('')} className="btn-clear-search">
+                    <CloseIcon size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Filtros de Mercado */}
+              <div className="filter-pills">
+                <button 
+                  className={`filter-pill ${filtroMercado === 'todos' && !soloTopLigas ? 'active' : ''}`}
+                  onClick={() => { setFiltroMercado('todos'); setSoloTopLigas(false); }}
+                >
+                  Todos ({partidos.length})
+                </button>
+                <button 
+                  className={`filter-pill ${soloTopLigas ? 'active' : ''}`}
+                  onClick={() => setSoloTopLigas(!soloTopLigas)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <StarIcon size={13} /> Solo Top Ligas
+                </button>
+                <button 
+                  className={`filter-pill ${filtroMercado === '1x2' ? 'active' : ''}`}
+                  onClick={() => setFiltroMercado('1x2')}
+                >
+                  1X2 Ganador
+                </button>
+                <button 
+                  className={`filter-pill ${filtroMercado === 'goles' ? 'active' : ''}`}
+                  onClick={() => setFiltroMercado('goles')}
+                >
+                  +/- 2.5 Goles
+                </button>
+                <button 
+                  className={`filter-pill ${filtroMercado === 'btts' ? 'active' : ''}`}
+                  onClick={() => setFiltroMercado('btts')}
+                >
+                  Ambos Marcan
+                </button>
+                <button 
+                  className={`filter-pill ${filtroMercado === 'valor' ? 'active' : ''}`}
+                  onClick={() => setFiltroMercado(filtroMercado === 'valor' ? 'todos' : 'valor')}
+                >
+                  Solo Valor (+EV)
+                </button>
               </div>
             </div>
+          </section>
 
-            <div className="kpi-card">
-              <span className="kpi-icon"><TargetIcon size={24} /></span>
-              <div className="kpi-data">
-                <span className="kpi-value">{probPromedio}%</span>
-                <span className="kpi-label">Confianza Promedio</span>
+          {/* 4. DASHBOARD PRINCIPAL (MATCHES + BETSLIP) */}
+          <main className="main-content">
+            {error && (
+              <div className="error-banner glass-card">
+                <span className="error-icon"><AlertTriangleIcon size={22} /></span>
+                <div>
+                  <strong>Error de sincronización con Supabase:</strong> {error}
+                </div>
               </div>
-            </div>
-
-            <div className="kpi-card highlight-kpi">
-              <span className="kpi-icon"><TicketIcon size={24} /></span>
-              <div className="kpi-data">
-                <span className="kpi-value">{ticket.length}</span>
-                <span className="kpi-label">En Tu Ticket</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. BARRA DE CONTROLES, BÚSQUEDA Y FILTROS */}
-      <section className="controls-bar-container">
-        <div className="controls-wrapper">
-          {/* Buscador */}
-          <div className="search-box">
-            <span className="search-icon"><SearchIcon size={18} /></span>
-            <input 
-              type="text" 
-              placeholder="Buscar equipo o torneo (ej. Real Madrid, BetPlay, Ibiza)..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="search-input"
-            />
-            {busqueda && (
-              <button onClick={() => setBusqueda('')} className="btn-clear-search">
-                <CloseIcon size={14} />
-              </button>
             )}
-          </div>
 
-          {/* Filtros de Mercado */}
-          <div className="filter-pills">
-            <button 
-              className={`filter-pill ${filtroMercado === 'todos' && !soloTopLigas ? 'active' : ''}`}
-              onClick={() => { setFiltroMercado('todos'); setSoloTopLigas(false); }}
-            >
-              Todos ({partidos.length})
-            </button>
-            <button 
-              className={`filter-pill ${soloTopLigas ? 'active' : ''}`}
-              onClick={() => setSoloTopLigas(!soloTopLigas)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <StarIcon size={13} /> Solo Top Ligas
-            </button>
-            <button 
-              className={`filter-pill ${filtroMercado === '1x2' ? 'active' : ''}`}
-              onClick={() => setFiltroMercado('1x2')}
-            >
-              1X2 Ganador
-            </button>
-            <button 
-              className={`filter-pill ${filtroMercado === 'goles' ? 'active' : ''}`}
-              onClick={() => setFiltroMercado('goles')}
-            >
-              +/- 2.5 Goles
-            </button>
-            <button 
-              className={`filter-pill ${filtroMercado === 'btts' ? 'active' : ''}`}
-              onClick={() => setFiltroMercado('btts')}
-            >
-              Ambos Marcan
-            </button>
-            <button 
-              className={`filter-pill ${filtroMercado === 'valor' ? 'active' : ''}`}
-              onClick={() => setFiltroMercado(filtroMercado === 'valor' ? 'todos' : 'valor')}
-            >
-              Solo Valor (+EV)
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. DASHBOARD PRINCIPAL (MATCHES + BETSLIP) */}
-      <main className="main-content">
-        {error && (
-          <div className="error-banner glass-card">
-            <span className="error-icon"><AlertTriangleIcon size={22} /></span>
-            <div>
-              <strong>Error de sincronización con Supabase:</strong> {error}
-            </div>
-          </div>
-        )}
-
-        {cargando ? (
-          <div className="loader-container glass-card">
-            <div className="spinner"></div>
-            <p className="loader-title">Procesando matrices de Poisson...</p>
-            <span className="loader-sub">Consultando históricos y estimando probabilidades en vivo</span>
-          </div>
-        ) : (
-          <div className="dashboard-grid">
-            <section className="matches-section">
-              <div className="section-header-row">
-                <h2>Cartelera de Pronósticos</h2>
-                <span className="matches-subtitle">
-                  Mostrando {partidosFiltrados.length} de {partidos.length} partidos verificados
-                </span>
+            {cargando ? (
+              <div className="loader-container glass-card">
+                <div className="spinner"></div>
+                <p className="loader-title">Procesando matrices de Poisson...</p>
+                <span className="loader-sub">Consultando históricos y estimando probabilidades en vivo</span>
               </div>
+            ) : (
+              <div className="dashboard-grid">
+                <section className="matches-section">
+                  <div className="section-header-row">
+                    <h2>Cartelera de Pronósticos</h2>
+                    <span className="matches-subtitle">
+                      Mostrando {partidosFiltrados.length} de {partidos.length} partidos verificados
+                    </span>
+                  </div>
 
-              <MatchList 
-                partidos={partidosFiltrados} 
-                ticket={ticket}
-                onAddTicket={agregarAlTicket} 
-                filtroMercado={filtroMercado}
-              />
-            </section>
+                  <MatchList 
+                    partidos={partidosFiltrados} 
+                    ticket={ticket}
+                    onAddTicket={agregarAlTicket} 
+                    filtroMercado={filtroMercado}
+                  />
+                </section>
 
-            <aside className="betslip-section">
-              <BetSlip 
-                ticket={ticket} 
-                onRemove={removerDelTicket} 
-                onClear={limpiarTicket} 
-              />
-            </aside>
-          </div>
-        )}
-      </main>
+                <aside className="betslip-section">
+                  <BetSlip 
+                    ticket={ticket} 
+                    onRemove={removerDelTicket} 
+                    onClear={limpiarTicket} 
+                  />
+                </aside>
+              </div>
+            )}
+          </main>
+        </>
+      )}
 
       {/* 5. FOOTER */}
       <footer className="main-footer">
         <p>© 2026 Poisson Predictor PRO • Sistema Estadístico Cuantitativo de Fútbol</p>
       </footer>
 
-      {/* 6. BARRA FLOTANTE MÓVIL (VISIBLE EN CELULARES SI HAY TICKETS) */}
-      {ticket.length > 0 && (
+      {/* 6. BARRA FLOTANTE MÓVIL (VISIBLE EN CELULARES SI HAY TICKETS Y EN CARTELERA) */}
+      {ticket.length > 0 && pestanaActiva === 'cartelera' && (
         <div className="mobile-ticket-bar">
           <div className="mobile-bar-summary" onClick={() => setMostrarTicketMobile(true)}>
             <div className="mobile-bar-badge">
