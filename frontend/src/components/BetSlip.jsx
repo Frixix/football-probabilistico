@@ -8,6 +8,7 @@ export default function BetSlip({
   onClear, 
   onClose, 
   isMobile = false,
+  onGenerarSeguro = null,
   onGenerarAleatorio = null,
   onGenerarModerado = null,
   onIrACombinadas = null
@@ -53,7 +54,7 @@ export default function BetSlip({
 
   const getRiesgoInfo = (prob) => {
     if (prob > 0.45) {
-      return { nivel: 'Riesgo Controlado', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', desc: 'Probabilidad alta de acierto según Poisson.' };
+      return { nivel: 'Riesgo Controlado (Seguro)', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', desc: 'Probabilidad alta de acierto según Poisson.' };
     }
     if (prob >= 0.20) {
       return { nivel: 'Riesgo Moderado', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', desc: 'Efecto dado en juego: cuota atractiva con varianza moderada.' };
@@ -74,13 +75,23 @@ export default function BetSlip({
           <span className="ticket-badge">{ticket.length}</span>
         </div>
         <div className="betslip-header-actions">
+          {onGenerarSeguro && (
+            <button 
+              onClick={onGenerarSeguro} 
+              className="btn-betslip-header-action btn-header-safe" 
+              title="Generar automáticamente un ticket ultra seguro de equipos conocidos"
+            >
+              <ShieldIcon size={13} />
+              <span>Seguro</span>
+            </button>
+          )}
           {onGenerarAleatorio && (
             <button 
               onClick={onGenerarAleatorio} 
               className="btn-betslip-header-action" 
               title="Generar automáticamente un ticket aleatorio de alta probabilidad"
             >
-              <DicesIcon size={14} />
+              <DicesIcon size={13} />
               <span>Aleatorio</span>
             </button>
           )}
@@ -103,9 +114,20 @@ export default function BetSlip({
             <ReceiptIcon size={40} className="empty-receipt-svg" />
           </div>
           <p className="empty-main-text">Tu ticket está vacío</p>
-          <span className="empty-sub-text">Selecciona partidos de la cartelera o genera un ticket automático calibrado:</span>
+          <span className="empty-sub-text">Selecciona partidos o genera un ticket automático calibrado en ligas top:</span>
 
           <div className="empty-betslip-actions">
+            {onGenerarSeguro && (
+              <button 
+                type="button" 
+                className="btn-empty-generate btn-empty-safe"
+                onClick={onGenerarSeguro}
+                title="Generar la combinación más segura de la jornada (Mínimo Riesgo en equipos conocidos)"
+              >
+                <ShieldIcon size={16} />
+                <span>Ticket Ultra Seguro (Mínimo Riesgo)</span>
+              </button>
+            )}
             {onGenerarAleatorio && (
               <button 
                 type="button" 
@@ -114,7 +136,7 @@ export default function BetSlip({
                 title="Generar al azar entre las selecciones de mayor probabilidad"
               >
                 <DicesIcon size={16} />
-                <span>Ticket Aleatorio (Alta Probabilidad)</span>
+                <span>Ticket Aleatorio (Equipos Top)</span>
               </button>
             )}
             {onGenerarModerado && (
@@ -124,7 +146,7 @@ export default function BetSlip({
                 onClick={onGenerarModerado}
                 title="Generar una combinada calibrada en Riesgo Moderado"
               >
-                <ShieldIcon size={16} />
+                <ZapIcon size={16} />
                 <span>Combinada Riesgo Moderado</span>
               </button>
             )}

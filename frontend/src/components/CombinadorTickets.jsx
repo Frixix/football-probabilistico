@@ -8,6 +8,7 @@ import {
 import { 
   generarTicketAleatorioMayorProbabilidad, 
   generarTicketRiesgoModerado, 
+  generarTicketUltraSeguro,
   generarTodasLasCombinadasSugeridas,
   formatearPickParaTicket,
   calcularMetricasTicket
@@ -22,7 +23,7 @@ export default function CombinadorTickets({
   ticketActual = [],
   onIrACartelera 
 }) {
-  const [numSelecciones, setNumSelecciones] = useState(3);
+  const [numSelecciones, setNumSelecciones] = useState(2);
   const [filtroRiesgo, setFiltroRiesgo] = useState('todos'); // 'todos' | 'moderado' | 'controlado'
   const [ticketActivo, setTicketActivo] = useState(null);
   const [montoSimulado, setMontoSimulado] = useState(10000);
@@ -38,16 +39,23 @@ export default function CombinadorTickets({
     return generarTodasLasCombinadasSugeridas(partidos);
   }, [partidos]);
 
-  // Al montar o cambiar partidos, seleccionar por defecto la combinada de Riesgo Moderado
+  // Al montar o cambiar partidos, seleccionar por defecto el ticket Ultra Seguro (Mínimo Riesgo)
   useEffect(() => {
     if (combinadasSugeridas.length > 0 && !ticketActivo) {
-      // Priorizar la de riesgo moderado
-      const mod = combinadasSugeridas.find(c => c.tipoGenerador === 'riesgo_moderado') || combinadasSugeridas[0];
-      setTicketActivo(mod);
+      const seguro = combinadasSugeridas.find(c => c.tipoGenerador === 'ultra_seguro') || combinadasSugeridas[0];
+      setTicketActivo(seguro);
     }
   }, [combinadasSugeridas]);
 
-  // Manejador: Generar Ticket Aleatorio con Mayor Probabilidad
+  // Manejador: Generar Ticket Ultra Seguro (Mínimo Riesgo, Alta Probabilidad, Equipos Conocidos)
+  const handleGenerarUltraSeguro = () => {
+    const nuevo = generarTicketUltraSeguro(partidos, numSelecciones);
+    if (nuevo) {
+      setTicketActivo(nuevo);
+    }
+  };
+
+  // Manejador: Generar Ticket Aleatorio con Mayor Probabilidad (Equipos Conocidos)
   const handleGenerarAleatorio = () => {
     setAnimandoAleatorio(true);
     setTimeout(() => {
@@ -56,7 +64,7 @@ export default function CombinadorTickets({
         setTicketActivo(nuevo);
       }
       setAnimandoAleatorio(false);
-    }, 250);
+    }, 200);
   };
 
   // Manejador: Generar Ticket Riesgo Moderado
@@ -147,15 +155,15 @@ export default function CombinadorTickets({
       <section className="combinador-hero glass-card">
         <div className="combinador-hero-content">
           <div className="combinador-hero-badge">
-            <ZapIcon size={16} className="zap-badge-icon" />
-            <span>ALGORITMO ESTOCÁSTICO DE COMBINADAS</span>
+            <ShieldIcon size={16} className="zap-badge-icon" />
+            <span>ALGORITMO ESTOCÁSTICO • EQUIPOS CONOCIDOS</span>
           </div>
           <h2 className="combinador-title">
-            Tickets Automáticos & <span className="title-gradient">Sugerencias de Riesgo Moderado</span>
+            Tickets Automáticos & <span className="title-gradient">Sugerencias de Mínimo Riesgo</span>
           </h2>
           <p className="combinador-desc">
-            Construcción matemática de apuestas combinadas equilibradas. Filtra correlaciones espurias 
-            y maximiza la probabilidad compuesta evaluando matrices bivariadas de Dixon-Coles.
+            Construcción matemática de apuestas combinadas exclusivamente con <strong>equipos conocidos de ligas top</strong>. 
+            Prioriza selecciones de alta certeza (Doble Oportunidad 1X/X2 y líneas seguras de goles) para <strong>minimizar las pérdidas al máximo</strong> y proteger tu banca.
           </p>
         </div>
 
@@ -164,14 +172,27 @@ export default function CombinadorTickets({
           <div className="quick-buttons-group">
             <button 
               type="button" 
+              className="btn-action-generator btn-generator-safe"
+              onClick={handleGenerarUltraSeguro}
+              title="Generar la combinación más segura de la jornada con equipos conocidos (minimizar pérdidas)"
+            >
+              <ShieldIcon size={20} className="generator-svg-icon" />
+              <div className="btn-gen-text">
+                <strong>Ultra Seguro</strong>
+                <span>Mínimo Riesgo • Equipos Top</span>
+              </div>
+            </button>
+
+            <button 
+              type="button" 
               className={`btn-action-generator btn-generator-random ${animandoAleatorio ? 'pulse-btn' : ''}`}
               onClick={handleGenerarAleatorio}
-              title="Generar un ticket combinando aleatoriamente entre los partidos con mayor probabilidad individual"
+              title="Generar un ticket combinando aleatoriamente entre los partidos conocidos con mayor probabilidad individual"
             >
               <DicesIcon size={20} className="generator-svg-icon" />
               <div className="btn-gen-text">
                 <strong>Ticket Aleatorio</strong>
-                <span>Mayor Probabilidad</span>
+                <span>Equipos Conocidos</span>
               </div>
             </button>
 
@@ -179,12 +200,12 @@ export default function CombinadorTickets({
               type="button" 
               className="btn-action-generator btn-generator-moderate"
               onClick={handleGenerarModerado}
-              title="Generar una combinada matemática calibrada exactamente en Riesgo Moderado (20% a 45%)"
+              title="Generar una combinada calibrada en Riesgo Moderado (20% a 45%)"
             >
-              <ShieldIcon size={20} className="generator-svg-icon" />
+              <ZapIcon size={20} className="generator-svg-icon" />
               <div className="btn-gen-text">
                 <strong>Riesgo Moderado</strong>
-                <span>Balance Óptimo Cuota/Acierto</span>
+                <span>Balance Cuota / Acierto</span>
               </div>
             </button>
           </div>

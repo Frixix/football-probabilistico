@@ -13,6 +13,7 @@ import {
 import { 
   generarTicketAleatorioMayorProbabilidad, 
   generarTicketRiesgoModerado, 
+  generarTicketUltraSeguro,
   formatearPickParaTicket 
 } from './utils/combinadas';
 import HORARIOS_FIXTURES from './data/horarios_fixtures.json';
@@ -100,6 +101,19 @@ function App() {
     setTicket(formateados);
     setMensajeToast('¡Ticket combinado cargado con éxito en el BetSlip!');
     setTimeout(() => setMensajeToast(null), 3200);
+  };
+
+  const handleGenerarSeguroRapido = () => {
+    const pool = partidosFiltrados.length >= 2 ? partidosFiltrados : partidos;
+    const res = generarTicketUltraSeguro(pool, 2);
+    if (res && res.picks) {
+      cargarTicketCompleto(res.picks.map(p => formatearPickParaTicket(p)));
+      setMensajeToast(`🛡️ ${res.titulo} (@${res.metricas.cuotaFormateada}) cargado en el BetSlip`);
+      setTimeout(() => setMensajeToast(null), 3200);
+    } else {
+      setMensajeToast('No hay suficientes partidos para generar el ticket ultra seguro');
+      setTimeout(() => setMensajeToast(null), 2500);
+    }
   };
 
   const handleGenerarAleatorioRapido = () => {
@@ -485,6 +499,7 @@ function App() {
                     ticket={ticket} 
                     onRemove={removerDelTicket} 
                     onClear={limpiarTicket}
+                    onGenerarSeguro={handleGenerarSeguroRapido}
                     onGenerarAleatorio={handleGenerarAleatorioRapido}
                     onGenerarModerado={handleGenerarModeradoRapido}
                     onIrACombinadas={() => setPestanaActiva('combinadas')}
@@ -536,6 +551,7 @@ function App() {
               onRemove={removerDelTicket} 
               onClear={limpiarTicket} 
               onClose={() => setMostrarTicketMobile(false)}
+              onGenerarSeguro={handleGenerarSeguroRapido}
               onGenerarAleatorio={handleGenerarAleatorioRapido}
               onGenerarModerado={handleGenerarModeradoRapido}
               onIrACombinadas={() => {

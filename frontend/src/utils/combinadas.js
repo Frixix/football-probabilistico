@@ -1,19 +1,60 @@
-import { generarMercadosCompletos } from './markets';
+import { generarMercadosCompletos } from './markets.js';
+import { obtenerInfoTorneo } from './leagues.js';
 
 /**
  * Motor Cuantitativo de Combinadas y Generador Automático de Tickets
  *
  * Clasificación de Riesgo:
- * - Riesgo Controlado: P >= 0.45 (Cuota ~1.50 - 2.20)
+ * - Riesgo Controlado (Ultra Seguro): P >= 0.45 (Cuota ~1.45 - 2.20) -> Mínima Varianza
  * - Riesgo Moderado:   0.20 <= P < 0.45 (Cuota ~2.22 - 5.00) -> Zona Óptima de Valor
  * - Alto Riesgo:       P < 0.20 (Cuota > 5.00)
  */
 
 export const RANGOS_RIESGO = {
-  CONTROLADO: { min: 0.45, max: 1.00, label: 'Riesgo Controlado', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
+  CONTROLADO: { min: 0.45, max: 1.00, label: 'Mínimo Riesgo (Controlado)', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
   MODERADO:   { min: 0.20, max: 0.45, label: 'Riesgo Moderado',   color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
   ALTO:       { min: 0.00, max: 0.20, label: 'Alto Riesgo',       color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' }
 };
+
+/**
+ * Determina con rigor si un partido involucra equipos conocidos de ligas principales
+ * (Colombia, Inglaterra, España, Alemania, Italia, Francia, Argentina, Brasil,
+ * Champions League, Libertadores, Sudamericana, y primeras divisiones reconocidas).
+ */
+export function esPartidoEquipoConocido(partido) {
+  if (!partido) return false;
+  const idL = partido.id_liga || partido.id_torneo || null;
+  const info = obtenerInfoTorneo(partido.torneo, partido.pais, partido.local, partido.visitante, idL);
+  return Boolean(info.esTop || (info.prioridad !== undefined && info.prioridad <= 25));
+}
+
+/**
+ * Filtra un pool de partidos para garantizar que las combinadas automáticas se construyan
+ * exclusivamente con equipos conocidos de torneos destacados, evitando ligas exóticas o regionales.
+ */
+export function filtrarPartidosEquiposConocidos(partidos) {
+  if (!partidos || partidos.length === 0) return [];
+  const conocidos = partidos.filter(esPartidoEquipoConocido);
+  if (conocidos.length >= 2) {
+    // Ordenar de mayor jerarquía a menor (1: BetPlay, 2: Premier, 3: La Liga, etc.)
+    return [...conocidos].sort((a, b) => {
+      const idA = a.id_liga || a.id_torneo || null;
+      const idB = b.id_liga || b.id_torneo || null;
+      const infoA = obtenerInfoTorneo(a.torneo, a.pais, a.local, a.visitante, idA);
+      const infoB = obtenerInfoTorneo(b.torneo, b.pais, b.local, b.visitante, idB);
+      return (infoA.prioridad || 50) - (infoB.prioridad || 50);
+    });
+  }
+
+  // Fallback si la jornada tiene pocos eventos en ligas top (permitir prioridad <= 35)
+  const semiConocidos = partidos.filter(p => {
+    const info = obtenerInfoTorneo(p.torneo, p.pais, p.local, p.visitante, p.id_liga);
+    return (info.prioridad || 99) <= 35;
+  });
+  if (semiConocidos.length >= 2) return semiConocidos;
+
+  return partidos;
+}
 
 /**
  * Extrae todos los mercados candidatos disponibles para un partido.
@@ -204,25 +245,103 @@ function shuffle(array) {
 }
 
 /**
- * 🎲 BOTÓN: TICKET ALEATORIO CON MAYOR PROBABILIDAD
+ * 🛡️ GENERADOR DE TICKET ULTRA SEGURO / MÍNIMO RIESGO (CONSERVADOR)
  *
- * Toma aleatoriamente entre los partidos disponibles con las selecciones de mayor
- * probabilidad estadística (ej. Doble Oportunidad, +1.5 goles o favoritos sólidos con prob >= 65%).
- * Devuelve un ticket combinado fresco en cada ejecución.
+ * Filtra estrictamente EQUIPOS CONOCIDOS de ligas top (Colombia, Premier, La Liga,
+ * Serie A, Bundesliga, Champions, Libertadores, etc.) y selecciona los mercados de
+ * MÁXIMA probabilidad matemática (Doble Oportunidad 1X/X2 >= 72-85%, Goles +1.5 o -3.5 >= 75%).
+ *
+ * Por defecto combina 2 selecciones de alta certeza para producir una probabilidad
+ * conjunta de 55% a 75%+ (cuota ~1.45 - 1.95), minimizando drásticamente la varianza y pérdidas.
+ */
+export function generarTicketUltraSeguro(partidos, numSelecciones = 2) {
+  if (!partidos || partidos.length < 2) return null;
+
+  // 1. Filtrar rigurosamente equipos conocidos de ligas principales
+  const poolConocidos = filtrarPartidosEquiposConocidos(partidos);
+  if (poolConocidos.length < 2) return null;
+
+  // 2. Extraer el mercado más seguro de cada partido conocido
+  const mejoresPorPartido = [];
+
+  poolConocidos.forEach(p => {
+    const candidatos = obtenerCandidatosPartido(p, 0.65);
+    if (!candidatos || candidatos.length === 0) return;
+
+    // Prioridad de máxima certeza:
+    // a) Doble Oportunidad con prob >= 72% (tasa de fallo mínima)
+    // b) Líneas seguras de goles (+1.5 o -3.5) con prob >= 75%
+    // c) El mejor candidato disponible del partido
+    const pickUltra = candidatos.find(c => 
+      (c.tipo === 'doble_oportunidad' && c.probDecimal >= 0.72) ||
+      (c.tipo === 'goles' && (c.mercado.includes('1.5') || c.mercado.includes('3.5')) && c.probDecimal >= 0.75)
+    ) || candidatos[0];
+
+    if (pickUltra && pickUltra.probDecimal >= 0.65) {
+      mejoresPorPartido.push(pickUltra);
+    }
+  });
+
+  if (mejoresPorPartido.length < 2) {
+    // Si la jornada no tiene tantos picks con > 65%, tomar los mejores disponibles de equipos conocidos
+    const fallback = poolConocidos.map(p => obtenerCandidatosPartido(p, 0.50)[0]).filter(Boolean);
+    fallback.sort((a, b) => b.probDecimal - a.probDecimal);
+    if (fallback.length < 2) return null;
+    const picks = fallback.slice(0, Math.min(numSelecciones, fallback.length));
+    return {
+      id: `safe-${Date.now()}`,
+      titulo: 'Ticket Ultra Seguro (Mínimo Riesgo)',
+      subtitulo: `${picks.length} selecciones de máxima probabilidad en ligas top. Diseñado para maximizar aciertos y proteger banca.`,
+      tipoGenerador: 'ultra_seguro',
+      picks,
+      metricas: calcularMetricasTicket(picks)
+    };
+  }
+
+  // Ordenar por mayor probabilidad matemática individual
+  mejoresPorPartido.sort((a, b) => b.probDecimal - a.probDecimal);
+  const picks = mejoresPorPartido.slice(0, Math.min(numSelecciones, mejoresPorPartido.length));
+
+  return {
+    id: `safe-${Date.now()}`,
+    titulo: 'Ticket Ultra Seguro (Mínimo Riesgo)',
+    subtitulo: `${picks.length} selecciones de máxima certeza en equipos conocidos. Diseñado para maximizar aciertos y proteger banca.`,
+    tipoGenerador: 'ultra_seguro',
+    picks,
+    metricas: calcularMetricasTicket(picks)
+  };
+}
+
+export const generarTicketConservador = generarTicketUltraSeguro;
+
+/**
+ * 🎲 BOTÓN: TICKET ALEATORIO CON MAYOR PROBABILIDAD (EQUIPOS CONOCIDOS)
+ *
+ * Toma aleatoriamente entre los partidos de equipos conocidos con las selecciones de mayor
+ * probabilidad estadística (Doble Oportunidad, +1.5 goles o favoritos sólidos con prob >= 65%).
+ * Devuelve un ticket combinado fresco en cada ejecución sin salir de ligas top.
  */
 export function generarTicketAleatorioMayorProbabilidad(partidos, numSelecciones = 3) {
   if (!partidos || partidos.length === 0) return null;
 
-  // Extraer el mejor pick (más seguro) de cada partido disponible
-  const mejoresPorPartido = partidos.map(partido => {
-    const candidatos = obtenerCandidatosPartido(partido, 0.60);
-    // Tomar el de más alta probabilidad
-    return candidatos[0] || null;
+  // Filtrar exclusivamente equipos conocidos
+  const poolConocidos = filtrarPartidosEquiposConocidos(partidos);
+  if (poolConocidos.length < 2) return null;
+
+  // Extraer el mejor pick (más seguro) de cada partido de equipos conocidos
+  const mejoresPorPartido = poolConocidos.map(partido => {
+    const candidatos = obtenerCandidatosPartido(partido, 0.62);
+    // Preferir dobles oportunidades o líneas de goles seguras
+    const preferente = candidatos.find(c => 
+      (c.tipo === 'doble_oportunidad' && c.probDecimal >= 0.70) ||
+      (c.tipo === 'goles' && c.probDecimal >= 0.72)
+    ) || candidatos[0];
+    return preferente || null;
   }).filter(Boolean);
 
   if (mejoresPorPartido.length === 0) return null;
 
-  // Filtrar o priorizar partidos con prob >= 65%
+  // Priorizar candidatos con prob >= 65%
   const altaProb = mejoresPorPartido.filter(c => c.probDecimal >= 0.65);
   const pool = altaProb.length >= numSelecciones ? altaProb : mejoresPorPartido;
 
@@ -236,7 +355,7 @@ export function generarTicketAleatorioMayorProbabilidad(partidos, numSelecciones
   return {
     id: `rnd-${Date.now()}`,
     titulo: 'Ticket Aleatorio de Alta Probabilidad',
-    subtitulo: 'Generado al azar a partir de las selecciones de mayor certeza estadística',
+    subtitulo: 'Generado al azar a partir de equipos conocidos con alta certeza estadística (Dixon-Coles)',
     tipoGenerador: 'aleatorio_alta_probabilidad',
     picks: seleccionados,
     metricas
@@ -244,18 +363,21 @@ export function generarTicketAleatorioMayorProbabilidad(partidos, numSelecciones
 }
 
 /**
- * ⚖️ GENERADOR DE TICKET DE RIESGO MODERADO
+ * ⚖️ GENERADOR DE TICKET DE RIESGO MODERADO (EQUIPOS CONOCIDOS)
  *
- * Busca y construye una combinada cuya probabilidad conjunta caiga con precisión
+ * Busca y construye una combinada en ligas top cuya probabilidad conjunta caiga con precisión
  * dentro del rango de Riesgo Moderado (20% <= P <= 45%, típicamente 25% a 38%, cuota ~2.40 - 4.20).
  */
 export function generarTicketRiesgoModerado(partidos, numSelecciones = 3, aleatorizar = true) {
   if (!partidos || partidos.length < 2) return null;
 
+  // Filtrar exclusivamente equipos conocidos
+  const poolConocidos = filtrarPartidosEquiposConocidos(partidos);
+  if (poolConocidos.length < 2) return null;
+
   // Extraer candidatos con buena solidez (58% a 85% de probabilidad individual)
-  const candidatosPorPartido = partidos.map(p => {
+  const candidatosPorPartido = poolConocidos.map(p => {
     const c = obtenerCandidatosPartido(p, 0.58);
-    // Preferir dobles oportunidades o líneas de goles seguras para combinadas moderadas
     const preferente = c.find(item => item.probDecimal >= 0.65 && item.probDecimal <= 0.85) || c[0];
     return preferente || null;
   }).filter(Boolean);
@@ -293,7 +415,7 @@ export function generarTicketRiesgoModerado(partidos, numSelecciones = 3, aleato
   return {
     id: `mod-${Date.now()}`,
     titulo: 'Combinada de Riesgo Moderado',
-    subtitulo: 'Balance calibrado entre probabilidad matemática (20% - 45%) y cuota atractiva',
+    subtitulo: 'Balance calibrado entre probabilidad matemática (20% - 45%) y cuota atractiva en ligas top',
     tipoGenerador: 'riesgo_moderado',
     picks: seleccionados,
     metricas
@@ -301,58 +423,17 @@ export function generarTicketRiesgoModerado(partidos, numSelecciones = 3, aleato
 }
 
 /**
- * 🛡️ TICKET CONSERVADOR (RIESGO CONTROLADO)
- * 2 selecciones de máxima probabilidad (> 75-80% cada una) para una combinada de prob >= 50%.
- */
-export function generarTicketConservador(partidos) {
-  if (!partidos || partidos.length < 2) return null;
-
-  const mejoresPicks = [];
-  partidos.forEach(p => {
-    const c = obtenerCandidatosPartido(p, 0.70);
-    if (c.length > 0) {
-      mejoresPicks.push(c[0]);
-    }
-  });
-
-  if (mejoresPicks.length < 2) {
-    // Si no hay tantos de 70%, tomar los top de cada uno
-    const fallback = partidos.map(p => obtenerCandidatosPartido(p, 0.50)[0]).filter(Boolean);
-    fallback.sort((a, b) => b.probDecimal - a.probDecimal);
-    if (fallback.length < 2) return null;
-    const picks = fallback.slice(0, 2);
-    return {
-      id: 'conservador-default',
-      titulo: 'Doble de Alta Seguridad',
-      subtitulo: '2 selecciones con la máxima confianza disponible de la jornada',
-      tipoGenerador: 'controlado',
-      picks,
-      metricas: calcularMetricasTicket(picks)
-    };
-  }
-
-  mejoresPicks.sort((a, b) => b.probDecimal - a.probDecimal);
-  const picks = mejoresPicks.slice(0, 2);
-
-  return {
-    id: 'conservador-default',
-    titulo: 'Doble de Riesgo Controlado',
-    subtitulo: 'Máxima tasa de acierto estimada con cuota moderada (P > 45%)',
-    tipoGenerador: 'controlado',
-    picks,
-    metricas: calcularMetricasTicket(picks)
-  };
-}
-
-/**
- * ⚽ TICKET ESPECIAL GOLES (LÍNEAS SEGURAS)
- * Selecciona mercados de goles (+1.5 o -3.5) con alta probabilidad.
+ * ⚽ TICKET ESPECIAL GOLES (LÍNEAS SEGURAS EN LIGAS TOP)
+ * Selecciona mercados de goles (+1.5 o -3.5) con alta probabilidad en equipos conocidos.
  */
 export function generarTicketGoles(partidos, numSelecciones = 3) {
   if (!partidos || partidos.length < 2) return null;
 
+  const poolConocidos = filtrarPartidosEquiposConocidos(partidos);
+  if (poolConocidos.length < 2) return null;
+
   const picksGoles = [];
-  partidos.forEach(p => {
+  poolConocidos.forEach(p => {
     const c = obtenerCandidatosPartido(p, 0.65).filter(item => item.tipo === 'goles');
     if (c.length > 0) {
       picksGoles.push(c[0]);
@@ -367,7 +448,7 @@ export function generarTicketGoles(partidos, numSelecciones = 3) {
   return {
     id: 'goles-default',
     titulo: 'Combinada de Goles Seguros',
-    subtitulo: 'Especializada en líneas de goles (+1.5 o -3.5) con alta consistencia de Poisson',
+    subtitulo: 'Especializada en líneas de goles (+1.5 o -3.5) con alta consistencia de Poisson en ligas top',
     tipoGenerador: 'goles',
     picks,
     metricas: calcularMetricasTicket(picks)
@@ -376,16 +457,18 @@ export function generarTicketGoles(partidos, numSelecciones = 3) {
 
 /**
  * 💎 TICKET DE VALOR MATEMÁTICO (+EV PRO)
- * Combina las selecciones con mayor valor esperado (+EV) y respaldo probabilístico.
+ * Combina las selecciones con mayor valor esperado (+EV) en equipos conocidos.
  */
 export function generarTicketValorEV(partidos, numSelecciones = 3) {
   if (!partidos || partidos.length < 2) return null;
 
+  const poolConocidos = filtrarPartidosEquiposConocidos(partidos);
+  if (poolConocidos.length < 2) return null;
+
   const candidatos = [];
-  partidos.forEach(p => {
+  poolConocidos.forEach(p => {
     const c = obtenerCandidatosPartido(p, 0.55);
     if (c.length > 0) {
-      // Ordenar por EV descendente y tomar el mejor
       const sortedByEv = [...c].sort((a, b) => (b.ev || 0) - (a.ev || 0));
       candidatos.push(sortedByEv[0]);
     }
@@ -399,7 +482,7 @@ export function generarTicketValorEV(partidos, numSelecciones = 3) {
   return {
     id: 'valor-ev-default',
     titulo: 'Combinada de Valor Esperado (+EV)',
-    subtitulo: 'Selecciones donde la estimación matemática supera la cuota promedio del mercado',
+    subtitulo: 'Selecciones donde la estimación matemática supera la cuota promedio del mercado en ligas top',
     tipoGenerador: 'valor',
     picks,
     metricas: calcularMetricasTicket(picks)
@@ -408,23 +491,24 @@ export function generarTicketValorEV(partidos, numSelecciones = 3) {
 
 /**
  * Genera el paquete completo de combinaciones sugeridas para la vista principal.
+ * Coloca en primer lugar el Ticket Ultra Seguro (Mínimo Riesgo).
  */
 export function generarTodasLasCombinadasSugeridas(partidos) {
   if (!partidos || partidos.length === 0) return [];
 
   const sugeridas = [];
 
-  // 1. Ticket Riesgo Moderado (Prioridad solicitada por el usuario)
+  // 1. Ticket Ultra Seguro (Mínimo Riesgo - 2 picks de máxima certidumbre en equipos conocidos)
+  const ticketUltraSeguro = generarTicketUltraSeguro(partidos, 2);
+  if (ticketUltraSeguro) sugeridas.push(ticketUltraSeguro);
+
+  // 2. Ticket Riesgo Moderado (Zona Óptima de Valor)
   const ticketModerado = generarTicketRiesgoModerado(partidos, 3, false);
   if (ticketModerado) sugeridas.push(ticketModerado);
 
-  // 2. Ticket Aleatorio de Alta Probabilidad (Ejemplo explícito del usuario)
+  // 3. Ticket Aleatorio de Alta Probabilidad (Equipos conocidos)
   const ticketAleatorio = generarTicketAleatorioMayorProbabilidad(partidos, 3);
   if (ticketAleatorio) sugeridas.push(ticketAleatorio);
-
-  // 3. Ticket Conservador (Riesgo Controlado)
-  const ticketConservador = generarTicketConservador(partidos);
-  if (ticketConservador) sugeridas.push(ticketConservador);
 
   // 4. Ticket Especial de Goles
   const ticketGoles = generarTicketGoles(partidos, 3);
