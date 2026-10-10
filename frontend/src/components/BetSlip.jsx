@@ -1,8 +1,17 @@
 import { useState, useMemo } from 'react';
-import { TicketIcon, ReceiptIcon, CloseIcon, WalletIcon, CalculatorIcon, ShieldIcon } from './Icons';
+import { TicketIcon, ReceiptIcon, CloseIcon, WalletIcon, CalculatorIcon, ShieldIcon, DicesIcon, ZapIcon } from './Icons';
 import { useBankroll } from '../hooks/useBankroll';
 
-export default function BetSlip({ ticket = [], onRemove, onClear, onClose, isMobile = false }) {
+export default function BetSlip({ 
+  ticket = [], 
+  onRemove, 
+  onClear, 
+  onClose, 
+  isMobile = false,
+  onGenerarAleatorio = null,
+  onGenerarModerado = null,
+  onIrACombinadas = null
+}) {
   const [monto, setMonto] = useState(10000);
   const [mostrarKellyConfig, setMostrarKellyConfig] = useState(false);
   const { bankroll, setBankroll, fraccionKelly, setFraccionKelly, fraccionesDisponibles, calcularStakeOptimo } = useBankroll();
@@ -65,6 +74,16 @@ export default function BetSlip({ ticket = [], onRemove, onClear, onClose, isMob
           <span className="ticket-badge">{ticket.length}</span>
         </div>
         <div className="betslip-header-actions">
+          {onGenerarAleatorio && (
+            <button 
+              onClick={onGenerarAleatorio} 
+              className="btn-betslip-header-action" 
+              title="Generar automáticamente un ticket aleatorio de alta probabilidad"
+            >
+              <DicesIcon size={14} />
+              <span>Aleatorio</span>
+            </button>
+          )}
           {ticket.length > 0 && (
             <button onClick={onClear} className="btn-clear-ticket" title="Vaciar ticket">
               Limpiar
@@ -84,8 +103,45 @@ export default function BetSlip({ ticket = [], onRemove, onClear, onClose, isMob
             <ReceiptIcon size={40} className="empty-receipt-svg" />
           </div>
           <p className="empty-main-text">Tu ticket está vacío</p>
-          <span className="empty-sub-text">Selecciona uno o más partidos para simular la probabilidad conjunta y la cuota combinada.</span>
+          <span className="empty-sub-text">Selecciona partidos de la cartelera o genera un ticket automático calibrado:</span>
+
+          <div className="empty-betslip-actions">
+            {onGenerarAleatorio && (
+              <button 
+                type="button" 
+                className="btn-empty-generate btn-empty-rnd"
+                onClick={onGenerarAleatorio}
+                title="Generar al azar entre las selecciones de mayor probabilidad"
+              >
+                <DicesIcon size={16} />
+                <span>Ticket Aleatorio (Alta Probabilidad)</span>
+              </button>
+            )}
+            {onGenerarModerado && (
+              <button 
+                type="button" 
+                className="btn-empty-generate btn-empty-mod"
+                onClick={onGenerarModerado}
+                title="Generar una combinada calibrada en Riesgo Moderado"
+              >
+                <ShieldIcon size={16} />
+                <span>Combinada Riesgo Moderado</span>
+              </button>
+            )}
+            {onIrACombinadas && (
+              <button 
+                type="button" 
+                className="btn-empty-generate btn-empty-tab"
+                onClick={onIrACombinadas}
+                title="Ver el apartado de combinadas sugeridas"
+              >
+                <ZapIcon size={16} />
+                <span>Ver Todas las Combinadas Sugeridas →</span>
+              </button>
+            )}
+          </div>
         </div>
+
       ) : (
         <div className="betslip-body">
           {/* Lista de selecciones */}

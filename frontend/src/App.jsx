@@ -2,12 +2,19 @@ import { useState, useMemo } from 'react';
 import MatchList from './components/MatchList';
 import BetSlip from './components/BetSlip';
 import BacktestDashboard from './components/BacktestDashboard';
+import CombinadorTickets from './components/CombinadorTickets';
 import { usePartidos } from './hooks/usePartidos';
 import { obtenerInfoTorneo } from './utils/leagues';
 import { 
   BallIcon, ChartIcon, TrophyIcon, TargetIcon, 
-  TicketIcon, SearchIcon, StarIcon, CloseIcon, AlertTriangleIcon, CalendarIcon 
+  TicketIcon, SearchIcon, StarIcon, CloseIcon, AlertTriangleIcon, CalendarIcon,
+  DicesIcon, ZapIcon, ShieldIcon
 } from './components/Icons';
+import { 
+  generarTicketAleatorioMayorProbabilidad, 
+  generarTicketRiesgoModerado, 
+  formatearPickParaTicket 
+} from './utils/combinadas';
 import './App.css';
 
 function App() {
@@ -24,6 +31,7 @@ function App() {
   const [soloTopLigas, setSoloTopLigas] = useState(false);
   const [mostrarTicketMobile, setMostrarTicketMobile] = useState(false);
   const [pestanaActiva, setPestanaActiva] = useState('cartelera');
+  const [mensajeToast, setMensajeToast] = useState(null);
 
   // Pestañas relativas de fechas: Ayer, Hoy, Mañana
   const diasNav = useMemo(() => {
@@ -78,7 +86,49 @@ function App() {
     setMostrarTicketMobile(false);
   };
 
+  const cargarTicketCompleto = (partidosSeleccionados) => {
+    const formateados = partidosSeleccionados.map(p => {
+      const idReal = p.id_partido || p.id || Math.random();
+      const idKey = p.id_seleccion || `${idReal}-${p.mercado_predicho || p.mercado}`;
+      return {
+        ...p,
+        id_partido: idReal,
+        id_seleccion: idKey
+      };
+    });
+    setTicket(formateados);
+    setMensajeToast('¡Ticket combinado cargado con éxito en el BetSlip!');
+    setTimeout(() => setMensajeToast(null), 3200);
+  };
+
+  const handleGenerarAleatorioRapido = () => {
+    const pool = partidosFiltrados.length >= 2 ? partidosFiltrados : partidos;
+    const res = generarTicketAleatorioMayorProbabilidad(pool, 3);
+    if (res && res.picks) {
+      cargarTicketCompleto(res.picks.map(p => formatearPickParaTicket(p)));
+      setMensajeToast(`🎲 ${res.titulo} (@${res.metricas.cuotaFormateada}) cargado en el BetSlip`);
+      setTimeout(() => setMensajeToast(null), 3200);
+    } else {
+      setMensajeToast('No hay suficientes partidos para generar la combinada');
+      setTimeout(() => setMensajeToast(null), 2500);
+    }
+  };
+
+  const handleGenerarModeradoRapido = () => {
+    const pool = partidosFiltrados.length >= 2 ? partidosFiltrados : partidos;
+    const res = generarTicketRiesgoModerado(pool, 3, true);
+    if (res && res.picks) {
+      cargarTicketCompleto(res.picks.map(p => formatearPickParaTicket(p)));
+      setMensajeToast(`⚖️ Combinada Riesgo Moderado (@${res.metricas.cuotaFormateada}) cargada`);
+      setTimeout(() => setMensajeToast(null), 3200);
+    } else {
+      setMensajeToast('No hay suficientes partidos para generar la combinada');
+      setTimeout(() => setMensajeToast(null), 2500);
+    }
+  };
+
   // Cuota y probabilidad compuesta para visualización en barra móvil
+
   const { probabilidadTotal, cuotaFinal } = useMemo(() => {
     if (!ticket.length) return { probabilidadTotal: 0, cuotaFinal: 0 };
     const prob = ticket.reduce((acc, p) => {
@@ -151,6 +201,14 @@ function App() {
               <span>Cartelera</span>
             </button>
             <button 
+              className={`nav-tab-btn ${pestanaActiva === 'combinadas' ? 'active' : ''}`}
+              onClick={() => setPestanaActiva('combinadas')}
+            >
+              <ZapIcon size={16} />
+              <span>Tickets Automáticos</span>
+              <span className="tab-pill-badge">NUEVO</span>
+            </button>
+            <button 
               className={`nav-tab-btn ${pestanaActiva === 'backtest' ? 'active' : ''}`}
               onClick={() => setPestanaActiva('backtest')}
             >
@@ -172,9 +230,19 @@ function App() {
         <main className="main-content">
           <BacktestDashboard />
         </main>
+      ) : pestanaActiva === 'combinadas' ? (
+        <main className="main-content">
+          <CombinadorTickets 
+            partidos={partidos} 
+            onCargarTicket={cargarTicketCompleto}
+            ticketActual={ticket}
+            onIrACartelera={() => setPestanaActiva('cartelera')}
+          />
+        </main>
       ) : (
         <>
           {/* 2. HERO SECTION CON KPIS */}
+
           <section className="hero-banner">
             <div className="hero-content">
               <h1 className="hero-title">
@@ -320,6 +388,56 @@ function App() {
                 </button>
               </div>
             </div>
+
+            {/* BANNER DE ACCIÓN RÁPIDA: COMBINADAS & TICKETS AUTOMÁTICOS */}
+            <div className="quick-generator-banner glass-card">
+              <div className="quick-gen-left">
+                <div className="quick-gen-icon-glow">
+                  <ZapIcon size={20} className="quick-gen-svg-icon" />
+                </div>
+                <div className="quick-gen-info">
+                  <div className="quick-gen-headline">
+                    <strong>Generador Cuantitativo de Tickets</strong>
+                    <span className="quick-gen-badge-live">DIXON-COLES PRO</span>
+                  </div>
+                  <p className="quick-gen-sub">
+                    Tickets automáticos calibrados para balancear probabilidad acumulada y cuota justa.
+                  </p>
+                </div>
+              </div>
+
+              <div className="quick-gen-actions">
+                <button 
+                  type="button" 
+                  className="btn-quick-generator btn-quick-rnd"
+                  onClick={handleGenerarAleatorioRapido}
+                  title="Generar al azar un ticket combinando los eventos de mayor probabilidad"
+                >
+                  <DicesIcon size={16} />
+                  <span>Ticket Aleatorio (Alta Probabilidad)</span>
+                </button>
+
+                <button 
+                  type="button" 
+                  className="btn-quick-generator btn-quick-mod"
+                  onClick={handleGenerarModeradoRapido}
+                  title="Generar una combinada que calza en el rango de Riesgo Moderado"
+                >
+                  <ShieldIcon size={16} />
+                  <span>Combinada Riesgo Moderado</span>
+                </button>
+
+                <button 
+                  type="button" 
+                  className="btn-quick-generator btn-quick-hub"
+                  onClick={() => setPestanaActiva('combinadas')}
+                  title="Ir al apartado completo de combinadas sugeridas"
+                >
+                  <ZapIcon size={16} />
+                  <span>Ver Centro de Combinadas →</span>
+                </button>
+              </div>
+            </div>
           </section>
 
           {/* 4. DASHBOARD PRINCIPAL (MATCHES + BETSLIP) */}
@@ -361,7 +479,10 @@ function App() {
                   <BetSlip 
                     ticket={ticket} 
                     onRemove={removerDelTicket} 
-                    onClear={limpiarTicket} 
+                    onClear={limpiarTicket}
+                    onGenerarAleatorio={handleGenerarAleatorioRapido}
+                    onGenerarModerado={handleGenerarModeradoRapido}
+                    onIrACombinadas={() => setPestanaActiva('combinadas')}
                   />
                 </aside>
               </div>
@@ -375,8 +496,8 @@ function App() {
         <p>© 2026 Poisson Predictor PRO • Sistema Estadístico Cuantitativo de Fútbol</p>
       </footer>
 
-      {/* 6. BARRA FLOTANTE MÓVIL (VISIBLE EN CELULARES SI HAY TICKETS Y EN CARTELERA) */}
-      {ticket.length > 0 && pestanaActiva === 'cartelera' && (
+      {/* 6. BARRA FLOTANTE MÓVIL (VISIBLE EN CELULARES SI HAY TICKETS) */}
+      {ticket.length > 0 && (pestanaActiva === 'cartelera' || pestanaActiva === 'combinadas') && (
         <div className="mobile-ticket-bar">
           <div className="mobile-bar-summary" onClick={() => setMostrarTicketMobile(true)}>
             <div className="mobile-bar-badge">
@@ -410,12 +531,27 @@ function App() {
               onRemove={removerDelTicket} 
               onClear={limpiarTicket} 
               onClose={() => setMostrarTicketMobile(false)}
+              onGenerarAleatorio={handleGenerarAleatorioRapido}
+              onGenerarModerado={handleGenerarModeradoRapido}
+              onIrACombinadas={() => {
+                setMostrarTicketMobile(false);
+                setPestanaActiva('combinadas');
+              }}
               isMobile={true}
             />
           </div>
         </div>
       )}
+
+      {/* 8. NOTIFICACIÓN TOAST FLOTANTE */}
+      {mensajeToast && (
+        <div className="toast-notification glass-card">
+          <ZapIcon size={18} className="toast-svg-icon" />
+          <span>{mensajeToast}</span>
+        </div>
+      )}
     </div>
+
   );
 }
 

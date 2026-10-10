@@ -256,3 +256,35 @@ export function CalendarIcon({ size = 18, className = "" }) {
   );
 }
 
+export function DicesIcon({ size = 20, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="12" height="12" x="2" y="10" rx="2" />
+      <path d="m17.92 14 3.5-3.5a2.41 2.41 0 0 0 0-3.41l-4.51-4.51a2.41 2.41 0 0 0-3.41 0L9.99 6" />
+      <circle cx="8" cy="16" r="1" fill="currentColor" />
+      <circle cx="5" cy="13" r="1" fill="currentColor" />
+      <circle cx="11" cy="19" r="1" fill="currentColor" />
+      <circle cx="15" cy="8" r="1" fill="currentColor" />
+      <circle cx="18" cy="5" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function ZapIcon({ size = 20, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+export function CopyIcon({ size = 18, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  );
+}
+
+

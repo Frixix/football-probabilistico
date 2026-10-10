@@ -7,7 +7,9 @@ import {
 import { useBankroll } from '../hooks/useBankroll';
 import { generarMercadosCompletos } from '../utils/markets';
 import H2HModal from './H2HModal';
+import MiniBarraHistorial from './MiniBarraHistorial';
 import HORARIOS_FIXTURES from '../data/horarios_fixtures.json';
+
 
 // Horarios programados locales (UTC-5 Colombia) para fixtures del día
 const HORAS_PROGRAMADAS = {
@@ -379,10 +381,14 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   return (
                     <div key={idReal} className={`match-card glass-card hover-${evaluacionAcierto} ${yaEnTicket ? 'in-ticket-card' : ''}`}>
                       <div className="match-header">
-                        <span className="match-time">
-                          <ClockIcon size={13} className="clock-svg" /> {hora12}
-                        </span>
+                        <div className="match-header-left">
+                          <span className="match-time">
+                            <ClockIcon size={13} className="clock-svg" /> {hora12}
+                          </span>
+                          <MiniBarraHistorial partido={partido} />
+                        </div>
                         <div className="match-header-badges">
+
                           {evaluacionAcierto === 'acertado' && (
                             <span className="acierto-badge badge-aquamarine" title="Pronóstico acertado">
                               <CheckIcon size={11} /> Acertado
