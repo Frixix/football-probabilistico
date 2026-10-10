@@ -18,7 +18,7 @@ def read_root():
     return {"estado": "En línea", "mensaje": "API de Poisson Predictor conectada"}
 
 @app.get("/api/predicciones")
-def get_predicciones():
+def get_predicciones(fecha: str = None):
     # Llama a la función matemática en main.py y guarda en Supabase
-    resultados = obtener_predicciones_api()
+    resultados = obtener_predicciones_api(fecha_objetivo=fecha)
     return {"partidos": resultados}

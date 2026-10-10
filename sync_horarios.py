@@ -47,8 +47,9 @@ def main():
     dt_bogota = datetime.utcnow() - timedelta(hours=5)
     hoy_str = dt_bogota.strftime("%Y-%m-%d")
     ayer_str = (dt_bogota - timedelta(days=1)).strftime("%Y-%m-%d")
+    manana_str = (dt_bogota + timedelta(days=1)).strftime("%Y-%m-%d")
     
-    fechas_api = [ayer_str, hoy_str]
+    fechas_api = [ayer_str, hoy_str, manana_str]
     
     for fecha in fechas_api:
         url = f"https://v3.football.api-sports.io/fixtures?date={fecha}&timezone=America/Bogota"

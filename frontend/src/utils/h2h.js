@@ -110,7 +110,7 @@ export function obtenerHistorialH2H(partido) {
   const n = cantidadPartidos;
   const pctLocal = parseFloat(((vicLocal / n) * 100).toFixed(1));
   const pctEmpate = parseFloat(((empates / n) * 100).toFixed(1));
-  const pctVis = parseFloat(((vicVis / n) * 100).toFixed(1));
+  const pctVisitante = parseFloat(((vicVis / n) * 100).toFixed(1));
   const promGoles = parseFloat((totalGoles / n).toFixed(2));
   const pctBtts = parseFloat(((bttsCount / n) * 100).toFixed(1));
   const pctOver25 = parseFloat(((over25Count / n) * 100).toFixed(1));

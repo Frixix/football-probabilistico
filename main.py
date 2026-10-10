@@ -125,13 +125,14 @@ def validar_resultados_historicos():
         print(f"Error consultando Supabase para validación: {e}")
 
 # 4. Función Principal de la API
-def obtener_predicciones_api():
+def obtener_predicciones_api(fecha_objetivo=None):
     print("\n--- INICIANDO CÁLCULO DE API (SISTEMA DE DOBLE LLAVE) ---")
     
     validar_resultados_historicos()
     
-    archivo_cache = os.path.join("data", "cache_diario.json")
-    hoy_dia = (datetime.utcnow() - timedelta(hours=5)).strftime("%Y-%m-%d")
+    dt_bogota = datetime.utcnow() - timedelta(hours=5)
+    hoy_dia = fecha_objetivo if fecha_objetivo else dt_bogota.strftime("%Y-%m-%d")
+    archivo_cache = os.path.join("data", f"cache_{hoy_dia}.json")
 
     if os.path.exists(archivo_cache):
         try:
