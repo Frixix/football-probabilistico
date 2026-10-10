@@ -6,38 +6,52 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'PEGA_AQUI_TU_URL';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'PEGA_AQUI_TU_LLAVE';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export function usePartidos() {
+export function usePartidos(fechaSeleccionada) {
   const [partidos, setPartidos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fecha dinámica anclada a Bogotá (UTC-5)
+  const hoyBogota = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  const fechaEfectiva = fechaSeleccionada || hoyBogota;
+
   useEffect(() => {
+    let cancelado = false;
+
     const fetchPartidos = async () => {
       try {
         setCargando(true);
+        setError(null);
         
-        // Fecha dinámica anclada a Bogotá
-        const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-        
-        // Consulta a Supabase
-        const { data, error } = await supabase
+        // Consulta a Supabase por la fecha elegida
+        const { data, error: err } = await supabase
           .from('historial_predicciones')
           .select('*')
-          .eq('fecha', hoy);
+          .eq('fecha', fechaEfectiva);
 
-        if (error) throw error;
+        if (err) throw err;
         
-        setPartidos(data || []);
+        if (!cancelado) {
+          setPartidos(data || []);
+        }
       } catch (err) {
         console.error("Error obteniendo los partidos:", err);
-        setError(err.message);
+        if (!cancelado) {
+          setError(err.message);
+        }
       } finally {
-        setCargando(false);
+        if (!cancelado) {
+          setCargando(false);
+        }
       }
     };
 
     fetchPartidos();
-  }, []);
 
-  return { partidos, cargando, error };
+    return () => {
+      cancelado = true;
+    };
+  }, [fechaEfectiva]);
+
+  return { partidos, cargando, error, fechaEfectiva };
 }

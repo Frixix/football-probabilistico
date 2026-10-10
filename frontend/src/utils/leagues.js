@@ -76,33 +76,45 @@ export function obtenerInfoTorneo(nombreTorneo = "", paisAPI = "") {
   if (t.includes("la liga") || (t.includes("primera division") && (p === "spain" || p === "españa"))) {
     return { pais: "España", flagCode: "es", prioridad: 4, esTop: true };
   }
+  // Liga Profesional de Argentina (Liga de élite y máxima categoría)
+  if (
+    t.includes("liga profesional") || 
+    t.includes("torneo betano") || 
+    t.includes("copa de la liga") || 
+    t.includes("copa argentina") ||
+    t.includes("superliga") ||
+    (t.includes("primera division") && (p === "argentina" || t.includes("argentina"))) ||
+    (p === "argentina" && !t.includes("b metropolitana") && !t.includes("federal") && !t.includes("reserva") && !t.includes("nacional"))
+  ) {
+    return { pais: "Argentina", flagCode: "ar", prioridad: 5, esTop: true };
+  }
   if (t.includes("libertadores") || t.includes("sudamericana")) {
-    return { pais: "Sudamérica", flagCode: null, prioridad: 5, esTop: true };
+    return { pais: "Sudamérica", flagCode: null, prioridad: 6, esTop: true };
   }
   if (t.includes("serie a") && (p === "italy" || p === "italia" || !p || p === "mundo")) {
     if (!t.includes("brazil") && !t.includes("ecuador")) {
-      return { pais: "Italia", flagCode: "it", prioridad: 6, esTop: true };
+      return { pais: "Italia", flagCode: "it", prioridad: 7, esTop: true };
     }
   }
   if (t.includes("bundesliga") && !t.includes("2.")) {
-    return { pais: "Alemania", flagCode: "de", prioridad: 7, esTop: true };
+    return { pais: "Alemania", flagCode: "de", prioridad: 8, esTop: true };
   }
   if (t.includes("ligue 1") && (p === "france" || p === "francia" || !p || p === "mundo")) {
     // Si no es Argelia
     if (!t.includes("algeria") && !t.includes("algerie")) {
-      return { pais: "Francia", flagCode: "fr", prioridad: 8, esTop: true };
+      return { pais: "Francia", flagCode: "fr", prioridad: 9, esTop: true };
     }
   }
   if (t.includes("europa league") || t.includes("conference league")) {
-    return { pais: "Europa", flagCode: null, prioridad: 9, esTop: true };
+    return { pais: "Europa", flagCode: null, prioridad: 10, esTop: true };
   }
   if (t.includes("major league soccer") || (t.includes("mls") && !t.includes("next"))) {
-    return { pais: "EE. UU.", flagCode: "us", prioridad: 10, esTop: true };
+    return { pais: "EE. UU.", flagCode: "us", prioridad: 11, esTop: true };
   }
 
   // 2. Primeras Divisiones reconocidas de América y Europa
-  if (t.includes("liga profesional") || (t.includes("primera division") && p === "argentina")) {
-    return { pais: "Argentina", flagCode: "ar", prioridad: 15, esTop: true };
+  if (t.includes("primera nacional") || (p === "argentina" && (t.includes("nacional") || t.includes("metropolitana") || t.includes("federal")))) {
+    return { pais: "Argentina", flagCode: "ar", prioridad: 20, esTop: false };
   }
   if (t.includes("brasileirao") || (t.includes("serie a") && (p === "brazil" || p === "brasil"))) {
     return { pais: "Brasil", flagCode: "br", prioridad: 16, esTop: true };

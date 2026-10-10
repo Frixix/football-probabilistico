@@ -226,6 +226,104 @@
   gap: 16px;
 }
 
+/* --- NAVEGACIÓN Y SELECTOR DE FECHAS (Ayer, Hoy, Mañana) --- */
+.date-nav-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.date-tabs-bar {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.date-tab-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 72px;
+}
+
+.date-tab-pill:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.date-tab-pill.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(6, 182, 212, 0.18) 100%);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.date-pill-main {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.date-pill-sub {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.date-tab-pill.active .date-pill-sub {
+  color: #34d399;
+}
+
+.date-custom-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 0.4rem 0.75rem;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.date-custom-picker:hover,
+.date-custom-picker:focus-within {
+  border-color: var(--accent-green);
+  background: rgba(22, 32, 54, 0.9);
+}
+
+.calendar-svg-icon {
+  color: var(--accent-green-neon);
+  flex-shrink: 0;
+}
+
+.date-native-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
 .search-box {
   position: relative;
   flex: 1;

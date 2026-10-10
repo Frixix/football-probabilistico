@@ -5,18 +5,47 @@ import BacktestDashboard from './components/BacktestDashboard';
 import { usePartidos } from './hooks/usePartidos';
 import { 
   BallIcon, ChartIcon, TrophyIcon, TargetIcon, 
-  TicketIcon, SearchIcon, StarIcon, CloseIcon, AlertTriangleIcon 
+  TicketIcon, SearchIcon, StarIcon, CloseIcon, AlertTriangleIcon, CalendarIcon 
 } from './components/Icons';
 import './App.css';
 
 function App() {
-  const { partidos, cargando, error } = usePartidos();
+  // Fecha anclada dinámicamente a Bogotá (UTC-5)
+  const hoyBogota = useMemo(() => {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  }, []);
+
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyBogota);
+  const { partidos, cargando, error } = usePartidos(fechaSeleccionada);
   const [ticket, setTicket] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [filtroMercado, setFiltroMercado] = useState('todos');
   const [soloTopLigas, setSoloTopLigas] = useState(false);
   const [mostrarTicketMobile, setMostrarTicketMobile] = useState(false);
   const [pestanaActiva, setPestanaActiva] = useState('cartelera');
+
+  // Pestañas relativas de fechas: Ayer, Hoy, Mañana
+  const diasNav = useMemo(() => {
+    const [y, m, d] = hoyBogota.split('-').map(Number);
+    const dHoy = new Date(y, m - 1, d);
+
+    const dAyer = new Date(dHoy);
+    dAyer.setDate(dAyer.getDate() - 1);
+    const fAyer = dAyer.toLocaleDateString('en-CA');
+
+    const dManana = new Date(dHoy);
+    dManana.setDate(dManana.getDate() + 1);
+    const fManana = dManana.toLocaleDateString('en-CA');
+
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const formato = (dt) => `${dt.getDate()} ${meses[dt.getMonth()]}`;
+
+    return [
+      { id: fAyer, label: 'Ayer', sub: formato(dAyer) },
+      { id: hoyBogota, label: 'Hoy', sub: formato(dHoy) },
+      { id: fManana, label: 'Mañana', sub: formato(dManana) },
+    ];
+  }, [hoyBogota]);
 
   // Manejadores de Ticket
   const agregarAlTicket = (partido) => {
@@ -61,7 +90,7 @@ function App() {
     return { probabilidadTotal: prob, cuotaFinal: cuota };
   }, [ticket]);
 
-  // Filtrado reactivo por buscador y por top ligas
+  // Filtrado reactivo por buscador y por top ligas (incluyendo Liga Argentina)
   const partidosFiltrados = useMemo(() => {
     if (!partidos) return [];
     return partidos.filter(p => {
@@ -75,7 +104,12 @@ function App() {
 
       if (soloTopLigas) {
         const torneo = (p.torneo || '').toLowerCase();
-        const topKeywords = ['primera a', 'betplay', 'champions', 'premier league', 'la liga', 'serie a', 'bundesliga', 'ligue 1', 'libertadores', 'mls'];
+        const topKeywords = [
+          'primera a', 'betplay', 'champions', 'premier league', 'la liga', 
+          'serie a', 'bundesliga', 'ligue 1', 'libertadores', 'sudamericana', 
+          'mls', 'liga profesional', 'argentina', 'torneo betano', 
+          'copa de la liga', 'copa argentina', 'boca', 'river'
+        ];
         const esTop = topKeywords.some(kw => torneo.includes(kw));
         if (!esTop) return false;
       }
@@ -193,9 +227,35 @@ function App() {
             </div>
           </section>
 
-          {/* 3. BARRA DE CONTROLES, BÚSQUEDA Y FILTROS */}
+          {/* 3. BARRA DE CONTROLES, NAVEGACIÓN DE FECHAS Y FILTROS */}
           <section className="controls-bar-container">
             <div className="controls-wrapper">
+              {/* Selector de Fechas: Ayer, Hoy, Mañana y selector libre */}
+              <div className="date-nav-container">
+                <div className="date-tabs-bar">
+                  {diasNav.map((dia) => (
+                    <button
+                      key={dia.id}
+                      type="button"
+                      className={`date-tab-pill ${fechaSeleccionada === dia.id ? 'active' : ''}`}
+                      onClick={() => setFechaSeleccionada(dia.id)}
+                    >
+                      <span className="date-pill-main">{dia.label}</span>
+                      <span className="date-pill-sub">{dia.sub}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="date-custom-picker" title="Elegir otra fecha del calendario">
+                  <CalendarIcon size={15} className="calendar-svg-icon" />
+                  <input
+                    type="date"
+                    value={fechaSeleccionada}
+                    onChange={(e) => e.target.value && setFechaSeleccionada(e.target.value)}
+                    className="date-native-input"
+                  />
+                </div>
+              </div>
+
               {/* Buscador */}
               <div className="search-box">
                 <span className="search-icon"><SearchIcon size={18} /></span>
