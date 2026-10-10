@@ -165,18 +165,31 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
     const grupos = {};
     partidosFiltrados.forEach(partido => {
       const nombreLiga = partido.torneo || "Torneo General";
-      const info = obtenerInfoTorneo(nombreLiga, partido.pais);
+      const idReal = partido.id_partido || partido.id;
+      const infoFixture = HORARIOS_FIXTURES[idReal] || HORARIOS_FIXTURES[String(idReal)] || null;
+      const paisEfectivo = partido.pais || infoFixture?.pais || null;
+      const idLiga = partido.id_liga || infoFixture?.id_liga || null;
+
+      const info = obtenerInfoTorneo(
+        nombreLiga,
+        paisEfectivo,
+        partido.local,
+        partido.visitante,
+        idLiga
+      );
+
       const nombrePais = info.pais;
+      const nombreLigaMostrado = info.torneoLimpio || nombreLiga;
       const prioridad = info.prioridad;
       const flagCode = info.flagCode;
-      const flagUrl = obtenerUrlBandera(flagCode) || partido.bandera || null;
+      const flagUrl = obtenerUrlBandera(flagCode) || infoFixture?.bandera || partido.bandera || null;
       
-      const keyUnica = `${nombrePais}-${nombreLiga}`; 
+      const keyUnica = `${nombrePais}-${nombreLigaMostrado}`; 
       
       if (!grupos[keyUnica]) {
         grupos[keyUnica] = { 
           key: keyUnica,
-          nombreLiga,
+          nombreLiga: nombreLigaMostrado,
           nombrePais,
           flagUrl,
           esTop: info.esTop,
@@ -186,6 +199,20 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
       }
       grupos[keyUnica].partidos.push(partido);
     });
+
+    // Ordenar los partidos dentro de cada liga por horario cronológico ascendente
+    Object.values(grupos).forEach(grupo => {
+      grupo.partidos.sort((a, b) => {
+        const idA = a.id_partido || a.id;
+        const idB = b.id_partido || b.id;
+        const fixA = HORARIOS_FIXTURES[idA] || HORARIOS_FIXTURES[String(idA)];
+        const fixB = HORARIOS_FIXTURES[idB] || HORARIOS_FIXTURES[String(idB)];
+        const hA = fixA?.hora || a.hora || '23:59';
+        const hB = fixB?.hora || b.hora || '23:59';
+        return hA.localeCompare(hB);
+      });
+    });
+
     return grupos;
   }, [partidosFiltrados]);
 
@@ -195,7 +222,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
       const prioA = torneosAgrupados[a].prioridad;
       const prioB = torneosAgrupados[b].prioridad;
       if (prioA !== prioB) return prioA - prioB; 
-      return torneosAgrupados[a].nombreLiga.localeCompare(torneosAgrupados[b].nombreLiga);
+      return (torneosAgrupados[a].nombreLiga || '').localeCompare(torneosAgrupados[b].nombreLiga || '');
     });
   }, [torneosAgrupados]);
 
@@ -203,7 +230,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
     if (ligasAbiertas[torneoKey] !== undefined) {
       return ligasAbiertas[torneoKey];
     }
-    return prioridad < 60;
+    return prioridad < 40;
   };
 
   if (!partidos || partidos.length === 0) {
@@ -231,7 +258,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
       {ligasOrdenadas.map(torneoKey => {
         const grupo = torneosAgrupados[torneoKey];
         const abierta = estaAbierta(torneoKey, grupo.prioridad);
-        const esLigaSecundaria = grupo.prioridad >= 80;
+        const esLigaSecundaria = grupo.prioridad >= 50;
         
         return (
           <div key={torneoKey} className={`tournament-group ${esLigaSecundaria ? 'torneo-secundario' : ''}`}>

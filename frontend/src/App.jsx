@@ -15,6 +15,7 @@ import {
   generarTicketRiesgoModerado, 
   formatearPickParaTicket 
 } from './utils/combinadas';
+import HORARIOS_FIXTURES from './data/horarios_fixtures.json';
 import './App.css';
 
 function App() {
@@ -154,7 +155,11 @@ function App() {
       if (!matchBusqueda) return false;
 
       if (soloTopLigas) {
-        const info = obtenerInfoTorneo(p.torneo, p.pais);
+        const idReal = p.id_partido || p.id;
+        const infoFix = HORARIOS_FIXTURES[idReal] || HORARIOS_FIXTURES[String(idReal)] || null;
+        const paisEfectivo = p.pais || infoFix?.pais || null;
+        const idLiga = p.id_liga || infoFix?.id_liga || null;
+        const info = obtenerInfoTorneo(p.torneo, paisEfectivo, p.local, p.visitante, idLiga);
         if (!info.esTop) return false;
       }
 
