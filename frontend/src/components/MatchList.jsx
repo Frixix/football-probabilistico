@@ -222,9 +222,15 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   const idReal = partido.id_partido || partido.id || Math.random(); 
                   const hora12 = formatearHora12(partido.hora, idReal);
                   const mercadoReal = partido.mercado_predicho || partido.mercado || "Sin Mercado"; 
-                  const terminado = partido.goles_local !== null && partido.goles_local !== undefined;
+                  const gl = (partido.goles_local !== null && partido.goles_local !== undefined) 
+                    ? parseInt(partido.goles_local, 10) 
+                    : (partido.marcador ? parseInt(partido.marcador.split('-')[0], 10) : null);
+                  const gv = (partido.goles_visitante !== null && partido.goles_visitante !== undefined) 
+                    ? parseInt(partido.goles_visitante, 10) 
+                    : (partido.marcador ? parseInt(partido.marcador.split('-')[1], 10) : null);
+                  const terminado = gl !== null && !isNaN(gl) && gv !== null && !isNaN(gv);
                   const estadoClase = partido.estado_clase || (terminado ? "estado-rojo" : "estado-verde");
-                  const estadoTexto = partido.estado_texto || (terminado ? `${partido.goles_local} - ${partido.goles_visitante} (FT)` : "PROGRAMADO");
+                  const estadoTexto = terminado ? `FT ${gl} - ${gv}` : (partido.estado_texto || "PROGRAMADO");
 
                   const mercados = generarMercadosCompletos(partido);
                   const estaExpandido = !!partidosExpandidos[idReal];
@@ -270,8 +276,6 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                     if (partido.fue_acierto === true) return 'acertado';
                     if (partido.fue_acierto === false) return 'fallado';
                     if (terminado) {
-                      const gl = parseInt(partido.goles_local, 10);
-                      const gv = parseInt(partido.goles_visitante, 10);
                       const pred = (partido.mercado_predicho || partido.mercado || '').toLowerCase();
                       const localL = (partido.local || '').toLowerCase();
                       const visL = (partido.visitante || '').toLowerCase();
@@ -321,7 +325,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                             </span>
                           )}
                           <span className={`status-badge ${estadoClase}`}>
-                            {terminado ? 'FT ' : 'LIVE '} {estadoTexto}
+                            {estadoTexto}
                           </span>
                         </div>
                       </div>
@@ -333,9 +337,26 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                             <span className="team-avatar avatar-home">{iniLocal}</span>
                             <span className="team-name">{partido.local}</span>
                           </div>
-                          {renderRacha(partido.forma_local)}
+                          <div className="team-meta-right">
+                            {terminado && (
+                              <span className={`team-score-num ${gl > gv ? 'score-winner' : (gl < gv ? 'score-loser' : 'score-tie')}`} title={`Goles anotados: ${gl}`}>
+                                {gl}
+                              </span>
+                            )}
+                            {renderRacha(partido.forma_local)}
+                          </div>
                         </div>
                         <div className="vs-divider-row">
+                          {terminado ? (
+                            <div className="match-live-score-pill" title="Marcador Final Real (FT)">
+                              <span className="score-main-digit">{gl}</span>
+                              <span className="score-sep">-</span>
+                              <span className="score-main-digit">{gv}</span>
+                              <span className="score-ft-tag">FT</span>
+                            </div>
+                          ) : (
+                            <span className="vs-tag-text">VS</span>
+                          )}
                           <button 
                             type="button" 
                             className="btn-h2h-trigger" 
@@ -351,7 +372,14 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                             <span className="team-avatar avatar-away">{iniVis}</span>
                             <span className="team-name">{partido.visitante}</span>
                           </div>
-                          {renderRacha(partido.forma_visitante)}
+                          <div className="team-meta-right">
+                            {terminado && (
+                              <span className={`team-score-num ${gv > gl ? 'score-winner' : (gv < gl ? 'score-loser' : 'score-tie')}`} title={`Goles anotados: ${gv}`}>
+                                {gv}
+                              </span>
+                            )}
+                            {renderRacha(partido.forma_visitante)}
+                          </div>
                         </div>
                       </div>
                       

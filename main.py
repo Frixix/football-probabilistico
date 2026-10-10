@@ -38,11 +38,12 @@ def validar_resultados_historicos():
         return
 
     try:
-        # Límite de 5 para proteger la API de partidos
+        # Validar priorizando fechas recientes
         respuesta = supabase.table("historial_predicciones")\
             .select("*")\
             .is_("fue_acierto", "null")\
-            .limit(5)\
+            .order("fecha", desc=True)\
+            .limit(15)\
             .execute()
         
         partidos_pendientes = respuesta.data
