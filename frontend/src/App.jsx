@@ -3,6 +3,7 @@ import MatchList from './components/MatchList';
 import BetSlip from './components/BetSlip';
 import BacktestDashboard from './components/BacktestDashboard';
 import { usePartidos } from './hooks/usePartidos';
+import { obtenerInfoTorneo } from './utils/leagues';
 import { 
   BallIcon, ChartIcon, TrophyIcon, TargetIcon, 
   TicketIcon, SearchIcon, StarIcon, CloseIcon, AlertTriangleIcon, CalendarIcon 
@@ -103,15 +104,8 @@ function App() {
       if (!matchBusqueda) return false;
 
       if (soloTopLigas) {
-        const torneo = (p.torneo || '').toLowerCase();
-        const topKeywords = [
-          'primera a', 'betplay', 'champions', 'premier league', 'la liga', 
-          'serie a', 'bundesliga', 'ligue 1', 'libertadores', 'sudamericana', 
-          'mls', 'liga profesional', 'argentina', 'torneo betano', 
-          'copa de la liga', 'copa argentina', 'boca', 'river'
-        ];
-        const esTop = topKeywords.some(kw => torneo.includes(kw));
-        if (!esTop) return false;
+        const info = obtenerInfoTorneo(p.torneo, p.pais);
+        if (!info.esTop) return false;
       }
 
       return true;
@@ -410,6 +404,7 @@ function App() {
       {mostrarTicketMobile && (
         <div className="mobile-ticket-drawer-backdrop" onClick={() => setMostrarTicketMobile(false)}>
           <div className="mobile-ticket-drawer-content" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-handle-bar"></div>
             <BetSlip 
               ticket={ticket} 
               onRemove={removerDelTicket} 

@@ -60,23 +60,38 @@ export function obtenerInfoTorneo(nombreTorneo = "", paisAPI = "") {
   const t = nombreTorneo.toLowerCase();
   let p = (paisAPI || "").trim().toLowerCase();
 
-  // 1. Torneos Élite y Ligas Top
-  if (t.includes("primera a") || t.includes("betplay") || t.includes("copa colombia")) {
+  // 1. Torneos Élite y Ligas Top Solicitadas
+  // 1.1 Colombia (Liga BetPlay, Primera A, Copa Colombia)
+  if (t.includes("primera a") || t.includes("betplay") || t.includes("copa colombia") || (p === "colombia" && !t.includes("femenina"))) {
     return { pais: "Colombia", flagCode: "co", prioridad: 1, esTop: true };
   }
-  if (t.includes("champions league")) {
-    return { pais: "Europa", flagCode: null, prioridad: 2, esTop: true };
-  }
+  // 1.2 Inglaterra (Premier League, FA Cup, EFL)
   if (t.includes("premier league") && (p === "england" || !p || p === "mundo" || t.includes("english"))) {
-    // Verificar si es la Premier League inglesa y no de otro país
-    if (!t.includes("fkf") && !t.includes("uganda") && !t.includes("cup")) {
-      return { pais: "Inglaterra", flagCode: "gb-eng", prioridad: 3, esTop: true };
+    if (!t.includes("fkf") && !t.includes("uganda") && !t.includes("cup") && !t.includes("u21") && !t.includes("u19")) {
+      return { pais: "Inglaterra", flagCode: "gb-eng", prioridad: 2, esTop: true };
     }
   }
-  if (t.includes("la liga") || (t.includes("primera division") && (p === "spain" || p === "españa"))) {
-    return { pais: "España", flagCode: "es", prioridad: 4, esTop: true };
+  // 1.3 España (La Liga, Copa del Rey)
+  if (t.includes("la liga") || t.includes("laliga") || (t.includes("primera division") && (p === "spain" || p === "españa"))) {
+    return { pais: "España", flagCode: "es", prioridad: 3, esTop: true };
   }
-  // Liga Profesional de Argentina (Liga de élite y máxima categoría)
+  // 1.4 Alemania (Bundesliga)
+  if (t.includes("bundesliga") && !t.includes("u19") && !t.includes("women") && !t.includes("femenina")) {
+    return { pais: "Alemania", flagCode: "de", prioridad: 4, esTop: true };
+  }
+  // 1.5 Italia (Serie A, Coppa Italia)
+  if ((t.includes("serie a") && (p === "italy" || p === "italia" || !p || p === "mundo")) || t.includes("coppa italia")) {
+    if (!t.includes("brazil") && !t.includes("brasil") && !t.includes("ecuador") && !t.includes("women")) {
+      return { pais: "Italia", flagCode: "it", prioridad: 5, esTop: true };
+    }
+  }
+  // 1.6 Francia (Ligue 1, Coupe de France)
+  if ((t.includes("ligue 1") && (p === "france" || p === "francia" || !p || p === "mundo")) || t.includes("coupe de france")) {
+    if (!t.includes("algeria") && !t.includes("algerie") && !t.includes("burkina") && !t.includes("ivory")) {
+      return { pais: "Francia", flagCode: "fr", prioridad: 6, esTop: true };
+    }
+  }
+  // 1.7 Argentina (Liga Profesional, Torneo Betano, Copa de la Liga, Copa Argentina)
   if (
     t.includes("liga profesional") || 
     t.includes("torneo betano") || 
@@ -84,32 +99,27 @@ export function obtenerInfoTorneo(nombreTorneo = "", paisAPI = "") {
     t.includes("copa argentina") ||
     t.includes("superliga") ||
     (t.includes("primera division") && (p === "argentina" || t.includes("argentina"))) ||
-    (p === "argentina" && !t.includes("b metropolitana") && !t.includes("federal") && !t.includes("reserva") && !t.includes("nacional"))
+    (p === "argentina" && (t.includes("primera nacional") || !t.includes("b metropolitana") && !t.includes("federal") && !t.includes("reserva")))
   ) {
-    return { pais: "Argentina", flagCode: "ar", prioridad: 5, esTop: true };
+    return { pais: "Argentina", flagCode: "ar", prioridad: 7, esTop: true };
+  }
+  // 1.8 Brasil (Brasileirão Serie A, Copa do Brasil)
+  if (t.includes("brasileirao") || t.includes("brasileirão") || (t.includes("serie a") && (p === "brazil" || p === "brasil")) || (p === "brazil" && t.includes("copa do brasil"))) {
+    return { pais: "Brasil", flagCode: "br", prioridad: 8, esTop: true };
+  }
+
+  // Torneos Continentales Élite
+  if (t.includes("champions league")) {
+    return { pais: "Europa", flagCode: null, prioridad: 9, esTop: true };
   }
   if (t.includes("libertadores") || t.includes("sudamericana")) {
-    return { pais: "Sudamérica", flagCode: null, prioridad: 6, esTop: true };
-  }
-  if (t.includes("serie a") && (p === "italy" || p === "italia" || !p || p === "mundo")) {
-    if (!t.includes("brazil") && !t.includes("ecuador")) {
-      return { pais: "Italia", flagCode: "it", prioridad: 7, esTop: true };
-    }
-  }
-  if (t.includes("bundesliga") && !t.includes("2.")) {
-    return { pais: "Alemania", flagCode: "de", prioridad: 8, esTop: true };
-  }
-  if (t.includes("ligue 1") && (p === "france" || p === "francia" || !p || p === "mundo")) {
-    // Si no es Argelia
-    if (!t.includes("algeria") && !t.includes("algerie")) {
-      return { pais: "Francia", flagCode: "fr", prioridad: 9, esTop: true };
-    }
+    return { pais: "Sudamérica", flagCode: null, prioridad: 10, esTop: true };
   }
   if (t.includes("europa league") || t.includes("conference league")) {
-    return { pais: "Europa", flagCode: null, prioridad: 10, esTop: true };
+    return { pais: "Europa", flagCode: null, prioridad: 11, esTop: true };
   }
   if (t.includes("major league soccer") || (t.includes("mls") && !t.includes("next"))) {
-    return { pais: "EE. UU.", flagCode: "us", prioridad: 11, esTop: true };
+    return { pais: "EE. UU.", flagCode: "us", prioridad: 12, esTop: true };
   }
 
   // 2. Primeras Divisiones reconocidas de América y Europa

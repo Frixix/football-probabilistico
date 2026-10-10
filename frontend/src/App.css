@@ -1591,9 +1591,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 2000;
     flex-direction: column;
     justify-content: flex-end;
@@ -1601,27 +1601,102 @@
   }
 
   .mobile-ticket-drawer-content {
-    background: #0d1322;
-    border-top: 1px solid rgba(16, 185, 129, 0.4);
-    border-radius: 24px 24px 0 0;
-    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.9);
-    max-height: 86vh;
+    background: #090e1a;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-bottom: none;
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.95);
+    height: 88vh;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     animation: slideUpDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  .drawer-handle-bar {
+    width: 42px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 9999px;
+    margin: 10px auto 4px auto;
+    flex-shrink: 0;
+  }
+
   .mobile-ticket-drawer-content .betslip-container {
     border: none;
     background: transparent;
     box-shadow: none;
-    max-height: 86vh;
-    padding: 1.25rem 1.25rem 2rem 1.25rem;
+    flex: 1;
+    min-height: 0;
+    max-height: 100%;
+    padding: 0.5rem 1rem 1.25rem 1rem;
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 1.25rem));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mobile-ticket-drawer-content .betslip-header {
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.65rem;
+    flex-shrink: 0;
+  }
+
+  .mobile-ticket-drawer-content .betslip-title h3 {
+    font-size: 1.05rem;
+  }
+
+  .mobile-ticket-drawer-content .btn-close-betslip-modal {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .mobile-ticket-drawer-content .betslip-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mobile-ticket-drawer-content .ticket-items-list {
+    max-height: 220px;
+    flex-shrink: 0;
+  }
+
+  .mobile-ticket-drawer-content .ticket-item {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mobile-ticket-drawer-content .ticket-match-title {
+    font-size: 0.85rem;
+    line-height: 1.25;
+  }
+
+  .mobile-ticket-drawer-content .ticket-market-tag {
+    font-size: 0.75rem;
+  }
+
+  .mobile-ticket-drawer-content .simulator-box {
+    padding: 10px 12px;
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .mobile-ticket-drawer-content .btn-quick-amount {
+    padding: 6px 4px;
+    font-size: 0.75rem;
   }
 
   .has-mobile-ticket {
-    padding-bottom: 75px !important;
+    padding-bottom: 85px !important;
   }
 }
 
