@@ -7,10 +7,11 @@ import {
 import { useBankroll } from '../hooks/useBankroll';
 import { generarMercadosCompletos } from '../utils/markets';
 import H2HModal from './H2HModal';
+import HORARIOS_FIXTURES from '../data/horarios_fixtures.json';
 
 // Horarios programados locales (UTC-5 Colombia) para fixtures del día
 const HORAS_PROGRAMADAS = {
-  1549504: "15:00", // Deportivo Garcilaso vs Sport Huancayo
+  1549504: "19:30", // Deportivo Garcilaso vs Sport Huancayo
   1571165: "14:30", // Ibiza vs Real Madrid II
   1493733: "18:00", // Lexington vs FC Tulsa
   1639851: "19:00", // Libertad vs Leones del Norte
@@ -28,6 +29,64 @@ const HORAS_PROGRAMADAS = {
   1635276: "08:00", // Entebbe UPPC vs Police
   1635277: "08:00", // URA vs KCCA
 };
+
+/**
+ * Evaluación cuantitativa rigurosa del mercado mostrado frente al resultado final
+ */
+export function evaluarAciertoMercado(mercadoTexto, gl, gv, local = '', visitante = '') {
+  if (gl === null || gl === undefined || isNaN(gl) || gv === null || gv === undefined || isNaN(gv)) {
+    return 'pendiente';
+  }
+  const pred = (mercadoTexto || '').toLowerCase().trim();
+  const localL = (local || '').toLowerCase().trim();
+  const visL = (visitante || '').toLowerCase().trim();
+  const suma = gl + gv;
+
+  let ok = false;
+  // 1. Doble Oportunidad (Evaluación previa prioritaria a empate simple)
+  if (pred.startsWith('1x') || pred.includes('local o empate') || pred.includes('o empate')) {
+    ok = gl >= gv;
+  } else if (pred.startsWith('x2') || pred.includes('empate o')) {
+    ok = gv >= gl;
+  } else if (pred.startsWith('12') || pred.includes('local o visitante') || (pred.includes(' o ') && !pred.includes('empate'))) {
+    ok = gl !== gv;
+  }
+  // 2. 1X2 Ganador Directo / Empate
+  else if (pred.includes('empate')) {
+    ok = gl === gv;
+  } else if (pred.includes('gana')) {
+    if (localL && pred.includes(localL)) ok = gl > gv;
+    else if (visL && pred.includes(visL)) ok = gv > gl;
+    else if (pred.includes('local') || pred.startsWith('1')) ok = gl > gv;
+    else if (pred.includes('visitante') || pred.startsWith('2')) ok = gv > gl;
+  }
+  // 3. Líneas de Goles (+/- 0.5, 1.5, 2.5, 3.5)
+  else if (pred.includes('más de 0.5') || pred.includes('mas de 0.5') || pred.includes('+0.5')) {
+    ok = suma > 0.5;
+  } else if (pred.includes('menos de 0.5') || pred.includes('-0.5')) {
+    ok = suma < 0.5;
+  } else if (pred.includes('más de 1.5') || pred.includes('mas de 1.5') || pred.includes('+1.5')) {
+    ok = suma > 1.5;
+  } else if (pred.includes('menos de 1.5') || pred.includes('-1.5')) {
+    ok = suma < 1.5;
+  } else if (pred.includes('más de 2.5') || pred.includes('mas de 2.5') || pred.includes('+2.5')) {
+    ok = suma > 2.5;
+  } else if (pred.includes('menos de 2.5') || pred.includes('-2.5')) {
+    ok = suma < 2.5;
+  } else if (pred.includes('más de 3.5') || pred.includes('mas de 3.5') || pred.includes('+3.5')) {
+    ok = suma > 3.5;
+  } else if (pred.includes('menos de 3.5') || pred.includes('-3.5')) {
+    ok = suma < 3.5;
+  }
+  // 4. Ambos Marcan (BTTS)
+  else if (pred.includes('marcan: sí') || pred.includes('marcan: si') || pred.includes('btts sí') || pred.includes('btts si')) {
+    ok = gl > 0 && gv > 0;
+  } else if (pred.includes('marcan: no') || pred.includes('btts no')) {
+    ok = gl === 0 || gv === 0;
+  }
+
+  return ok ? 'acertado' : 'fallado';
+}
 
 export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMercado = 'todos' }) {
   const [ligasAbiertas, setLigasAbiertas] = useState({});
@@ -50,13 +109,15 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
   };
 
   const formatearHora12 = (hora24, idPartido) => {
-    let horaStr = hora24;
+    const info = HORARIOS_FIXTURES[idPartido] || HORARIOS_FIXTURES[String(idPartido)];
+    if (info?.hora12) return info.hora12;
+    let horaStr = hora24 || info?.hora;
     if (!horaStr || horaStr === "TBD") {
-      horaStr = HORAS_PROGRAMADAS[idPartido] || "15:00";
+      horaStr = HORAS_PROGRAMADAS[idPartido] || "18:00";
     }
     const [h, min] = horaStr.split(":");
     let hora = parseInt(h, 10);
-    if (isNaN(hora)) return "3:00 PM";
+    if (isNaN(hora)) return "6:00 PM";
     const ampm = hora >= 12 ? 'PM' : 'AM';
     hora = hora % 12;
     hora = hora ? hora : 12; 
@@ -220,17 +281,50 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   const cuotaTeorica = probNum > 0 ? (probNum > 1 ? (100 / probNum).toFixed(2) : (1 / probNum).toFixed(2)) : '1.00';
                   
                   const idReal = partido.id_partido || partido.id || Math.random(); 
+                  const infoFixture = HORARIOS_FIXTURES[idReal] || HORARIOS_FIXTURES[String(idReal)] || null;
                   const hora12 = formatearHora12(partido.hora, idReal);
                   const mercadoReal = partido.mercado_predicho || partido.mercado || "Sin Mercado"; 
+
+                  // Goles y estado del partido con respaldo de sincronización en directo
                   const gl = (partido.goles_local !== null && partido.goles_local !== undefined) 
                     ? parseInt(partido.goles_local, 10) 
-                    : (partido.marcador ? parseInt(partido.marcador.split('-')[0], 10) : null);
+                    : (infoFixture?.goles_local !== null && infoFixture?.goles_local !== undefined
+                      ? parseInt(infoFixture.goles_local, 10)
+                      : (partido.marcador ? parseInt(partido.marcador.split('-')[0], 10) : null));
+
                   const gv = (partido.goles_visitante !== null && partido.goles_visitante !== undefined) 
                     ? parseInt(partido.goles_visitante, 10) 
-                    : (partido.marcador ? parseInt(partido.marcador.split('-')[1], 10) : null);
-                  const terminado = gl !== null && !isNaN(gl) && gv !== null && !isNaN(gv);
-                  const estadoClase = partido.estado_clase || (terminado ? "estado-rojo" : "estado-verde");
-                  const estadoTexto = terminado ? `FT ${gl} - ${gv}` : (partido.estado_texto || "PROGRAMADO");
+                    : (infoFixture?.goles_visitante !== null && infoFixture?.goles_visitante !== undefined
+                      ? parseInt(infoFixture.goles_visitante, 10)
+                      : (partido.marcador ? parseInt(partido.marcador.split('-')[1], 10) : null));
+
+                  // Determinar estado en tiempo real (En vivo vs Finalizado vs Programado)
+                  const esVivo = Boolean(
+                    infoFixture?.es_vivo || 
+                    ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(infoFixture?.status)
+                  );
+
+                  const terminado = Boolean(
+                    !esVivo && (
+                      infoFixture?.terminado || 
+                      infoFixture?.status === 'FT' || 
+                      infoFixture?.status === 'AET' || 
+                      infoFixture?.status === 'PEN' || 
+                      (gl !== null && !isNaN(gl) && gv !== null && !isNaN(gv) && (partido.fue_acierto !== null || infoFixture?.status === 'FT'))
+                    )
+                  );
+
+                  const estadoClase = esVivo 
+                    ? "estado-live" 
+                    : terminado 
+                      ? "estado-finalizado" 
+                      : (infoFixture?.status === 'PST' ? "estado-amarillo" : "estado-programado");
+
+                  const estadoTexto = esVivo 
+                    ? (infoFixture?.status_texto || "EN VIVO") 
+                    : terminado 
+                      ? `FT ${gl} - ${gv}` 
+                      : (infoFixture?.status === 'PST' ? "POSTERGADO" : (partido.estado_texto || "PROGRAMADO"));
 
                   const mercados = generarMercadosCompletos(partido);
                   const estaExpandido = !!partidosExpandidos[idReal];
@@ -271,34 +365,14 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   if (mercadoDestacado.toLowerCase().includes('marcan')) claseMercado = 'mercado-btts';
                   if (mercadoDestacado.toLowerCase().includes('1x') || mercadoDestacado.toLowerCase().includes('x2') || mercadoDestacado.toLowerCase().includes('12')) claseMercado = 'mercado-dc';
 
-                  // Evaluación cuantitativa del acierto del pronóstico: acertado (agua marina), fallado (rojo), pendiente (gris)
+                  // Evaluación cuantitativa del acierto del pronóstico: acertado (agua marina), fallado (rojo), en_juego, pendiente (gris)
                   const evaluacionAcierto = (() => {
-                    if (partido.fue_acierto === true) return 'acertado';
-                    if (partido.fue_acierto === false) return 'fallado';
-                    if (terminado) {
-                      const pred = (partido.mercado_predicho || partido.mercado || '').toLowerCase();
-                      const localL = (partido.local || '').toLowerCase();
-                      const visL = (partido.visitante || '').toLowerCase();
-                      const suma = gl + gv;
-
-                      let ok = false;
-                      if (pred.includes('gana') && pred.includes(localL)) ok = gl > gv;
-                      else if (pred.includes('gana') && pred.includes(visL)) ok = gv > gl;
-                      else if (pred.includes('empate')) ok = gl === gv;
-                      else if (pred.includes('1x')) ok = gl >= gv;
-                      else if (pred.includes('x2')) ok = gv >= gl;
-                      else if (pred.includes('12')) ok = gl !== gv;
-                      else if (pred.includes('más de 2.5') || pred.includes('mas de 2.5') || pred.includes('+2.5')) ok = suma > 2.5;
-                      else if (pred.includes('menos de 2.5') || pred.includes('-2.5')) ok = suma < 2.5;
-                      else if (pred.includes('más de 1.5') || pred.includes('+1.5')) ok = suma > 1.5;
-                      else if (pred.includes('menos de 1.5') || pred.includes('-1.5')) ok = suma < 1.5;
-                      else if (pred.includes('más de 3.5') || pred.includes('+3.5')) ok = suma > 3.5;
-                      else if (pred.includes('menos de 3.5') || pred.includes('-3.5')) ok = suma < 3.5;
-                      else if (pred.includes('marcan: sí') || pred.includes('marcan: si')) ok = gl > 0 && gv > 0;
-                      else if (pred.includes('marcan: no')) ok = gl === 0 || gv === 0;
-
-                      return ok ? 'acertado' : 'fallado';
+                    if (esVivo) return 'en_juego';
+                    if (terminado && gl !== null && gv !== null) {
+                      return evaluarAciertoMercado(mercadoDestacado, gl, gv, partido.local, partido.visitante);
                     }
+                    if (partido.fue_acierto === true && mercadoDestacado === mercadoReal) return 'acertado';
+                    if (partido.fue_acierto === false && mercadoDestacado === mercadoReal) return 'fallado';
                     return 'pendiente';
                   })();
 
@@ -319,12 +393,18 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                               <CloseIcon size={11} /> No acertó
                             </span>
                           )}
+                          {evaluacionAcierto === 'en_juego' && (
+                            <span className="acierto-badge badge-live-acierto" title="Partido en juego en directo">
+                              <span className="live-dot-pulse"></span> En Vivo
+                            </span>
+                          )}
                           {evaluacionAcierto === 'pendiente' && (
                             <span className="acierto-badge badge-gray" title="Aún no ha jugado">
                               <ClockIcon size={11} /> Por jugar
                             </span>
                           )}
                           <span className={`status-badge ${estadoClase}`}>
+                            {esVivo && <span className="live-dot-pulse"></span>}
                             {estadoTexto}
                           </span>
                         </div>
@@ -338,8 +418,11 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                             <span className="team-name">{partido.local}</span>
                           </div>
                           <div className="team-meta-right">
-                            {terminado && (
-                              <span className={`team-score-num ${gl > gv ? 'score-winner' : (gl < gv ? 'score-loser' : 'score-tie')}`} title={`Goles anotados: ${gl}`}>
+                            {(terminado || esVivo) && gl !== null && (
+                              <span 
+                                className={`team-score-num ${esVivo ? 'score-live-num' : (gl > gv ? 'score-winner' : (gl < gv ? 'score-loser' : 'score-tie'))}`} 
+                                title={`Goles anotados: ${gl}`}
+                              >
                                 {gl}
                               </span>
                             )}
@@ -347,7 +430,14 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                           </div>
                         </div>
                         <div className="vs-divider-row">
-                          {terminado ? (
+                          {esVivo ? (
+                            <div className="match-live-score-pill score-pill-live" title="Marcador en directo (En Vivo)">
+                              <span className="score-main-digit">{gl ?? 0}</span>
+                              <span className="score-sep">-</span>
+                              <span className="score-main-digit">{gv ?? 0}</span>
+                              <span className="score-live-tag">VIVO</span>
+                            </div>
+                          ) : terminado ? (
                             <div className="match-live-score-pill" title="Marcador Final Real (FT)">
                               <span className="score-main-digit">{gl}</span>
                               <span className="score-sep">-</span>
@@ -373,8 +463,11 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                             <span className="team-name">{partido.visitante}</span>
                           </div>
                           <div className="team-meta-right">
-                            {terminado && (
-                              <span className={`team-score-num ${gv > gl ? 'score-winner' : (gv < gl ? 'score-loser' : 'score-tie')}`} title={`Goles anotados: ${gv}`}>
+                            {(terminado || esVivo) && gv !== null && (
+                              <span 
+                                className={`team-score-num ${esVivo ? 'score-live-num' : (gv > gl ? 'score-winner' : (gv < gl ? 'score-loser' : 'score-tie'))}`} 
+                                title={`Goles anotados: ${gv}`}
+                              >
                                 {gv}
                               </span>
                             )}
