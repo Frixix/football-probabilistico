@@ -50,6 +50,36 @@ fechas_a_cargar = [hoy_dia, manana_dia]
 headers = {'x-apisports-key': api_partidos}
 url = "https://v3.football.api-sports.io/fixtures"
 
+def es_partido_relevante(torneo, local, visitante):
+    t = (torneo or "").lower()
+    l = (local or "").lower()
+    v = (visitante or "").lower()
+    
+    # 1. Filtro estricto: descartar partidos basura / ligas menores / reservas
+    descartes = [
+        "u17", "u18", "u19", "u20", "u21", "u23", "youth", "women", "femenin",
+        "druha", "league two", "3. division", "regionalliga", "primera c", "primera d",
+        "state cup", "azadegan", "non league", "isthmian", "girone", "pro league a",
+        "reserva", "cup women", "canadian"
+    ]
+    if any(k in t or k in l or k in v for k in descartes):
+        return False
+        
+    # 2. Torneos y ligas reconocidas de primer nivel
+    torneos_validos = [
+        "premier league", "championship", "la liga", "laliga", "serie a", "serie b",
+        "bundesliga", "2. bundesliga", "ligue 1", "ligue 2", "liga profesional",
+        "brasileir", "betplay", "primera a", "copa libertadores", "copa sudamericana",
+        "champions league", "europa league", "conference league", "nations league",
+        "eredivisie", "primeira liga", "premiership", "super lig", "liga mx", "major league soccer",
+        "copa del rey", "fa cup", "coppa italia", "coupe de france", "dfb pokal",
+        "copa argentina", "copa do brasil", "copa colombia", "primera nacional"
+    ]
+    if any(k in t for k in torneos_validos):
+        return True
+        
+    return False
+
 # Cargar caché local de fixtures si existe para optimizar peticiones
 fixtures_cache = {}
 archivo_hf = os.path.join("frontend", "src", "data", "horarios_fixtures.json")
@@ -116,36 +146,6 @@ for dia_objetivo in fechas_a_cargar:
         except Exception as e:
             print(f"🚨 Error consultando fixtures: {e}")
             partidos = []
-
-def es_partido_relevante(torneo, local, visitante):
-    t = (torneo or "").lower()
-    l = (local or "").lower()
-    v = (visitante or "").lower()
-    
-    # 1. Filtro estricto: descartar partidos basura / ligas menores / reservas
-    descartes = [
-        "u17", "u18", "u19", "u20", "u21", "u23", "youth", "women", "femenin",
-        "druha", "league two", "3. division", "regionalliga", "primera c", "primera d",
-        "state cup", "azadegan", "non league", "isthmian", "girone", "pro league a",
-        "reserva", "cup women"
-    ]
-    if any(k in t or k in l or k in v for k in descartes):
-        return False
-        
-    # 2. Torneos y ligas reconocidas de primer nivel
-    torneos_validos = [
-        "premier league", "championship", "la liga", "laliga", "serie a", "serie b",
-        "bundesliga", "2. bundesliga", "ligue 1", "ligue 2", "liga profesional",
-        "brasileir", "betplay", "primera a", "copa libertadores", "copa sudamericana",
-        "champions league", "europa league", "conference league", "nations league",
-        "eredivisie", "primeira liga", "premiership", "super lig", "liga mx", "major league soccer",
-        "copa del rey", "fa cup", "coppa italia", "coupe de france", "dfb pokal",
-        "copa argentina", "copa do brasil", "copa colombia", "primera nacional"
-    ]
-    if any(k in t for k in torneos_validos):
-        return True
-        
-    return False
 
     partidos_procesados = 0
     registros_batch = []
