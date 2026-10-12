@@ -218,8 +218,18 @@ def obtener_predicciones_api(fecha_objetivo=None):
         esperados = gestor.obtener_mu_esperado(id_liga, temporada, local, visitante)
         if not esperados:
             continue
-        mu_l = esperados["mu_local"]
-        mu_v = esperados["mu_visitante"]
+        # Calibración cuantitativa por perfil goleador de la liga
+        t_low = torneo.lower()
+        factor_goles_liga = 1.0
+        if any(k in t_low for k in ["bundesliga", "alemania"]):
+            factor_goles_liga = 1.10  # Alta tasa goleadora (~3.2 goles/partido)
+        elif any(k in t_low for k in ["premier league", "inglaterra"]):
+            factor_goles_liga = 1.06  # Alta intensidad ofensiva (~3.0 goles/partido)
+        elif any(k in t_low for k in ["argentina", "brasil", "brazil"]):
+            factor_goles_liga = 0.92  # Ligas más tácticas y marcadores más cerrados (~2.2 goles/partido)
+
+        mu_l = esperados["mu_local"] * factor_goles_liga
+        mu_v = esperados["mu_visitante"] * factor_goles_liga
             
         # Motor probabilístico calibrado de Dixon-Coles
         matriz = generar_matriz_dixon_coles(mu_l, mu_v)

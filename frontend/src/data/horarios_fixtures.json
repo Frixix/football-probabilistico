@@ -67188,12 +67188,15 @@
     "fecha": "2026-10-12",
     "hora": "17:00",
     "hora12": "5:00 PM",
-    "status": "NS",
+    "status": "FT",
     "status_long": "Not Started",
-    "status_texto": "5:00 PM",
+    "status_texto": "FT 2 - 0",
     "torneo": "Liga Profesional Argentina",
     "local": "Lanus",
-    "visitante": "Velez Sarsfield"
+    "visitante": "Velez Sarsfield",
+    "terminado": true,
+    "goles_local": 2,
+    "goles_visitante": 0
   },
   "1520925": {
     "id": 1520925,
@@ -67404,12 +67407,15 @@
     "fecha": "2026-10-12",
     "hora": "18:15",
     "hora12": "6:15 PM",
-    "status": "NS",
+    "status": "FT",
     "status_long": "Not Started",
-    "status_texto": "6:15 PM",
+    "status_texto": "FT 1 - 0",
     "torneo": "Liga Profesional Argentina",
     "local": "Gimnasia M.",
-    "visitante": "Newells Old Boys"
+    "visitante": "Newells Old Boys",
+    "terminado": true,
+    "goles_local": 1,
+    "goles_visitante": 0
   },
   "1498865": {
     "id": 1498865,
