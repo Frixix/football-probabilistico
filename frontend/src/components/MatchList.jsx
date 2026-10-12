@@ -115,11 +115,17 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
     if (info?.hora12) return info.hora12;
     let horaStr = hora24 || info?.hora;
     if (!horaStr || horaStr === "TBD") {
-      horaStr = HORAS_PROGRAMADAS[idPartido] || "18:00";
+      if (HORAS_PROGRAMADAS[idPartido]) {
+        horaStr = HORAS_PROGRAMADAS[idPartido];
+      } else {
+        const fallbacks = ["10:30", "12:00", "13:30", "15:00", "17:30", "19:00", "20:00"];
+        const numId = typeof idPartido === 'number' ? idPartido : (parseInt(String(idPartido).replace(/\D/g, ''), 10) || 0);
+        horaStr = fallbacks[numId % fallbacks.length];
+      }
     }
     const [h, min] = horaStr.split(":");
     let hora = parseInt(h, 10);
-    if (isNaN(hora)) return "6:00 PM";
+    if (isNaN(hora)) return "3:00 PM";
     const ampm = hora >= 12 ? 'PM' : 'AM';
     hora = hora % 12;
     hora = hora ? hora : 12; 

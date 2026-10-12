@@ -84,6 +84,35 @@ for dia_objetivo in fechas_a_cargar:
         try:
             res = requests.get(url, headers=headers, params=params).json()
             partidos = res.get("response", [])
+            if partidos:
+                for fix_item in partidos:
+                    fid = str(fix_item["fixture"]["id"])
+                    date_iso = fix_item["fixture"].get("date", "")
+                    h_str = date_iso[11:16] if len(date_iso) >= 16 else "15:00"
+                    try:
+                        hh = int(h_str[:2])
+                        mm = h_str[3:5]
+                        ampm = "PM" if hh >= 12 else "AM"
+                        hh12 = hh % 12 or 12
+                        h12_str = f"{hh12}:{mm} {ampm}"
+                    except Exception:
+                        h12_str = h_str
+                    fixtures_cache[fid] = {
+                        "id": fix_item["fixture"]["id"],
+                        "fecha": dia_objetivo,
+                        "hora": h_str,
+                        "hora12": h12_str,
+                        "status": fix_item["fixture"]["status"]["short"],
+                        "torneo": fix_item["league"].get("name", "Liga"),
+                        "local": fix_item["teams"]["home"]["name"],
+                        "visitante": fix_item["teams"]["away"]["name"]
+                    }
+                try:
+                    os.makedirs(os.path.dirname(archivo_hf), exist_ok=True)
+                    with open(archivo_hf, "w", encoding="utf-8") as f_out:
+                        json.dump(fixtures_cache, f_out, ensure_ascii=False, indent=2)
+                except Exception as err_cache:
+                    print(f"Aviso guardando horarios en caché: {err_cache}")
         except Exception as e:
             print(f"🚨 Error consultando fixtures: {e}")
             partidos = []
