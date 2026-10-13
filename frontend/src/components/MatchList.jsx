@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { obtenerInfoTorneo, obtenerUrlBandera } from '../utils/leagues';
 import { 
   TrophyIcon, ClockIcon, ChevronDownIcon, 
-  BallIcon, SearchIcon, CheckIcon, CloseIcon, LayersIcon, SwordsIcon 
+  BallIcon, SearchIcon, CheckIcon, CloseIcon, LayersIcon, SwordsIcon, AlertTriangleIcon 
 } from './Icons';
 import { useBankroll } from '../hooks/useBankroll';
 import { generarMercadosCompletos } from '../utils/markets';
@@ -333,14 +333,24 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                       ? parseInt(infoFixture.goles_visitante, 10)
                       : (partido.marcador ? parseInt(partido.marcador.split('-')[1], 10) : null));
 
-                  // Determinar estado en tiempo real (En vivo vs Finalizado vs Programado)
+                  // Determinar estado en tiempo real (En vivo vs Suspendido vs Finalizado vs Programado)
                   const esVivo = Boolean(
                     infoFixture?.es_vivo || 
                     ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(infoFixture?.status)
                   );
 
+                  const esSuspendido = Boolean(
+                    ['PST', 'SUSP', 'CANC', 'ABD', 'INT', 'WO'].includes(infoFixture?.status) ||
+                    partido.estado === 'SUSPENDIDO' ||
+                    partido.status === 'PST' ||
+                    String(infoFixture?.status_texto || '').toUpperCase().includes('SUSPEND') ||
+                    String(infoFixture?.status_texto || '').toUpperCase().includes('POSTERG') ||
+                    String(partido.estado_texto || '').toUpperCase().includes('SUSPEND') ||
+                    String(partido.estado_texto || '').toUpperCase().includes('POSTERG')
+                  );
+
                   const terminado = Boolean(
-                    !esVivo && (
+                    !esVivo && !esSuspendido && (
                       infoFixture?.terminado || 
                       infoFixture?.status === 'FT' || 
                       infoFixture?.status === 'AET' || 
@@ -351,15 +361,19 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
 
                   const estadoClase = esVivo 
                     ? "estado-live" 
-                    : terminado 
-                      ? "estado-finalizado" 
-                      : (infoFixture?.status === 'PST' ? "estado-amarillo" : "estado-programado");
+                    : esSuspendido
+                      ? "estado-amarillo"
+                      : terminado 
+                        ? "estado-finalizado" 
+                        : "estado-programado";
 
                   const estadoTexto = esVivo 
                     ? (infoFixture?.status_texto || "EN VIVO") 
-                    : terminado 
-                      ? `FT ${gl} - ${gv}` 
-                      : (infoFixture?.status === 'PST' ? "POSTERGADO" : (partido.estado_texto || "PROGRAMADO"));
+                    : esSuspendido
+                      ? (['CANC'].includes(infoFixture?.status) ? "CANCELADO" : "SUSPENDIDO")
+                      : terminado 
+                        ? `FT ${gl} - ${gv}` 
+                        : (partido.estado_texto || "PROGRAMADO");
 
                   const mercados = generarMercadosCompletos(partido);
                   const estaExpandido = !!partidosExpandidos[idReal];
@@ -400,8 +414,9 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   if (mercadoDestacado.toLowerCase().includes('marcan')) claseMercado = 'mercado-btts';
                   if (mercadoDestacado.toLowerCase().includes('1x') || mercadoDestacado.toLowerCase().includes('x2') || mercadoDestacado.toLowerCase().includes('12')) claseMercado = 'mercado-dc';
 
-                  // Evaluación cuantitativa del acierto del pronóstico: acertado (agua marina), fallado (rojo), en_juego, pendiente (gris)
+                  // Evaluación cuantitativa del acierto del pronóstico: acertado (agua marina), fallado (rojo), suspendido (amarillo), en_juego, pendiente (gris)
                   const evaluacionAcierto = (() => {
+                    if (esSuspendido) return 'suspendido';
                     if (esVivo) return 'en_juego';
                     if (terminado && gl !== null && gv !== null) {
                       return evaluarAciertoMercado(mercadoDestacado, gl, gv, partido.local, partido.visitante);
@@ -412,7 +427,7 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                   })();
 
                   return (
-                    <div key={idReal} className={`match-card glass-card hover-${evaluacionAcierto} ${yaEnTicket ? 'in-ticket-card' : ''}`}>
+                    <div key={idReal} className={`match-card glass-card hover-${evaluacionAcierto} ${esSuspendido ? 'card-suspendido' : ''} ${yaEnTicket ? 'in-ticket-card' : ''}`}>
                       <div className="match-header">
                         <div className="match-header-left">
                           <span className="match-time">
@@ -430,6 +445,11 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                           {evaluacionAcierto === 'fallado' && (
                             <span className="acierto-badge badge-red" title="Pronóstico no acertado">
                               <CloseIcon size={11} /> No acertó
+                            </span>
+                          )}
+                          {evaluacionAcierto === 'suspendido' && (
+                            <span className="acierto-badge badge-yellow" title="Partido suspendido / no disputado">
+                              <AlertTriangleIcon size={11} /> Suspendido
                             </span>
                           )}
                           {evaluacionAcierto === 'en_juego' && (
@@ -482,6 +502,10 @@ export default function MatchList({ partidos, ticket = [], onAddTicket, filtroMe
                               <span className="score-sep">-</span>
                               <span className="score-main-digit">{gv}</span>
                               <span className="score-ft-tag">FT</span>
+                            </div>
+                          ) : esSuspendido ? (
+                            <div className="match-live-score-pill score-pill-suspended" title="Partido Suspendido / No Disputado">
+                              <span className="score-ft-tag score-suspended-tag">SUSP</span>
                             </div>
                           ) : (
                             <span className="vs-tag-text">VS</span>
