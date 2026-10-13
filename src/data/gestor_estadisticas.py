@@ -30,6 +30,45 @@ def calcular_factor_forma(racha_str):
     factor = 1.0 + (score - 0.50) * 0.20
     return round(max(0.88, min(1.12, factor)), 4)
 
+def resolver_nombre_equipo(nombre_busqueda, dict_equipos):
+    if not nombre_busqueda or not dict_equipos:
+        return None
+    if nombre_busqueda in dict_equipos:
+        return nombre_busqueda
+    n_norm = nombre_busqueda.lower().strip()
+    for k in dict_equipos:
+        if k.lower().strip() == n_norm:
+            return k
+    alias_map = {
+        "milan": ["ac milan"],
+        "ac milan": ["milan"],
+        "juventus": ["juve"],
+        "roma": ["as roma"],
+        "as roma": ["roma"],
+        "inter": ["internazionale", "inter milan"],
+        "psg": ["paris saint germain", "paris saint-germain"],
+        "paris saint germain": ["psg"],
+        "bayern": ["bayern münchen", "bayern munich"],
+        "bayern münchen": ["bayern munich", "bayern"],
+        "bayer leverkusen": ["leverkusen"],
+        "athletic club": ["athletic bilbao"],
+        "atletico madrid": ["atlético madrid", "atletico de madrid"],
+        "real madrid": ["madrid"],
+        "manchester united": ["man united", "man utd"],
+        "manchester city": ["man city"]
+    }
+    if n_norm in alias_map:
+        for al in alias_map[n_norm]:
+            for k in dict_equipos:
+                if al in k.lower():
+                    return k
+    if len(n_norm) >= 4:
+        for k in dict_equipos:
+            k_low = k.lower()
+            if n_norm in k_low or k_low in n_norm:
+                return k
+    return None
+
 class GestorEstadisticas:
     def __init__(self, api_key):
         self.api_key = api_key
@@ -54,7 +93,14 @@ class GestorEstadisticas:
     def obtener_mu_esperado(self, id_liga, temporada, local, visitante):
         llave_original = f"{id_liga}_{temporada}"
         
-        if llave_original not in self.cache:
+        # Buscar en cache con tolerancia multitemporada
+        liga_stats = None
+        for k in [llave_original, f"{id_liga}_2026", f"{id_liga}_2024", f"{id_liga}_2025", str(id_liga)]:
+            if k in self.cache and self.cache[k]:
+                liga_stats = self.cache[k]
+                break
+
+        if not liga_stats:
             print(f"📥 Descargando estadísticas reales de la liga {id_liga} (Temp {temporada})...")
             url = "https://v3.football.api-sports.io/standings"
             params = {"league": id_liga, "season": temporada}
@@ -85,8 +131,19 @@ class GestorEstadisticas:
                     liga_data = res["response"][0]["league"]
                     if "standings" in liga_data and len(liga_data["standings"]) > 0:
                         standings = liga_data["standings"][0]
+                        
+                        total_gf_h = sum(eq.get("home", {}).get("goals", {}).get("for", 0) for eq in standings)
+                        total_p_h = sum(eq.get("home", {}).get("played", 0) for eq in standings)
+                        total_gf_a = sum(eq.get("away", {}).get("goals", {}).get("for", 0) for eq in standings)
+                        total_p_a = sum(eq.get("away", {}).get("played", 0) for eq in standings)
+                        media_h = round(total_gf_h / total_p_h, 4) if total_p_h > 0 else 1.48
+                        media_a = round(total_gf_a / total_p_a, 4) if total_p_a > 0 else 1.20
+
                         for equipo in standings:
                             nombre = equipo["team"]["name"]
+                            rank = equipo.get("rank", 10)
+                            points = equipo.get("points", 0)
+                            goals_diff = equipo.get("goalsDiff", 0)
                             all_data = equipo.get("all", {})
                             home_data = equipo.get("home", {})
                             away_data = equipo.get("away", {})
@@ -108,6 +165,10 @@ class GestorEstadisticas:
                                 factor_forma = calcular_factor_forma(forma_str)
 
                                 datos_liga[nombre] = {
+                                    "rank": rank,
+                                    "points": points,
+                                    "goals_diff": goals_diff,
+                                    "p_total": partidos_total,
                                     "gf": round(gf_total, 4),
                                     "gc": round(gc_total, 4),
                                     "gf_home": round(gf_home, 4),
@@ -117,35 +178,42 @@ class GestorEstadisticas:
                                     "p_home": p_home,
                                     "p_away": p_away,
                                     "forma": forma_str,
-                                    "factor_forma": factor_forma
+                                    "factor_forma": factor_forma,
+                                    "media_liga_home": media_h,
+                                    "media_liga_away": media_a
                                 }
                 
-                # 🔥 CORRECCIÓN CLAVE: Solo guardar en caché si realmente encontramos datos
                 if len(datos_liga) > 0:
                     self.cache[llave_original] = datos_liga
+                    self.cache[f"{id_liga}_2026"] = datos_liga
+                    self.cache[f"{id_liga}_2024"] = datos_liga
                     self._guardar_cache()
-                    print(f"✅ Estadísticas guardadas con éxito para la liga {id_liga} (con desglose Local/Visita y Forma EWMA)")
+                    print(f"✅ Estadísticas guardadas con éxito para la liga {id_liga} (con tabla de posiciones)")
+                    liga_stats = datos_liga
                 else:
-                    print(f"⚠️ La liga {id_liga} no tiene tabla de posiciones (Probablemente es Copa o Amistoso).")
+                    print(f"⚠️ La liga {id_liga} no tiene tabla de posiciones.")
                     self.cache[llave_original] = {} 
                     self._guardar_cache()
+                    time.sleep(7)
+                    return None
                 time.sleep(7)
 
             except Exception as e:
                 print(f"⚠️ Error crítico en liga {id_liga}: {e}")
                 time.sleep(7)
                 return None 
-                
-        # Buscar en caché
-        liga_stats = self.cache.get(llave_original, {})
+
         if not liga_stats:
             return None
             
-        if local not in liga_stats or visitante not in liga_stats:
+        nom_l_real = resolver_nombre_equipo(local, liga_stats)
+        nom_v_real = resolver_nombre_equipo(visitante, liga_stats)
+
+        if not nom_l_real or not nom_v_real:
             return None
         
-        stats_local = liga_stats[local]
-        stats_visitante = liga_stats[visitante]
+        stats_local = liga_stats[nom_l_real]
+        stats_visitante = liga_stats[nom_v_real]
         
         # Ponderación Bayesiana de Local vs Visitante (Shrinkage)
         p_home_l = stats_local.get("p_home", 0)
@@ -175,12 +243,90 @@ class GestorEstadisticas:
         factor_forma_local = stats_local.get("factor_forma", 1.0)
         factor_forma_visitante = stats_visitante.get("factor_forma", 1.0)
 
-        mu_local = ((ataque_local + defensa_visitante) / 2) * factor_forma_local
-        mu_visitante = ((ataque_visitante + defensa_local) / 2) * factor_forma_visitante
+        media_home = stats_local.get("media_liga_home")
+        media_away = stats_visitante.get("media_liga_away")
+
+        # Modelo bivariado Maher con ajuste de Tabla de Posiciones
+        if media_home and media_away and media_home > 0 and media_away > 0:
+            fuerza_ataque_l = ataque_local / media_home
+            vulnerabilidad_def_v = defensa_visitante / media_away
+            fuerza_ataque_v = ataque_visitante / media_away
+            vulnerabilidad_def_l = defensa_local / media_home
+
+            mu_l_base = media_home * fuerza_ataque_l * vulnerabilidad_def_v
+            mu_v_base = media_away * fuerza_ataque_v * vulnerabilidad_def_l
+
+            rank_l = stats_local.get("rank", 10)
+            rank_v = stats_visitante.get("rank", 10)
+            p_tot_l = stats_local.get("p_total", 10)
+            p_tot_v = stats_visitante.get("p_total", 10)
+
+            pts_pg_l = (stats_local.get("points", 0) / p_tot_l) if p_tot_l > 0 else 1.3
+            pts_pg_v = (stats_visitante.get("points", 0) / p_tot_v) if p_tot_v > 0 else 1.3
+            diff_rank = rank_v - rank_l
+
+            factor_tabla_l = 1.0
+            factor_tabla_v = 1.0
+            factor_ritmo_goles = 1.0
+            tipo_partido = "estandar"
+
+            es_top_l = rank_l <= 4 or pts_pg_l >= 2.0
+            es_top_v = rank_v <= 4 or pts_pg_v >= 2.0
+            es_fondo_l = rank_l >= 14 or pts_pg_l <= 0.95
+            es_fondo_v = rank_v >= 14 or pts_pg_v <= 0.95
+
+            # Asimetría por Desigualdad de Tabla (Top vs Fondo: Goleadas / Over)
+            if es_top_l and es_fondo_v:
+                factor_tabla_l += min(0.20, 0.012 * abs(diff_rank))
+                factor_tabla_v *= 0.88
+                factor_ritmo_goles = 1.08
+                tipo_partido = "mismatch_goleador"
+            elif es_top_v and es_fondo_l:
+                factor_tabla_v += min(0.18, 0.010 * abs(diff_rank))
+                factor_tabla_l *= 0.90
+                factor_ritmo_goles = 1.06
+                tipo_partido = "mismatch_goleador"
+            # Duelo directo entre colistas (defensas cerradas: Under)
+            elif es_fondo_l and es_fondo_v:
+                factor_ritmo_goles = 0.90
+                tipo_partido = "duelo_descenso_cerrado"
+            # Duelo entre gigantes goleadores en la cima
+            elif es_top_l and es_top_v:
+                if stats_local.get("gf", 1.0) >= 1.6 and stats_visitante.get("gf", 1.0) >= 1.4:
+                    factor_ritmo_goles = 1.08
+                    tipo_partido = "duelo_elite_abierto"
+
+            # Potenciador de equipos goleadores insignia
+            equipos_goleadores = [
+                "bayern", "bayer leverkusen", "leverkusen", "psg", "paris saint",
+                "real madrid", "barcelona", "manchester city", "arsenal", "liverpool",
+                "inter", "ac milan", "milan", "juventus", "roma", "lazio", "fiorentina", "atalanta"
+            ]
+            bonus_elite_l = 1.0
+            bonus_elite_v = 1.0
+            nom_l_low = nom_l_real.lower()
+            nom_v_low = nom_v_real.lower()
+            if any(eq in nom_l_low for eq in equipos_goleadores) and stats_local.get("gf", 1.0) >= 1.5:
+                bonus_elite_l = 1.06
+            if any(eq in nom_v_low for eq in equipos_goleadores) and stats_visitante.get("gf", 1.0) >= 1.4:
+                bonus_elite_v = 1.05
+
+            mu_local = mu_l_base * factor_tabla_l * bonus_elite_l * factor_forma_local * factor_ritmo_goles
+            mu_visitante = mu_v_base * factor_tabla_v * bonus_elite_v * factor_forma_visitante * factor_ritmo_goles
+        else:
+            # Compatibilidad exacta con formato legacy y pruebas unitarias
+            mu_local = ((ataque_local + defensa_visitante) / 2) * factor_forma_local
+            mu_visitante = ((ataque_visitante + defensa_local) / 2) * factor_forma_visitante
+            rank_l = stats_local.get("rank")
+            rank_v = stats_visitante.get("rank")
+            tipo_partido = "estandar"
         
         return {
             "mu_local": round(max(0.1, mu_local), 4),
             "mu_visitante": round(max(0.1, mu_visitante), 4),
             "forma_local": stats_local.get("forma", ""),
-            "forma_visitante": stats_visitante.get("forma", "")
+            "forma_visitante": stats_visitante.get("forma", ""),
+            "rank_local": rank_l,
+            "rank_visitante": rank_v,
+            "tipo_partido": tipo_partido
         }

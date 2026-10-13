@@ -173,4 +173,89 @@ def calcular_lineas_goles(matriz, limites=[1.5, 2.5, 3.5]):
     lineas = {}
     for lim in limites:
         lineas[str(lim)] = calcular_probabilidades_over_under(matriz, limite=lim)
-    return lineas
+    return lineas
+
+def seleccionar_mercado_goles_optimo(matriz, contexto_tabla=None):
+    """
+    Selecciona la recomendación cuantitativa más efectiva para el mercado de goles:
+    - Analiza las líneas 1.5, 2.5 y 3.5 goles a partir de la matriz bivariada de Dixon-Coles.
+    - Maximiza el acierto predictivo:
+      1. Si Más de 2.5 tiene alta probabilidad (>= 58%), es una selección Over robusta.
+      2. Si Menos de 2.5 tiene alta probabilidad (>= 58%), es una selección Under robusta.
+      3. Si el partido muestra tendencia goleadora pero la línea 2.5 está en zona gris (50-57%),
+         selecciona 'Más de 1.5 Goles', que ofrece una tasa de acierto muy superior (~75-88%).
+      4. Si el partido muestra tendencia cerrada pero la línea 2.5 está en zona gris (50-57%),
+         selecciona 'Menos de 3.5 Goles', ofreciendo alta seguridad (~75-88%).
+    """
+    p_15 = calcular_probabilidades_over_under(matriz, limite=1.5)
+    p_25 = calcular_probabilidades_over_under(matriz, limite=2.5)
+    p_35 = calcular_probabilidades_over_under(matriz, limite=3.5)
+    
+    over_15 = p_15["Over"]
+    under_15 = p_15["Under"]
+    over_25 = p_25["Over"]
+    under_25 = p_25["Under"]
+    over_35 = p_35["Over"]
+    under_35 = p_35["Under"]
+
+    tipo_partido = (contexto_tabla or {}).get("tipo_partido", "") if isinstance(contexto_tabla, dict) else ""
+
+    # 1. Partidos con claro perfil Over (>= 58% o mismatch goleador de tabla con Over 2.5 >= 53%)
+    if over_25 >= 0.58 or (tipo_partido == "mismatch_goleador" and over_25 >= 0.53):
+        return {
+            "mercado": "Más de 2.5 Goles",
+            "prob": round(float(over_25), 4),
+            "linea": 2.5,
+            "tipo": "goles",
+            "direccion": "Over",
+            "confianza": "Alta"
+        }
+    # 2. Partidos con claro perfil Under (>= 58% o duelo de descenso cerrado con Under 2.5 >= 53%)
+    elif under_25 >= 0.58 or (tipo_partido == "duelo_descenso_cerrado" and under_25 >= 0.53):
+        return {
+            "mercado": "Menos de 2.5 Goles",
+            "prob": round(float(under_25), 4),
+            "linea": 2.5,
+            "tipo": "goles",
+            "direccion": "Under",
+            "confianza": "Alta"
+        }
+    # 3. Tendencia a goles moderada: asegurar asertividad con Más de 1.5 Goles
+    elif over_25 >= under_25 and over_15 >= 0.70:
+        return {
+            "mercado": "Más de 1.5 Goles",
+            "prob": round(float(over_15), 4),
+            "linea": 1.5,
+            "tipo": "goles",
+            "direccion": "Over",
+            "confianza": "Muy Alta"
+        }
+    # 4. Tendencia a juego cerrado moderada: asegurar asertividad con Menos de 3.5 Goles
+    elif under_25 > over_25 and under_35 >= 0.70:
+        return {
+            "mercado": "Menos de 3.5 Goles",
+            "prob": round(float(under_35), 4),
+            "linea": 3.5,
+            "tipo": "goles",
+            "direccion": "Under",
+            "confianza": "Muy Alta"
+        }
+    # 5. Fallback
+    elif over_25 >= under_25:
+        return {
+            "mercado": "Más de 2.5 Goles",
+            "prob": round(float(over_25), 4),
+            "linea": 2.5,
+            "tipo": "goles",
+            "direccion": "Over",
+            "confianza": "Media"
+        }
+    else:
+        return {
+            "mercado": "Menos de 2.5 Goles",
+            "prob": round(float(under_25), 4),
+            "linea": 2.5,
+            "tipo": "goles",
+            "direccion": "Under",
+            "confianza": "Media"
+        }

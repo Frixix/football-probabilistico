@@ -15,7 +15,8 @@ from src.models.poisson import (
     generar_matriz_dixon_coles,
     calcular_probabilidades_1x2,
     calcular_probabilidades_over_under,
-    calcular_probabilidades_btts
+    calcular_probabilidades_btts,
+    seleccionar_mercado_goles_optimo
 )
 from main import validar_resultados_historicos
 
@@ -50,11 +51,13 @@ fechas_a_cargar = [hoy_dia, manana_dia]
 headers = {'x-apisports-key': api_partidos}
 url = "https://v3.football.api-sports.io/fixtures"
 
-def es_partido_relevante(torneo, local, visitante):
-    t = (torneo or "").lower()
-    l = (local or "").lower()
-    v = (visitante or "").lower()
-    
+def es_partido_relevante(torneo, local, visitante, pais="", id_liga=None):
+    t = (torneo or "").lower().strip()
+    l = (local or "").lower().strip()
+    v = (visitante or "").lower().strip()
+    p = (pais or "").lower().strip()
+    lid = int(id_liga) if id_liga else None
+
     # 1. Filtro estricto: descartar partidos basura / ligas menores / reservas
     descartes = [
         "u17", "u18", "u19", "u20", "u21", "u23", "youth", "women", "femenin",
@@ -64,20 +67,42 @@ def es_partido_relevante(torneo, local, visitante):
     ]
     if any(k in t or k in l or k in v for k in descartes):
         return False
-        
-    # 2. Torneos y ligas reconocidas de primer nivel
-    torneos_validos = [
-        "premier league", "championship", "la liga", "laliga", "serie a", "serie b",
-        "bundesliga", "2. bundesliga", "ligue 1", "ligue 2", "liga profesional",
-        "brasileir", "betplay", "primera a", "copa libertadores", "copa sudamericana",
-        "champions league", "europa league", "conference league", "nations league",
-        "eredivisie", "primeira liga", "premiership", "super lig", "liga mx", "major league soccer",
-        "copa del rey", "fa cup", "coppa italia", "coupe de france", "dfb pokal",
-        "copa argentina", "copa do brasil", "copa colombia", "primera nacional"
+
+    # Descartar explícitamente países exóticos que usan nombres genéricos ("premier league", "ligue 1")
+    paises_exoticos = [
+        "mongolia", "kazakhstan", "kenya", "uganda", "malta", "algeria", "tunisia",
+        "egypt", "lebanon", "panama", "belarus", "tanzania", "rwanda", "zambia", "myanmar"
     ]
-    if any(k in t for k in torneos_validos):
+    if any(px in p for px in paises_exoticos):
+        return False
+
+    # 2. Las 5 grandes ligas europeas y torneos élite prioritarios
+    # 2.1 Inglaterra
+    if lid == 39 or (("premier league" in t or "championship" in t or "fa cup" in t or "league cup" in t) and ("england" in p or "inglaterra" in p or not p)):
         return True
-        
+    # 2.2 España
+    if lid == 140 or (("la liga" in t or "laliga" in t or "copa del rey" in t or "primera division" in t) and ("spain" in p or "españa" in p or not p)):
+        return True
+    # 2.3 Alemania
+    if lid == 78 or (("bundesliga" in t or "dfb pokal" in t) and ("germany" in p or "alemania" in p or not p)):
+        return True
+    # 2.4 Italia
+    if lid == 135 or (("serie a" in t or "coppa italia" in t) and ("italy" in p or "italia" in p or not p)):
+        return True
+    # 2.5 Francia
+    if lid == 61 or (("ligue 1" in t or "coupe de france" in t) and ("france" in p or "francia" in p or not p)):
+        return True
+    # 2.6 Torneos Continentales Élite
+    if lid in [2, 3, 848, 13, 11] or any(k in t for k in ["champions league", "europa league", "conference league", "copa libertadores", "copa sudamericana"]):
+        return True
+    # 2.7 Ligas principales de referencia (Colombia, Argentina, Brasil, MLS, Portugal, Países Bajos)
+    if lid in [239, 128, 71, 253, 94, 88]:
+        return True
+    if any(k in t for k in ["betplay", "copa colombia", "torneo betano", "liga profesional", "brasileirao", "brasileirão", "copa do brasil"]):
+        return True
+    if "major league soccer" in t or t == "mls" or "eredivisie" in t or "primeira liga" in t:
+        return True
+
     return False
 
 # Cargar caché local de fixtures si existe para optimizar peticiones
@@ -156,36 +181,29 @@ for dia_objetivo in fechas_a_cargar:
         equipo_local = p["teams"]["home"]["name"]
         equipo_visitante = p["teams"]["away"]["name"]
 
-        # 🛑 Descartar partidos basura que no sean de ligas reconocidas
-        if not es_partido_relevante(torneo, equipo_local, equipo_visitante):
+        pais = p["league"].get("country", "")
+        id_liga = p["league"].get("id", 0)
+
+        # 🛑 Descartar partidos que no pertenezcan a ligas o países élite
+        if not es_partido_relevante(torneo, equipo_local, equipo_visitante, pais=pais, id_liga=id_liga):
             continue
 
-        id_liga = p["league"].get("id", 0)
         temporada = p["league"].get("season", 2026)
 
-        # Consultar estadísticas verificadas de la tabla
+        # Consultar estadísticas verificadas de la tabla de posiciones
         calculo = gestor.obtener_mu_esperado(id_liga, temporada, equipo_local, equipo_visitante)
         if not calculo:
             # Si no hay tabla de posiciones real, se omite (no inventar datos falsos)
             continue
 
-        # Calibración cuantitativa por perfil goleador de la liga
-        t_low = torneo.lower()
-        factor_goles_liga = 1.0
-        if any(k in t_low for k in ["bundesliga", "alemania"]):
-            factor_goles_liga = 1.10  # Alta tasa goleadora histórica (~3.2 goles/partido)
-        elif any(k in t_low for k in ["premier league", "inglaterra"]):
-            factor_goles_liga = 1.06  # Alta intensidad ofensiva (~3.0 goles/partido)
-        elif any(k in t_low for k in ["argentina", "brasil", "brazil"]):
-            factor_goles_liga = 0.92  # Ligas más tácticas y marcadores más cerrados (~2.2 goles/partido)
-
-        mu_local = calculo["mu_local"] * factor_goles_liga
-        mu_visitante = calculo["mu_visitante"] * factor_goles_liga
+        mu_local = calculo["mu_local"]
+        mu_visitante = calculo["mu_visitante"]
 
         matriz = generar_matriz_dixon_coles(mu_local, mu_visitante)
         prob_1x2 = calcular_probabilidades_1x2(matriz)
         prob_goles = calcular_probabilidades_over_under(matriz, limite=2.5)
         prob_btts = calcular_probabilidades_btts(matriz)
+        mercado_goles_optimo = seleccionar_mercado_goles_optimo(matriz, contexto_tabla=calculo)
 
         opciones_mercado = [
             {"mercado": f"Gana {equipo_local}", "prob": prob_1x2["1"], "tipo": "1x2"},
@@ -196,6 +214,14 @@ for dia_objetivo in fechas_a_cargar:
             {"mercado": "Ambos Marcan: Sí", "prob": prob_btts["Si"], "tipo": "btts"},
             {"mercado": "Ambos Marcan: No", "prob": prob_btts["No"], "tipo": "btts"}
         ]
+        # Si el mercado analítico de goles optimizado supera el umbral de robustez (>= 58%), agregarlo a las opciones
+        if mercado_goles_optimo and mercado_goles_optimo.get("prob", 0) >= 0.58:
+            opciones_mercado.append({
+                "mercado": mercado_goles_optimo["mercado"],
+                "prob": mercado_goles_optimo["prob"],
+                "tipo": "goles"
+            })
+
         mejor_opcion = max(opciones_mercado, key=lambda x: x["prob"])
 
         registros_batch.append({

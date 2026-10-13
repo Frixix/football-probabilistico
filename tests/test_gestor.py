@@ -72,3 +72,28 @@ def test_calcular_factor_forma():
     # Cadena vacía o None debe ser exactamente 1.0
     assert calcular_factor_forma("") == 1.0
     assert calcular_factor_forma(None) == 1.0
+
+def test_gestor_tabla_posiciones_y_mismatch():
+    gestor = GestorEstadisticas(api_key="fake_key")
+    gestor.cache["140_2024"] = {
+        "Lider": {
+            "rank": 1, "points": 80, "p_total": 30,
+            "gf": 2.4, "gc": 0.8, "gf_home": 2.8, "gc_home": 0.6, "gf_away": 2.0, "gc_away": 1.0,
+            "p_home": 15, "p_away": 15, "forma": "WWWWW", "factor_forma": 1.08,
+            "media_liga_home": 1.45, "media_liga_away": 1.15
+        },
+        "Colista": {
+            "rank": 19, "points": 18, "p_total": 30,
+            "gf": 0.8, "gc": 2.0, "gf_home": 1.0, "gc_home": 1.7, "gf_away": 0.6, "gc_away": 2.3,
+            "p_home": 15, "p_away": 15, "forma": "LLLLL", "factor_forma": 0.92,
+            "media_liga_home": 1.45, "media_liga_away": 1.15
+        }
+    }
+    mu = gestor.obtener_mu_esperado(140, 2024, "Lider", "Colista")
+    assert mu is not None
+    assert mu["tipo_partido"] == "mismatch_goleador"
+    assert mu["rank_local"] == 1
+    assert mu["rank_visitante"] == 19
+    # El lider debe tener un mu_local abrumadoramente superior
+    assert mu["mu_local"] > 2.5
+    assert mu["mu_visitante"] < 0.8

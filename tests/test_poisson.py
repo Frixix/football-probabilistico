@@ -153,4 +153,27 @@ def test_mercados_derivados():
     for lim in ["1.5", "2.5", "3.5"]:
         assert round(lineas[lim]["Over"] + lineas[lim]["Under"], 4) == 1.0
 
+def test_seleccionar_mercado_goles_optimo():
+    from src.models.poisson import generar_matriz_dixon_coles, seleccionar_mercado_goles_optimo
+    
+    # 1. Partido con alta tasa esperada (ej. Bayern / Leverkusen -> mu_total = 3.6)
+    matriz_alta = generar_matriz_dixon_coles(2.2, 1.4)
+    res_alta = seleccionar_mercado_goles_optimo(matriz_alta)
+    assert res_alta["direccion"] == "Over"
+    assert res_alta["prob"] >= 0.58
+    assert "Goles" in res_alta["mercado"]
+    
+    # 2. Partido con baja tasa esperada (ej. Duelo defensivo cerrado -> mu_total = 1.7)
+    matriz_baja = generar_matriz_dixon_coles(0.9, 0.8)
+    res_baja = seleccionar_mercado_goles_optimo(matriz_baja)
+    assert res_baja["direccion"] == "Under"
+    assert res_baja["prob"] >= 0.58
+    assert "Goles" in res_baja["mercado"]
+    
+    # 3. Partido en zona gris para línea 2.5 (mu_total = 2.45): debe recomendar línea segura (1.5 o 3.5)
+    matriz_media = generar_matriz_dixon_coles(1.35, 1.10)
+    res_media = seleccionar_mercado_goles_optimo(matriz_media)
+    # Debe tener una probabilidad de seguridad alta (>= 70%)
+    assert res_media["prob"] >= 0.70
+
 

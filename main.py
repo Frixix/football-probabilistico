@@ -18,7 +18,8 @@ from src.models.poisson import (
     generar_matriz_dixon_coles,
     calcular_probabilidades_1x2,
     calcular_probabilidades_over_under,
-    calcular_probabilidades_btts
+    calcular_probabilidades_btts,
+    seleccionar_mercado_goles_optimo
 )
 
 # 1. Cargar variables de entorno
@@ -218,24 +219,15 @@ def obtener_predicciones_api(fecha_objetivo=None):
         esperados = gestor.obtener_mu_esperado(id_liga, temporada, local, visitante)
         if not esperados:
             continue
-        # Calibración cuantitativa por perfil goleador de la liga
-        t_low = torneo.lower()
-        factor_goles_liga = 1.0
-        if any(k in t_low for k in ["bundesliga", "alemania"]):
-            factor_goles_liga = 1.10  # Alta tasa goleadora (~3.2 goles/partido)
-        elif any(k in t_low for k in ["premier league", "inglaterra"]):
-            factor_goles_liga = 1.06  # Alta intensidad ofensiva (~3.0 goles/partido)
-        elif any(k in t_low for k in ["argentina", "brasil", "brazil"]):
-            factor_goles_liga = 0.92  # Ligas más tácticas y marcadores más cerrados (~2.2 goles/partido)
-
-        mu_l = esperados["mu_local"] * factor_goles_liga
-        mu_v = esperados["mu_visitante"] * factor_goles_liga
+        mu_l = esperados["mu_local"]
+        mu_v = esperados["mu_visitante"]
             
         # Motor probabilístico calibrado de Dixon-Coles
         matriz = generar_matriz_dixon_coles(mu_l, mu_v)
         prob_1x2 = calcular_probabilidades_1x2(matriz)
         prob_goles = calcular_probabilidades_over_under(matriz, limite=2.5)
         prob_btts = calcular_probabilidades_btts(matriz)
+        mercado_goles_optimo = seleccionar_mercado_goles_optimo(matriz, contexto_tabla=esperados)
 
         opciones_mercado = [
             {"mercado": f"Gana {local}", "prob": prob_1x2["1"], "tipo": "1x2"},
@@ -246,6 +238,13 @@ def obtener_predicciones_api(fecha_objetivo=None):
             {"mercado": "Ambos Marcan: Sí", "prob": prob_btts["Si"], "tipo": "btts"},
             {"mercado": "Ambos Marcan: No", "prob": prob_btts["No"], "tipo": "btts"}
         ]
+        if mercado_goles_optimo and mercado_goles_optimo.get("prob", 0) >= 0.58:
+            opciones_mercado.append({
+                "mercado": mercado_goles_optimo["mercado"],
+                "prob": mercado_goles_optimo["prob"],
+                "tipo": "goles"
+            })
+
         mejor_opcion = max(opciones_mercado, key=lambda x: x["prob"])
 
         prob_predicha = float(mejor_opcion["prob"])
@@ -297,6 +296,11 @@ def obtener_predicciones_api(fecha_objetivo=None):
             "cuota_mercado": cuota_mercado,
             "ev": ev,
             "es_valor": es_valor,
+            "mu_local": mu_l,
+            "mu_visitante": mu_v,
+            "rank_local": esperados.get("rank_local"),
+            "rank_visitante": esperados.get("rank_visitante"),
+            "tipo_partido": esperados.get("tipo_partido", "estandar"),
             "forma_local": esperados.get("forma_local", ""),
             "forma_visitante": esperados.get("forma_visitante", "")
         })
