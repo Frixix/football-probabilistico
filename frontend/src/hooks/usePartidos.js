@@ -48,8 +48,15 @@ export function usePartidos(fechaSeleccionada) {
 
     fetchPartidos();
 
+    const handleActualizado = () => {
+      fetchPartidos();
+    };
+
+    window.addEventListener('historial-actualizado', handleActualizado);
+
     return () => {
       cancelado = true;
+      window.removeEventListener('historial-actualizado', handleActualizado);
     };
   }, [fechaEfectiva]);
 

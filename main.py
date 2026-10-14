@@ -37,81 +37,141 @@ else:
     supabase = None
     print("⚠️ Faltan las llaves de Supabase en el archivo .env")
 
-# 3. Función de validación de historial
-def validar_resultados_historicos():
+# 3. Función de validación de historial y cálculo de aciertos
+def evaluar_acierto_mercado(prediccion_raw, goles_local, goles_visitante, local, visitante):
+    if goles_local is None or goles_visitante is None:
+        return None
+    pred = (prediccion_raw or "").strip().lower()
+    gl = int(goles_local)
+    gv = int(goles_visitante)
+    suma = gl + gv
+    loc = (local or "").strip().lower()
+    vis = (visitante or "").strip().lower()
+
+    # 1. Empate / X
+    if pred in ["empate", "x"]:
+        return gl == gv
+
+    # 2. Doble Oportunidad
+    if pred.startswith("1x") or "local o empate" in pred or (loc and f"{loc} o empate" in pred):
+        return gl >= gv
+    if pred.startswith("x2") or "empate o visitante" in pred or (vis and f"empate o {vis}" in pred):
+        return gv >= gl
+    if pred.startswith("12") or "local o visitante" in pred or (loc and vis and f"{loc} o {vis}" in pred):
+        return gl != gv
+
+    # 3. 1X2 Ganador
+    if pred in ["gana local", "1"]:
+        return gl > gv
+    if pred in ["gana visitante", "2"]:
+        return gv > gl
+    if pred.startswith("gana "):
+        eq = pred.replace("gana ", "").strip()
+        if loc and (eq == loc or eq in loc or loc in eq):
+            return gl > gv
+        if vis and (eq == vis or eq in vis or vis in eq):
+            return gv > gl
+
+    # 4. Líneas de Goles (Over / Under)
+    for linea in [0.5, 1.5, 2.5, 3.5, 4.5]:
+        if str(linea) in pred:
+            if any(k in pred for k in ["más", "mas", "over", ">", "ms"]):
+                return suma > linea
+            if any(k in pred for k in ["menos", "under", "<"]):
+                return suma < linea
+
+    # 5. Ambos Marcan (BTTS)
+    if "ambos marcan" in pred or "btts" in pred:
+        if ": no" in pred or "- no" in pred or pred.endswith(" no") or "no" in pred:
+            return gl == 0 or gv == 0
+        if any(k in pred for k in [": sí", ": si", "- sí", "- si", "yes"]) or pred.endswith(" sí") or pred.endswith(" si"):
+            return gl > 0 and gv > 0
+
+
+    return False
+
+def validar_resultados_historicos(limite=15):
     print("🔍 Iniciando validación de historial en Supabase...")
+    resultado_resumen = {
+        "status": "error",
+        "mensaje": "",
+        "total_pendientes": 0,
+        "evaluados": 0,
+        "acertados": 0,
+        "fallados": 0,
+        "aun_pendientes": 0,
+        "detalles": []
+    }
     if not supabase:
-        print("⚠️ Supabase no está conectado. Omitiendo validación.")
-        return
+        msg = "⚠️ Supabase no está conectado. Omitiendo validación."
+        print(msg)
+        resultado_resumen["mensaje"] = msg
+        return resultado_resumen
 
     try:
-        # Validar priorizando fechas recientes
-        respuesta = supabase.table("historial_predicciones")\
+        dt_bogota = datetime.utcnow() - timedelta(hours=5)
+        hoy_dia = dt_bogota.strftime("%Y-%m-%d")
+
+        # Validar priorizando fechas recientes hasta el día de hoy (no chequear partidos futuros)
+        query = supabase.table("historial_predicciones")\
             .select("*")\
             .is_("fue_acierto", "null")\
-            .order("fecha", desc=True)\
-            .limit(15)\
-            .execute()
-        
-        partidos_pendientes = respuesta.data
+            .lte("fecha", hoy_dia)\
+            .order("fecha", desc=True)
+
+        if limite:
+            query = query.limit(limite)
+        respuesta = query.execute()
+
+        partidos_pendientes = respuesta.data or []
+        resultado_resumen["total_pendientes"] = len(partidos_pendientes)
+
         if not partidos_pendientes:
-            print("✅ No hay partidos pendientes por evaluar.")
-            return
-            
+            msg = "✅ No hay partidos pendientes por evaluar. ¡Todo al día!"
+            print(msg)
+            resultado_resumen["status"] = "ok"
+            resultado_resumen["mensaje"] = msg
+            return resultado_resumen
+
         print(f"🔄 Se encontraron {len(partidos_pendientes)} partidos para evaluar. (Protección de tokens activada)")
 
         headers = {'x-apisports-key': API_KEY_PARTIDOS}
 
         for partido in partidos_pendientes:
             id_partido = partido["id_partido"]
-            prediccion = partido["mercado_predicho"]
-            
+            prediccion = partido.get("mercado_predicho", "")
+            local = partido.get("local", "")
+            visitante = partido.get("visitante", "")
+
             url = f"https://v3.football.api-sports.io/fixtures?id={id_partido}"
-            
+
             try:
                 res_api = requests.get(url, headers=headers).json()
                 if res_api.get("errors"):
-                    print(f"🚨 Límite o error de API al validar: {res_api.get('errors')}")
+                    err_msg = f"🚨 Límite o error de API al validar: {res_api.get('errors')}"
+                    print(err_msg)
+                    resultado_resumen["mensaje"] = err_msg
                     break
                 if not res_api.get("response"):
-                    time.sleep(1)
+                    time.sleep(0.5)
+                    resultado_resumen["aun_pendientes"] += 1
                     continue
-                    
+
                 datos_reales = res_api["response"][0]
                 estado_corto = datos_reales["fixture"]["status"]["short"]
-                
+
                 if estado_corto in ["FT", "AET", "PEN"]:
                     goles_local = datos_reales["goals"]["home"]
                     goles_visitante = datos_reales["goals"]["away"]
-                    
+
                     if goles_local is None or goles_visitante is None:
-                        continue 
-                        
-                    suma_goles = goles_local + goles_visitante
-                    fue_acierto = False
-                    
-                    if "Gana" in prediccion:
-                        equipo_ganador = prediccion.replace("Gana ", "")
-                        if goles_local > goles_visitante and equipo_ganador == partido["local"]:
-                            fue_acierto = True
-                        elif goles_visitante > goles_local and equipo_ganador == partido["visitante"]:
-                            fue_acierto = True
-                    elif prediccion == "Empate":
-                        if goles_local == goles_visitante:
-                            fue_acierto = True
-                    elif "Más de 2.5" in prediccion:
-                        if suma_goles > 2.5:
-                            fue_acierto = True
-                    elif "Menos de 2.5" in prediccion:
-                        if suma_goles < 2.5:
-                            fue_acierto = True
-                    elif "Ambos Marcan: Sí" in prediccion:
-                        if goles_local > 0 and goles_visitante > 0:
-                            fue_acierto = True
-                    elif "Ambos Marcan: No" in prediccion:
-                        if goles_local == 0 or goles_visitante == 0:
-                            fue_acierto = True
-                            
+                        resultado_resumen["aun_pendientes"] += 1
+                        continue
+
+                    fue_acierto = evaluar_acierto_mercado(
+                        prediccion, goles_local, goles_visitante, local, visitante
+                    )
+
                     actualizacion = {
                         "goles_local": goles_local,
                         "goles_visitante": goles_visitante,
@@ -121,15 +181,40 @@ def validar_resultados_historicos():
                         .update(actualizacion)\
                         .eq("id_partido", id_partido)\
                         .execute()
-                        
-                    print(f"Marcador guardado: {partido['local']} {goles_local} - {goles_visitante} {partido['visitante']} | ¿Acierto? {fue_acierto}")
+
+                    resultado_resumen["evaluados"] += 1
+                    if fue_acierto:
+                        resultado_resumen["acertados"] += 1
+                    else:
+                        resultado_resumen["fallados"] += 1
+
+                    detalle_item = {
+                        "id_partido": id_partido,
+                        "partido": f"{local} {goles_local} - {goles_visitante} {visitante}",
+                        "prediccion": prediccion,
+                        "fue_acierto": fue_acierto
+                    }
+                    resultado_resumen["detalles"].append(detalle_item)
+                    simbolo = "✅ ACERTADO" if fue_acierto else "❌ FALLADO"
+                    print(f"Marcador guardado: {local} {goles_local} - {goles_visitante} {visitante} | {simbolo} ({prediccion})")
+                else:
+                    resultado_resumen["aun_pendientes"] += 1
+
             except Exception as e:
                 print(f"Error procesando validación del partido {id_partido}: {e}")
-            
-            time.sleep(1) # Pausa para proteger API
-                
+                resultado_resumen["aun_pendientes"] += 1
+
+            time.sleep(1.2) # Pausa para proteger API contra rate limits
+
+        resultado_resumen["status"] = "ok"
+        resultado_resumen["mensaje"] = f"Validación finalizada. Evaluados: {resultado_resumen['evaluados']} ({resultado_resumen['acertados']} acertados, {resultado_resumen['fallados']} fallados). Pendientes: {resultado_resumen['aun_pendientes']}."
+
     except Exception as e:
-        print(f"Error consultando Supabase para validación: {e}")
+        err_msg = f"Error consultando Supabase para validación: {e}"
+        print(err_msg)
+        resultado_resumen["mensaje"] = err_msg
+
+    return resultado_resumen
 
 # 4. Función Principal de la API
 def obtener_predicciones_api(fecha_objetivo=None):

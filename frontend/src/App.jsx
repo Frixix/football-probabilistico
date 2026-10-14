@@ -8,7 +8,7 @@ import { obtenerInfoTorneo } from './utils/leagues';
 import { 
   BallIcon, ChartIcon, TrophyIcon, TargetIcon, 
   TicketIcon, SearchIcon, StarIcon, CloseIcon, AlertTriangleIcon, CalendarIcon,
-  DicesIcon, ZapIcon, ShieldIcon
+  DicesIcon, ZapIcon, ShieldIcon, RefreshCwIcon
 } from './components/Icons';
 import { 
   generarTicketAleatorioMayorProbabilidad, 
@@ -16,8 +16,11 @@ import {
   generarTicketUltraSeguro,
   formatearPickParaTicket 
 } from './utils/combinadas';
+import { actualizarResultadosBD } from './utils/actualizarResultados';
+import ActualizadorModal from './components/ActualizadorModal';
 import HORARIOS_FIXTURES from './data/horarios_fixtures.json';
 import './App.css';
+
 
 function App() {
   // Fecha anclada dinámicamente a Bogotá (UTC-5)
@@ -34,6 +37,32 @@ function App() {
   const [mostrarTicketMobile, setMostrarTicketMobile] = useState(false);
   const [pestanaActiva, setPestanaActiva] = useState('cartelera');
   const [mensajeToast, setMensajeToast] = useState(null);
+  const [actualizandoBD, setActualizandoBD] = useState(false);
+  const [progresoTexto, setProgresoTexto] = useState('');
+  const [resultadoModal, setResultadoModal] = useState(null);
+  const [mostrarModalActualizador, setMostrarModalActualizador] = useState(false);
+
+  const handleActualizarBaseDatos = async () => {
+    setActualizandoBD(true);
+    setMostrarModalActualizador(true);
+    setProgresoTexto('Conectando a base de datos y consultando marcadores oficiales...');
+    try {
+      const res = await actualizarResultadosBD({
+        limite: 40,
+        onProgreso: (txt) => setProgresoTexto(txt)
+      });
+      setResultadoModal(res);
+      if (res?.mensaje) {
+        setMensajeToast(res.mensaje);
+        setTimeout(() => setMensajeToast(null), 4000);
+      }
+    } catch (err) {
+      setResultadoModal({ exito: false, mensaje: err.message || 'Error actualizando resultados.' });
+    } finally {
+      setActualizandoBD(false);
+    }
+  };
+
 
   // Pestañas relativas de fechas: Ayer, Hoy, Mañana
   const diasNav = useMemo(() => {
@@ -237,6 +266,16 @@ function App() {
           </div>
 
           <div className="navbar-status">
+            <button 
+              type="button" 
+              className={`btn-navbar-sync ${actualizandoBD ? 'loading' : ''}`}
+              onClick={handleActualizarBaseDatos}
+              disabled={actualizandoBD}
+              title="Comprobar partidos pendientes en Supabase, consultar marcadores oficiales y registrar aciertos"
+            >
+              <RefreshCwIcon size={14} className={actualizandoBD ? 'rotating' : ''} />
+              <span>{actualizandoBD ? 'Actualizando BD...' : 'Actualizar Resultados'}</span>
+            </button>
             <span className="status-indicator">
               <span className="status-dot"></span> MOTOR ACTIVO
             </span>
@@ -571,6 +610,15 @@ function App() {
           <span>{mensajeToast}</span>
         </div>
       )}
+
+      {/* 9. MODAL DE ACTUALIZACIÓN DE BASE DE DATOS */}
+      <ActualizadorModal 
+        visible={mostrarModalActualizador}
+        cargando={actualizandoBD}
+        progresoTexto={progresoTexto}
+        resultado={resultadoModal}
+        onCerrar={() => setMostrarModalActualizador(false)}
+      />
     </div>
 
   );

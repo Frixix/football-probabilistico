@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useHistorial } from '../hooks/useHistorial';
+import { actualizarResultadosBD } from '../utils/actualizarResultados';
+import ActualizadorModal from './ActualizadorModal';
 import { 
   ChartIcon, TargetIcon, TrophyIcon, 
   CheckIcon, CloseIcon, ClockIcon, SearchIcon,
-  TrendingUpIcon, TrendingDownIcon, RefreshCwIcon, LayersIcon
+  TrendingUpIcon, TrendingDownIcon, RefreshCwIcon, LayersIcon, ZapIcon
 } from './Icons';
 
 export default function BacktestDashboard() {
@@ -11,12 +13,35 @@ export default function BacktestDashboard() {
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [busqueda, setBusqueda] = useState('');
   const [rotando, setRotando] = useState(false);
+  const [actualizandoBD, setActualizandoBD] = useState(false);
+  const [progresoTexto, setProgresoTexto] = useState('');
+  const [resultadoModal, setResultadoModal] = useState(null);
+  const [mostrarModal, setMostrarModal] = useState(false);
 
   const handleRecargar = () => {
     setRotando(true);
     recargar();
     setTimeout(() => setRotando(false), 800);
   };
+
+  const handleActualizarBD = async () => {
+    setActualizandoBD(true);
+    setMostrarModal(true);
+    setProgresoTexto('Iniciando verificación de marcadores oficiales...');
+    try {
+      const res = await actualizarResultadosBD({
+        limite: 40,
+        onProgreso: (txt) => setProgresoTexto(txt)
+      });
+      setResultadoModal(res);
+      recargar();
+    } catch (err) {
+      setResultadoModal({ exito: false, mensaje: err.message || 'Error en la actualización.' });
+    } finally {
+      setActualizandoBD(false);
+    }
+  };
+
 
   // Filtrar registros de la tabla
   const registrosFiltrados = useMemo(() => {
@@ -112,14 +137,26 @@ export default function BacktestDashboard() {
           </p>
         </div>
 
-        <button 
-          onClick={handleRecargar} 
-          className={`btn-refresh-backtest ${rotando ? 'rotating' : ''}`}
-          title="Recargar datos de Supabase"
-        >
-          <RefreshCwIcon size={16} />
-          <span>Sincronizar</span>
-        </button>
+        <div className="backtest-header-actions">
+          <button 
+            onClick={handleActualizarBD} 
+            className="btn-update-results"
+            disabled={actualizandoBD}
+            title="Verificar en vivo si los partidos pendientes ya jugaron y actualizar en Supabase si acertó o no"
+          >
+            <RefreshCwIcon size={16} className={actualizandoBD ? 'rotating' : ''} />
+            <span>{actualizandoBD ? 'Actualizando BD...' : 'Actualizar Resultados (Partidos Jugados)'}</span>
+          </button>
+
+          <button 
+            onClick={handleRecargar} 
+            className={`btn-refresh-backtest ${rotando ? 'rotating' : ''}`}
+            title="Recargar datos guardados en Supabase"
+          >
+            <RefreshCwIcon size={15} />
+            <span>Refrescar Vista</span>
+          </button>
+        </div>
       </div>
 
       {/* 2. KPIS PRINCIPALES DE RENDIMIENTO */}
@@ -399,6 +436,15 @@ export default function BacktestDashboard() {
           </table>
         </div>
       </div>
+
+      <ActualizadorModal 
+        visible={mostrarModal}
+        cargando={actualizandoBD}
+        progresoTexto={progresoTexto}
+        resultado={resultadoModal}
+        onCerrar={() => setMostrarModal(false)}
+      />
     </div>
   );
 }
+

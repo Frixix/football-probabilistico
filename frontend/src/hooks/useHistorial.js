@@ -34,7 +34,17 @@ export function useHistorial() {
 
   useEffect(() => {
     fetchHistorial();
+
+    const handleActualizado = () => {
+      fetchHistorial();
+    };
+
+    window.addEventListener('historial-actualizado', handleActualizado);
+    return () => {
+      window.removeEventListener('historial-actualizado', handleActualizado);
+    };
   }, [fetchHistorial]);
+
 
   // Cálculos de Backtesting cuantitativo en memoria
   const backtest = useMemo(() => {
