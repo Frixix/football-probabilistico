@@ -43,19 +43,26 @@ def resolver_nombre_equipo(nombre_busqueda, dict_equipos):
         "milan": ["ac milan"],
         "ac milan": ["milan"],
         "juventus": ["juve"],
+        "juve": ["juventus"],
+        "juventud": ["juventus", "juve"],
         "roma": ["as roma"],
         "as roma": ["roma"],
+        "lazio": ["ss lazio"],
+        "fiorentina": ["acf fiorentina"],
         "inter": ["internazionale", "inter milan"],
         "psg": ["paris saint germain", "paris saint-germain"],
         "paris saint germain": ["psg"],
         "bayern": ["bayern münchen", "bayern munich"],
         "bayern münchen": ["bayern munich", "bayern"],
-        "bayer leverkusen": ["leverkusen"],
+        "bayer leverkusen": ["leverkusen", "bayer 04 leverkusen"],
+        "leverkusen": ["bayer leverkusen", "bayer 04 leverkusen"],
         "athletic club": ["athletic bilbao"],
         "atletico madrid": ["atlético madrid", "atletico de madrid"],
         "real madrid": ["madrid"],
         "manchester united": ["man united", "man utd"],
-        "manchester city": ["man city"]
+        "manchester city": ["man city"],
+        "river plate": ["river"],
+        "boca juniors": ["boca"]
     }
     if n_norm in alias_map:
         for al in alias_map[n_norm]:
@@ -296,19 +303,28 @@ class GestorEstadisticas:
                     factor_ritmo_goles = 1.08
                     tipo_partido = "duelo_elite_abierto"
 
-            # Potenciador de equipos goleadores insignia
+            # Potenciador de equipos goleadores insignia (Inglaterra, España, Italia, Alemania, Francia, Argentina, Brasil)
             equipos_goleadores = [
-                "bayern", "bayer leverkusen", "leverkusen", "psg", "paris saint",
-                "real madrid", "barcelona", "manchester city", "arsenal", "liverpool",
-                "inter", "ac milan", "milan", "juventus", "roma", "lazio", "fiorentina", "atalanta"
+                # Alemania
+                "bayern", "bayer", "leverkusen", "borussia dortmund", "dortmund", "rb leipzig", "leipzig", "eintracht",
+                # Francia
+                "psg", "paris saint", "monaco", "marseille", "lille", "lyon",
+                # Italia (Mencionados explícitamente: Milan, Juventus, Roma, Inter, Lazio, Fiorentina, Atalanta, Napoli)
+                "inter", "ac milan", "milan", "juventus", "juve", "roma", "lazio", "fiorentina", "atalanta", "napoli",
+                # Inglaterra
+                "manchester city", "arsenal", "liverpool", "chelsea", "tottenham", "aston villa",
+                # España
+                "real madrid", "barcelona", "atletico madrid", "girona", "villarreal", "athletic club",
+                # Argentina & Brasil
+                "river plate", "boca juniors", "racing club", "flamengo", "palmeiras", "botafogo", "atletico mineiro"
             ]
             bonus_elite_l = 1.0
             bonus_elite_v = 1.0
             nom_l_low = nom_l_real.lower()
             nom_v_low = nom_v_real.lower()
-            if any(eq in nom_l_low for eq in equipos_goleadores) and stats_local.get("gf", 1.0) >= 1.5:
+            if any(eq in nom_l_low for eq in equipos_goleadores) and stats_local.get("gf", 1.0) >= 1.4:
                 bonus_elite_l = 1.06
-            if any(eq in nom_v_low for eq in equipos_goleadores) and stats_visitante.get("gf", 1.0) >= 1.4:
+            if any(eq in nom_v_low for eq in equipos_goleadores) and stats_visitante.get("gf", 1.0) >= 1.3:
                 bonus_elite_v = 1.05
 
             mu_local = mu_l_base * factor_tabla_l * bonus_elite_l * factor_forma_local * factor_ritmo_goles
