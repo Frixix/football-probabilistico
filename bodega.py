@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 import requests
 import json
 
@@ -124,10 +125,6 @@ def es_partido_relevante(torneo, local, visitante, pais="", id_liga=None):
 def ejecutar_bodega():
     print("--- INICIANDO BODEGA (HOY + MAÑANA) ---")
 
-    # 1. Validar resultados de partidos pasados pendientes
-    if supabase:
-        validar_resultados_historicos()
-
     gestor = GestorEstadisticas(api_estadisticas)
 
     # Fechas a procesar: Hoy y Mañana (Bogotá UTC-5)
@@ -150,15 +147,20 @@ def ejecutar_bodega():
         print(f"\n📅 Procesando pronósticos para la fecha: {dia_objetivo}")
         
         partidos = []
-        # Buscar en fixtures_cache primero
-        partidos_cached = [v for v in fixtures_cache.values() if v.get("fecha") == dia_objetivo]
+        # Buscar en fixtures_cache primero solo si tiene id_liga y pais válidos
+        partidos_cached = [v for v in fixtures_cache.values() if v.get("fecha") == dia_objetivo and v.get("id_liga") and v.get("id_liga") != 0]
     
         if partidos_cached:
-            print(f"  -> Usando {len(partidos_cached)} fixtures desde caché local.")
+            print(f"  -> Usando {len(partidos_cached)} fixtures válidos desde caché local.")
             for fix in partidos_cached:
                 partidos.append({
                     "fixture": {"id": fix["id"], "date": f"{dia_objetivo}T{fix.get('hora', '15:00')}:00"},
-                    "league": {"id": fix.get("id_liga", 0), "season": 2026, "name": fix.get("torneo", "Liga")},
+                    "league": {
+                        "id": fix.get("id_liga", 0),
+                        "country": fix.get("pais", ""),
+                        "season": 2026,
+                        "name": fix.get("torneo", "Liga")
+                    },
                     "teams": {
                         "home": {"name": fix.get("local", "Local")},
                         "away": {"name": fix.get("visitante", "Visitante")}
@@ -167,41 +169,53 @@ def ejecutar_bodega():
         else:
             print(f"  -> Consultando API-Football para fixtures de {dia_objetivo}...")
             params = {"date": dia_objetivo, "timezone": "America/Bogota"}
-            try:
-                res = requests.get(url, headers=headers, params=params).json()
-                partidos = res.get("response", [])
-                if partidos:
-                    for fix_item in partidos:
-                        fid = str(fix_item["fixture"]["id"])
-                        date_iso = fix_item["fixture"].get("date", "")
-                        h_str = date_iso[11:16] if len(date_iso) >= 16 else "15:00"
+            for intento in range(3):
+                try:
+                    res = requests.get(url, headers=headers, params=params).json()
+                    errs = res.get("errors")
+                    if errs:
+                        if isinstance(errs, dict) and "rateLimit" in errs:
+                            print("⚠️ Rate limit alcanzado en API-Football. Esperando 60 segundos antes de reintentar...")
+                            time.sleep(60)
+                            continue
+                        else:
+                            print(f"🚨 Aviso en respuesta de API: {errs}")
+                    partidos = res.get("response", []) or []
+                    if partidos:
+                        for fix_item in partidos:
+                            fid = str(fix_item["fixture"]["id"])
+                            date_iso = fix_item["fixture"].get("date", "")
+                            h_str = date_iso[11:16] if len(date_iso) >= 16 else "15:00"
+                            try:
+                                hh = int(h_str[:2])
+                                mm = h_str[3:5]
+                                ampm = "PM" if hh >= 12 else "AM"
+                                hh12 = hh % 12 or 12
+                                h12_str = f"{hh12}:{mm} {ampm}"
+                            except Exception:
+                                h12_str = h_str
+                            fixtures_cache[fid] = {
+                                "id": fix_item["fixture"]["id"],
+                                "id_liga": fix_item["league"].get("id", 0),
+                                "pais": fix_item["league"].get("country", ""),
+                                "fecha": dia_objetivo,
+                                "hora": h_str,
+                                "hora12": h12_str,
+                                "status": fix_item["fixture"]["status"]["short"],
+                                "torneo": fix_item["league"].get("name", "Liga"),
+                                "local": fix_item["teams"]["home"]["name"],
+                                "visitante": fix_item["teams"]["away"]["name"]
+                            }
                         try:
-                            hh = int(h_str[:2])
-                            mm = h_str[3:5]
-                            ampm = "PM" if hh >= 12 else "AM"
-                            hh12 = hh % 12 or 12
-                            h12_str = f"{hh12}:{mm} {ampm}"
-                        except Exception:
-                            h12_str = h_str
-                        fixtures_cache[fid] = {
-                            "id": fix_item["fixture"]["id"],
-                            "fecha": dia_objetivo,
-                            "hora": h_str,
-                            "hora12": h12_str,
-                            "status": fix_item["fixture"]["status"]["short"],
-                            "torneo": fix_item["league"].get("name", "Liga"),
-                            "local": fix_item["teams"]["home"]["name"],
-                            "visitante": fix_item["teams"]["away"]["name"]
-                        }
-                    try:
-                        os.makedirs(os.path.dirname(archivo_hf), exist_ok=True)
-                        with open(archivo_hf, "w", encoding="utf-8") as f_out:
-                            json.dump(fixtures_cache, f_out, ensure_ascii=False, indent=2)
-                    except Exception as err_cache:
-                        print(f"Aviso guardando horarios en caché: {err_cache}")
-            except Exception as e:
-                print(f"🚨 Error consultando fixtures: {e}")
-                partidos = []
+                            os.makedirs(os.path.dirname(archivo_hf), exist_ok=True)
+                            with open(archivo_hf, "w", encoding="utf-8") as f_out:
+                                json.dump(fixtures_cache, f_out, ensure_ascii=False, indent=2)
+                        except Exception as err_cache:
+                            print(f"Aviso guardando horarios en caché: {err_cache}")
+                    break
+                except Exception as e:
+                    print(f"🚨 Error consultando fixtures: {e}")
+                    break
     
         partidos_procesados = 0
         registros_batch = []
@@ -348,6 +362,14 @@ def ejecutar_bodega():
     
         print(f"Fecha {dia_objetivo}: {partidos_procesados} partidos guardados en Supabase.")
     
+    # 2. Validar resultados de partidos pasados pendientes una vez aseguradas las predicciones
+    if supabase:
+        try:
+            print("\n🔍 Validando resultados de partidos jugados anteriores...")
+            validar_resultados_historicos(limite=15)
+        except Exception as e_val:
+            print(f"Aviso en validación histórica: {e_val}")
+
     print("\n¡Proceso de Bodega finalizado! Partidos de Hoy y de Mañana sincronizados exitosamente.")
 if __name__ == "__main__":
     ejecutar_bodega()

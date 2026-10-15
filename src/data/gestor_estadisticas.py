@@ -97,6 +97,25 @@ class GestorEstadisticas:
         with open(self.archivo_cache, "w", encoding="utf-8") as f:
             json.dump(self.cache, f, indent=4)
 
+    def resolver_equipo_global(self, nombre):
+        """Busca el equipo en cualquier liga disponible en la caché."""
+        ligas_prioridad = [
+            "39_2026", "39_2024", "140_2026", "140_2024", "78_2026", "78_2024", 
+            "135_2026", "135_2024", "61_2026", "61_2024", "88_2026", "88_2024",
+            "94_2026", "94_2024", "128_2026", "71_2026", "239_2026", "2_2026", "3_2024", "848_2024"
+        ]
+        for k in ligas_prioridad:
+            if k in self.cache and isinstance(self.cache[k], dict):
+                eq = resolver_nombre_equipo(nombre, self.cache[k])
+                if eq:
+                    return self.cache[k][eq], eq
+        for k, v in self.cache.items():
+            if isinstance(v, dict):
+                eq = resolver_nombre_equipo(nombre, v)
+                if eq:
+                    return v[eq], eq
+        return None, None
+
     def obtener_mu_esperado(self, id_liga, temporada, local, visitante):
         llave_original = f"{id_liga}_{temporada}"
         
@@ -107,7 +126,7 @@ class GestorEstadisticas:
                 liga_stats = self.cache[k]
                 break
 
-        if not liga_stats:
+        if not liga_stats and id_liga and int(id_liga) != 0:
             print(f"📥 Descargando estadísticas reales de la liga {id_liga} (Temp {temporada})...")
             url = "https://v3.football.api-sports.io/standings"
             params = {"league": id_liga, "season": temporada}
@@ -137,7 +156,13 @@ class GestorEstadisticas:
                 if "response" in res and len(res["response"]) > 0:
                     liga_data = res["response"][0]["league"]
                     if "standings" in liga_data and len(liga_data["standings"]) > 0:
-                        standings = liga_data["standings"][0]
+                        todos_los_equipos = []
+                        for grp in liga_data["standings"]:
+                            if isinstance(grp, list):
+                                todos_los_equipos.extend(grp)
+                            elif isinstance(grp, dict):
+                                todos_los_equipos.append(grp)
+                        standings = todos_los_equipos
                         
                         total_gf_h = sum(eq.get("home", {}).get("goals", {}).get("for", 0) for eq in standings)
                         total_p_h = sum(eq.get("home", {}).get("played", 0) for eq in standings)
@@ -211,16 +236,39 @@ class GestorEstadisticas:
                 return None 
 
         if not liga_stats:
-            return None
+            liga_stats = {}
             
-        nom_l_real = resolver_nombre_equipo(local, liga_stats)
-        nom_v_real = resolver_nombre_equipo(visitante, liga_stats)
+        nom_l_real = resolver_nombre_equipo(local, liga_stats) if liga_stats else None
+        nom_v_real = resolver_nombre_equipo(visitante, liga_stats) if liga_stats else None
 
-        if not nom_l_real or not nom_v_real:
+        stats_local = liga_stats.get(nom_l_real) if nom_l_real else None
+        stats_visitante = liga_stats.get(nom_v_real) if nom_v_real else None
+
+        # Si no están en la tabla específica del torneo, buscar en la caché global de ligas
+        if not stats_local:
+            stats_local, nom_l_real = self.resolver_equipo_global(local)
+        if not stats_visitante:
+            stats_visitante, nom_v_real = self.resolver_equipo_global(visitante)
+
+        # Si ninguno de los dos equipos tiene datos registrados, no inventar
+        if not stats_local and not stats_visitante:
             return None
-        
-        stats_local = liga_stats[nom_l_real]
-        stats_visitante = liga_stats[nom_v_real]
+
+        # Prior calibrado para rivales de copas continentales sin estadísticas en liga doméstica
+        if not stats_local and stats_visitante:
+            stats_local = {
+                "gf": 1.05, "gc": 1.60, "gf_home": 1.10, "gc_home": 1.50,
+                "p_home": 10, "p_away": 10, "rank": 15, "points": 8, "p_total": 10,
+                "factor_forma": 1.0, "media_liga_home": 1.48, "media_liga_away": 1.20
+            }
+            nom_l_real = local
+        elif not stats_visitante and stats_local:
+            stats_visitante = {
+                "gf": 0.85, "gc": 1.75, "gf_away": 0.80, "gc_away": 1.85,
+                "p_home": 10, "p_away": 10, "rank": 16, "points": 8, "p_total": 10,
+                "factor_forma": 1.0, "media_liga_home": 1.48, "media_liga_away": 1.20
+            }
+            nom_v_real = visitante
         
         # Ponderación Bayesiana de Local vs Visitante (Shrinkage)
         p_home_l = stats_local.get("p_home", 0)
@@ -250,8 +298,8 @@ class GestorEstadisticas:
         factor_forma_local = stats_local.get("factor_forma", 1.0)
         factor_forma_visitante = stats_visitante.get("factor_forma", 1.0)
 
-        media_home = stats_local.get("media_liga_home")
-        media_away = stats_visitante.get("media_liga_away")
+        media_home = stats_local.get("media_liga_home") or 1.48
+        media_away = stats_visitante.get("media_liga_away") or 1.20
 
         # Modelo bivariado Maher con ajuste de Tabla de Posiciones
         if media_home and media_away and media_home > 0 and media_away > 0:
@@ -320,8 +368,8 @@ class GestorEstadisticas:
             ]
             bonus_elite_l = 1.0
             bonus_elite_v = 1.0
-            nom_l_low = nom_l_real.lower()
-            nom_v_low = nom_v_real.lower()
+            nom_l_low = (nom_l_real or local or "").lower()
+            nom_v_low = (nom_v_real or visitante or "").lower()
             if any(eq in nom_l_low for eq in equipos_goleadores) and stats_local.get("gf", 1.0) >= 1.4:
                 bonus_elite_l = 1.06
             if any(eq in nom_v_low for eq in equipos_goleadores) and stats_visitante.get("gf", 1.0) >= 1.3:
